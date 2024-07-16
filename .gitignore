@@ -1,0 +1,4 @@
+.env
+postgres.yaml
+db-data
+*.sum
