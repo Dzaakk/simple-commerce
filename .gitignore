@@ -2,3 +2,4 @@
 postgres.yaml
 db-data
 *.sum
+*.air.toml
