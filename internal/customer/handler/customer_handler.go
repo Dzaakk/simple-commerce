@@ -44,12 +44,6 @@ func (handler *CustomerHandler) Route(r *gin.RouterGroup) {
 				return
 			}
 		})
-		// customerHandler.GET("/balance", func(ctx *gin.Context) {
-		// 	if err := handler.GetBalance(ctx); err != nil {
-		// 		ctx.JSON(http.StatusInternalServerError, utils.Response(http.StatusInternalServerError, "failed to create customer", err.Error()))
-		// 		return
-		// 	}
-		// })
 	}
 }
 
@@ -74,16 +68,14 @@ func (handler *CustomerHandler) Create(ctx *gin.Context) error {
 	var data model.CustomerReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		newErr := fmt.Errorf("failed to bind JSON: %s", err)
-
 		ctx.JSON(http.StatusBadRequest, utils.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
-		return newErr
+		return nil
 	}
 	fmt.Printf("input = %v", data)
 	id, err := handler.Usecase.Create(data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
-		return err
+		return nil
 	}
 	res := model.CustomerRes{
 		Id: fmt.Sprintf("%d", *id),
@@ -93,24 +85,27 @@ func (handler *CustomerHandler) Create(ctx *gin.Context) error {
 }
 
 func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) error {
-	id, err := strconv.Atoi(ctx.Query("id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.Response(http.StatusBadRequest, "missing required parameter 'id'", err.Error()))
+	var data model.BalanceUpdateReq
+
+	if err := ctx.ShouldBindJSON(&data); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
 		return nil
 	}
-	balance, err := strconv.Atoi(ctx.Query("balance"))
+
+	balance, err := strconv.ParseFloat(data.Balance, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, utils.Response(http.StatusBadRequest, "missing required parameter 'balance'", err.Error()))
+		ctx.JSON(http.StatusBadRequest, utils.Response(http.StatusBadRequest, "Bad Request", "Invalid input data on field 'balance'"))
 		return nil
 	}
-	actionType := ctx.Query("actionType")
+
+	id, _ := strconv.Atoi(data.Id)
 	oldData, err := handler.Usecase.GetBalance(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
 		return err
 	}
 
-	newBalance, err := handler.Usecase.UpdateBalance(id, float32(balance), actionType)
+	newBalance, err := handler.Usecase.UpdateBalance(id, float32(balance), data.ActionType)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, utils.Response(http.StatusNotFound, "not found", err.Error()))
 		ctx.Abort()

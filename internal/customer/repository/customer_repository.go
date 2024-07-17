@@ -36,7 +36,7 @@ func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (*int, error) 
 	defer statement.Close()
 
 	var id int
-	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Created, data.CreatedBy).Scan(id)
+	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Created, data.CreatedBy).Scan(&id)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,9 @@ func rowsToCustomer(rows *sql.Rows) (*model.TCustomers, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if !base.UpdatedBy.Valid {
+		base.UpdatedBy.String = ""
+	}
 	customer.Base = base
 
 	return &customer, nil

@@ -29,7 +29,11 @@ type CustomerRes struct {
 	PhoneNumber string `json:"phoneNumber,omitempty"`
 	Balance     string `json:"balance,omitempty"`
 }
-
+type BalanceUpdateReq struct {
+	Id         string `json:"id"`
+	ActionType string `json:"actionType"`
+	Balance    string `json:"balance"`
+}
 type BalanceUpdateRes struct {
 	BalanceOld CustomerBalance `json:"oldData"`
 	BalanceNew CustomerBalance `json:"newData"`

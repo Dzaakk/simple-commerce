@@ -29,7 +29,7 @@ func (c *CustomerUseCaseImpl) Create(data model.CustomerReq) (*int, error) {
 		Email:       data.Email,
 		PhoneNumber: data.PhoneNumber,
 		Password:    data.Password,
-		Balance:     float32(1000000000),
+		Balance:     float32(10000000),
 		Base: template.Base{
 			Created:   time.Now(),
 			CreatedBy: "system",
@@ -54,7 +54,7 @@ func (c *CustomerUseCaseImpl) FindById(id int) (*model.CustomerRes, error) {
 		Username:    data.Username,
 		Email:       data.Email,
 		PhoneNumber: data.PhoneNumber,
-		Balance:     fmt.Sprintf("%v", data.Balance),
+		Balance:     fmt.Sprintf("%0.f", data.Balance),
 	}
 
 	return customer, nil
