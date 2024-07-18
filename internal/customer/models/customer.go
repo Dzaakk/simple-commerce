@@ -38,3 +38,8 @@ type BalanceUpdateRes struct {
 	BalanceOld CustomerBalance `json:"oldData"`
 	BalanceNew CustomerBalance `json:"newData"`
 }
+
+type LoginReq struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}

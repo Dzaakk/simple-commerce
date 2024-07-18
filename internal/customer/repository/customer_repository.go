@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strconv"
 )
 
 type CustomerRepository interface {
@@ -13,6 +14,7 @@ type CustomerRepository interface {
 	FindById(id int) (*model.TCustomers, error)
 	UpdateBalance(id int, balance float32) (*float32, error)
 	GetBalance(id int) (*model.CustomerBalance, error)
+	FindByEmail(email string) (*model.TCustomers, error)
 }
 
 type CustomerRepositoryImpl struct {
@@ -36,7 +38,7 @@ func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (*int, error) 
 	defer statement.Close()
 
 	var id int
-	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Created, data.CreatedBy).Scan(&id)
+	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Base.Created, data.Base.CreatedBy).Scan(&id)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +63,23 @@ func (repo *CustomerRepositoryImpl) FindById(id int) (*model.TCustomers, error) 
 	return customer, nil
 }
 
+const queryFindCustomerByEmail = `SELECT * FROM public.customer WHERE email = $1`
+
+func (repo *CustomerRepositoryImpl) FindByEmail(email string) (*model.TCustomers, error) {
+	rows, err := repo.DB.Query(queryFindCustomerByEmail, email)
+	if err != nil {
+		return nil, err
+	}
+
+	customer, err := retrieveCustomer(rows)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return customer, nil
+}
+
 const queryUpdateBalance = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
 
 func (repo *CustomerRepositoryImpl) UpdateBalance(id int, balance float32) (*float32, error) {
@@ -71,7 +90,8 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(id int, balance float32) (*flo
 	defer statement.Close()
 
 	var updatedBalance float32
-	err = statement.QueryRow(balance, string(rune(id)), id).Scan(&updatedBalance)
+	idString := strconv.Itoa(id)
+	err = statement.QueryRow(balance, idString, id).Scan(&updatedBalance)
 	if err != nil {
 		return nil, err
 	}

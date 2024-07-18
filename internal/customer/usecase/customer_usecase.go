@@ -13,6 +13,7 @@ type CustomerUseCase interface {
 	FindById(id int) (*model.CustomerRes, error)
 	UpdateBalance(id int, balance float32, actionType string) (*float32, error)
 	GetBalance(id int) (*model.CustomerBalance, error)
+	FindByEmail(email string) (*model.TCustomers, error)
 }
 
 type CustomerUseCaseImpl struct {
@@ -24,11 +25,16 @@ func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
 }
 
 func (c *CustomerUseCaseImpl) Create(data model.CustomerReq) (*int, error) {
+	hashedPassword, err := template.HashPassword(data.Password)
+	if err != nil {
+		return nil, err
+	}
+
 	customer := model.TCustomers{
 		Username:    data.Username,
 		Email:       data.Email,
 		PhoneNumber: data.PhoneNumber,
-		Password:    data.Password,
+		Password:    hashedPassword,
 		Balance:     float32(10000000),
 		Base: template.Base{
 			Created:   time.Now(),
@@ -41,6 +47,14 @@ func (c *CustomerUseCaseImpl) Create(data model.CustomerReq) (*int, error) {
 		return nil, err
 	}
 	return customerId, nil
+}
+func (c *CustomerUseCaseImpl) FindByEmail(email string) (*model.TCustomers, error) {
+	data, err := c.repo.FindByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func (c *CustomerUseCaseImpl) FindById(id int) (*model.CustomerRes, error) {
