@@ -14,7 +14,7 @@ type ProductRepository interface {
 	FindByCategoryId(categoryId int) ([]*model.TProduct, error)
 	FindById(id int) (*model.TProduct, error)
 	GetPriceById(id int) (*float32, error)
-	GetStockById(id int) (*int, error)
+	GetStockById(id int) (int, error)
 }
 
 type ProductRepositoryImpl struct {
@@ -38,7 +38,7 @@ func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.ProductRe
 
 	var id int
 
-	err = statement.QueryRow(data.ProductName, data.Price, data.Stock, data.CategoryId, data.Base.Created, data.Base.CreatedBy).Scan(&id)
+	err = statement.QueryRow(data.ProductName, data.Price, data.Stock, data.CategoryId, data.Base.Created, data.Base.CreatedBy).Scan(id)
 	if err != nil {
 		return nil, err
 	}
@@ -113,14 +113,14 @@ func (repo *ProductRepositoryImpl) GetPriceById(id int) (*float32, error) {
 
 const queryGetStockById = `SELECT stock FROM public.product WHERE id = $1`
 
-func (repo *ProductRepositoryImpl) GetStockById(id int) (*int, error) {
+func (repo *ProductRepositoryImpl) GetStockById(id int) (int, error) {
 	var stock int
-	err := repo.DB.QueryRow(queryGetPriceById, id).Scan(&stock)
+	err := repo.DB.QueryRow(queryGetPriceById, id).Scan(stock)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &stock, nil
+	return stock, nil
 }
 
 func rowsToProduct(rows *sql.Rows) (*model.TProduct, error) {
