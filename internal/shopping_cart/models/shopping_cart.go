@@ -25,7 +25,6 @@ type ShoppingCartReq struct {
 	Id         string `json:"id,omitempty"`
 	CustomerId string `json:"customerId,omitempty"`
 	ProductId  string `json:"productId,omitempty"`
-	Status     string `json:"status,omitempty"`
 	Quantity   string `json:"quantity,omitempty"`
 }
 
