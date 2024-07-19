@@ -7,9 +7,10 @@ import (
 )
 
 type ShoppingCartItemRepository interface {
-	Create(data model.TShoppingCartItem) (*model.ShoppingCartItemRes, error)
+	Create(data model.TShoppingCartItem) (*model.TShoppingCartItem, error)
 	Update(data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error)
 	CountQuantityByProductAndCartId(productId, cartId int) (int, error)
+	CountByCartId(cartId int) (int, error)
 	Delete(productId, cartId int) error
 	RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error)
 }
@@ -22,6 +23,18 @@ func NewShoppingCartItemRepository(db *sql.DB) ShoppingCartItemRepository {
 	return &ShoppingCartItemRepositoryImpl{
 		DB: db,
 	}
+}
+
+const queryCountItemByChartId = `SELECT COUNT(*) FROM public.shopping_cart_item WHERE cart_id=$1`
+
+func (repo *ShoppingCartItemRepositoryImpl) CountByCartId(cartId int) (int, error) {
+	var total int
+	err := repo.DB.QueryRow(queryCountItemByChartId, cartId).Scan(&total)
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
 }
 
 const queryUpdateShoppingCartItem = `UPDATE public.shopping_cart_item SET quantity=$1, updated=now(), updated_by=$2 WHERE cart_id=$3 AND product_id=$4 RETURNING quantity`
@@ -51,7 +64,7 @@ func (repo *ShoppingCartItemRepositoryImpl) Update(data model.TShoppingCartItem,
 const queryDeleteCartItems = "DELETE FROM shopping_cart_item WHERE cart_id=$1 AND product_id=$2"
 
 func (repo *ShoppingCartItemRepositoryImpl) Delete(productId int, cartId int) error {
-	result, err := repo.DB.Exec(queryDeleteCartItems, productId, cartId)
+	result, err := repo.DB.Exec(queryDeleteCartItems, cartId, productId)
 	if err != nil {
 		return err
 	}
@@ -107,7 +120,7 @@ func (repo *ShoppingCartItemRepositoryImpl) CountQuantityByProductAndCartId(prod
 
 const queryCreateShoppingCartItem = `INSERT INTO public.shopping_cart_item (cart_id, product_id, quantity, created, created_by) VALUES ($1, $2, $3, $4, $5)`
 
-func (repo *ShoppingCartItemRepositoryImpl) Create(data model.TShoppingCartItem) (*model.ShoppingCartItemRes, error) {
+func (repo *ShoppingCartItemRepositoryImpl) Create(data model.TShoppingCartItem) (*model.TShoppingCartItem, error) {
 	statement, err := repo.DB.Prepare(queryCreateShoppingCartItem)
 	if err != nil {
 		return nil, err
@@ -119,38 +132,5 @@ func (repo *ShoppingCartItemRepositoryImpl) Create(data model.TShoppingCartItem)
 		return nil, err
 	}
 
-	newCartItem := &model.ShoppingCartItemRes{
-		CartId:    fmt.Sprintf("%d", data.CartId),
-		ProductId: fmt.Sprintf("%d", data.ProductId),
-		Quantity:  fmt.Sprintf("%d", data.Quantity),
-	}
-
-	return newCartItem, nil
+	return &data, nil
 }
-
-// const queryUpdateQuantityShoppingCart = `UPDATE public.shopping_cart SET quantity=$1, updated_by=$2, updated=now() WHERE id=$3 AND customer_id=$4 RETURNING quantity`
-
-// func (repo *ShoppingCartRepositoryImpl) FindByProductIdAndCartId(productId int, cartId int) (*model.ShoppingCartRes, error) {
-// 	var shoppingCart *model.ShoppingCartRes
-// 	err := repo.DB.QueryRow(queryFindByCartId, cartId).Scan(&shoppingCart.Id, &shoppingCart.CustomerId, *&shoppingCart.Status)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return shoppingCart, nil
-// }
-// func (repo *ShoppingCartRepositoryImpl) UpdateQuantity(data model.TShopingCart) (*model.ShopingCartRes, error) {
-// 	statement, err := repo.DB.Prepare(queryUpdateQuantityShoppingCart)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer statement.Close()
-
-// 	var quantity int
-// 	err = statement.QueryRow(data.qua).Scan(&quantity)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &updatedBalance, nil
-// }

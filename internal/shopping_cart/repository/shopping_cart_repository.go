@@ -8,11 +8,11 @@ import (
 )
 
 type ShoppingCartRepository interface {
-	Create(data model.TShoppingCart) (*model.ShoppingCartRes, error)
-	FindByCustomerIdAndStatus(customerId int, status string) (*model.ShoppingCartRes, error)
+	Create(data model.TShoppingCart) (*model.TShoppingCart, error)
+	FindByCustomerIdAndStatus(customerId int, status string) (*model.TShoppingCart, error)
 	FindById(id int) (*model.ShoppingCartRes, error)
 	CheckStatus(id, customerId int) (*string, error)
-	UpdateStatusById(id int, status string) (*model.ShoppingCartRes, error)
+	UpdateStatusById(id int, status, customerid string) (*model.TShoppingCart, error)
 }
 
 type ShoppingCartRepositoryImpl struct {
@@ -27,7 +27,7 @@ func NewShoppingCartRepository(db *sql.DB) ShoppingCartRepository {
 
 const queryCreateShoppingCart = `INSERT INTO public.shopping_cart (customer_id, status, created, created_by) VALUES ($1, $2, $3, $4) RETURNING id`
 
-func (repo *ShoppingCartRepositoryImpl) Create(data model.TShoppingCart) (*model.ShoppingCartRes, error) {
+func (repo *ShoppingCartRepositoryImpl) Create(data model.TShoppingCart) (*model.TShoppingCart, error) {
 	statement, err := repo.DB.Prepare(queryCreateShoppingCart)
 	if err != nil {
 		return nil, err
@@ -41,13 +41,13 @@ func (repo *ShoppingCartRepositoryImpl) Create(data model.TShoppingCart) (*model
 		return nil, err
 	}
 
-	newShoppingCart := &model.ShoppingCartRes{
-		Id:         fmt.Sprintf("%d", id),
-		CustomerId: fmt.Sprintf("%d", data.CustomerId),
+	newData := &model.TShoppingCart{
+		Id:         id,
+		CustomerId: data.CustomerId,
 		Status:     data.Status,
 	}
 
-	return newShoppingCart, nil
+	return newData, nil
 }
 
 const queryFindById = `SELECT id, customer_id, status FROM public.shopping_cart WHERE id=$1`
@@ -64,7 +64,7 @@ func (repo *ShoppingCartRepositoryImpl) FindById(id int) (*model.ShoppingCartRes
 
 const queryFindByCartId = `SELECT id, customer_id FROM public.shopping_cart WHERE customer_id=$1 AND status=$2`
 
-func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(customerId int, status string) (*model.ShoppingCartRes, error) {
+func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(customerId int, status string) (*model.TShoppingCart, error) {
 	var data model.TShoppingCart
 	err := repo.DB.QueryRow(queryFindByCartId, customerId, status).Scan(&data.Id, &data.CustomerId)
 	if err != nil {
@@ -73,18 +73,14 @@ func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(customerId int
 		}
 		return nil, err
 	}
-
-	shoppingCart := &model.ShoppingCartRes{
-		Id:         fmt.Sprintf("%d", data.Id),
-		CustomerId: fmt.Sprintf("%d", data.CustomerId),
-		Status:     status,
-	}
-	return shoppingCart, nil
+	data.Status = status
+	fmt.Println("DATA = ", data)
+	return &data, nil
 }
 
-const queryUpdateStatusById = `UPDATE public.shopping_cart SET status=$1 updated_by=$2, updated=now() WHERE id=$3 RETURNING status, customer_id`
+const queryUpdateStatusById = `UPDATE public.shopping_cart SET status=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING status`
 
-func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(id int, status string) (*model.ShoppingCartRes, error) {
+func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(id int, status, customerId string) (*model.TShoppingCart, error) {
 	statement, err := repo.DB.Prepare(queryUpdateStatusById)
 	if err != nil {
 		return nil, err
@@ -92,16 +88,15 @@ func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(id int, status string) 
 	defer statement.Close()
 
 	var newStatus string
-	var customerId int
-	idString := strconv.Itoa(id)
-	err = statement.QueryRow(status, idString, id).Scan(&newStatus, &customerId)
+	err = statement.QueryRow(status, customerId, id).Scan(&newStatus)
 	if err != nil {
 		return nil, err
 	}
 
-	shoppingCart := &model.ShoppingCartRes{
-		Id:         fmt.Sprintf("%d", id),
-		CustomerId: fmt.Sprintf("%d", customerId),
+	strCustomerId, _ := strconv.Atoi(customerId)
+	shoppingCart := &model.TShoppingCart{
+		Id:         id,
+		CustomerId: strCustomerId,
 		Status:     newStatus,
 	}
 
