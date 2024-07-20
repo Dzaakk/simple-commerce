@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    image: dzaakk/latest
+    container_name: my-app
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8080:8080" 
+
+  db:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: youruser
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: yourdatabase
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres-data:
