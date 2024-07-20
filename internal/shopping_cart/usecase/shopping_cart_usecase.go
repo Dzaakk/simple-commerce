@@ -108,6 +108,7 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 			ProductName: dataProduct.ProductName,
 			Price:       fmt.Sprintf("%.0f", dataProduct.Price),
 			Quantity:    fmt.Sprintf("%d", quantity),
+			NewCartId:   fmt.Sprintf("%d", cart.Id),
 		}
 
 		return &item, nil

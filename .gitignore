@@ -1,5 +1,6 @@
 .env
 postgres.yaml
+redis.yaml
 db-data
 *.sum
 *.air.toml
