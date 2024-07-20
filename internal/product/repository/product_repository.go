@@ -74,7 +74,7 @@ func (repo *ProductRepositoryImpl) FindByCategoryId(categoryId int) ([]*model.TP
 		}
 		listProduct = append(listProduct, product)
 	}
-
+	fmt.Println("LEN = ", len(listProduct))
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}

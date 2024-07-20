@@ -1,15 +1,17 @@
 package psql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-func DB() *sql.DB {
+func Postgres() *sql.DB {
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
@@ -25,15 +27,40 @@ func DB() *sql.DB {
 
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		panic("Failed to connect to database")
+		panic("Failed to connect to Postgres")
 	}
 
 	err = db.Ping()
 	if err != nil {
-		panic("Error pinging database")
+		panic("Error pinging Postgres")
 	}
 
-	fmt.Println("Success connect to database")
+	fmt.Println("Success connect to Postgres")
 
 	return db
+}
+
+func Redis() *redis.Client {
+	err := godotenv.Load()
+	if err != nil {
+		panic("Error loading .env file")
+	}
+
+	redisAddr := os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT")
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	fmt.Printf("CONNECTION LINK = %v\n", redisAddr)
+	fmt.Printf("PASS = %v\n", redisPassword)
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: "",
+		DB:       0,
+	})
+
+	_, err = client.Ping(context.Background()).Result()
+	if err != nil {
+		panic("Failed to connect to Redis")
+	}
+
+	fmt.Println("Success connect to Redis")
+	return client
 }

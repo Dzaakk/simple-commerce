@@ -1,7 +1,7 @@
 package main
 
 import (
-	psql "Dzaakk/synapsis/package/db"
+	db "Dzaakk/synapsis/package/db"
 	"fmt"
 
 	customer "Dzaakk/synapsis/internal/customer/injector"
@@ -13,13 +13,14 @@ import (
 )
 
 func main() {
-	db := psql.DB()
+	postgres := db.Postgres()
+	redis := db.Redis()
 	r := gin.Default()
 	fmt.Println("START")
 
-	customer.InitializedService(db).Route(&r.RouterGroup)
-	product.InitializedService(db).Route(&r.RouterGroup)
-	shoppingCart.InitializedService(db).Route(&r.RouterGroup)
-	transaction.InitializedService(db).Route(&r.RouterGroup)
+	customer.InitializedService(postgres).Route(&r.RouterGroup, redis)
+	product.InitializedService(postgres).Route(&r.RouterGroup, redis)
+	shoppingCart.InitializedService(postgres).Route(&r.RouterGroup, redis)
+	transaction.InitializedService(postgres).Route(&r.RouterGroup, redis)
 	r.Run()
 }

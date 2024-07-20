@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type ShoppingCarthandler struct {
@@ -21,24 +22,24 @@ func NewShoppingCartHandler(usecase usecase.ShoppingCartUseCase) *ShoppingCartha
 		Usecase: usecase,
 	}
 }
-func (handler *ShoppingCarthandler) Route(r *gin.RouterGroup) {
+func (handler *ShoppingCarthandler) Route(r *gin.RouterGroup, redis *redis.Client) {
 	ShoppingHandler := r.Group("api/v1")
 
 	ShoppingHandler.Use()
 	{
-		ShoppingHandler.POST("/shopping-cart", auth.JWTMiddleware(), func(ctx *gin.Context) {
+		ShoppingHandler.POST("/shopping-cart", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
 			if err := handler.AddProductToShoppingCart(ctx); err != nil {
 				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "internal server error", err.Error()))
 				return
 			}
 		})
-		ShoppingHandler.GET("/shopping-cart", auth.JWTMiddleware(), func(ctx *gin.Context) {
+		ShoppingHandler.GET("/shopping-cart", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
 			if err := handler.GetListShoppingCart(ctx); err != nil {
 				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "failed to Get product", err.Error()))
 				return
 			}
 		})
-		ShoppingHandler.POST("/shopping-cart/delete", auth.JWTMiddleware(), func(ctx *gin.Context) {
+		ShoppingHandler.POST("/shopping-cart/delete", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
 			if err := handler.DeleteShoppingList(ctx); err != nil {
 				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "failed to Get product", err.Error()))
 				return

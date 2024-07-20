@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type ProductHandler struct {
@@ -20,7 +21,7 @@ func NewProductHandler(usecase usecase.ProductUseCase) *ProductHandler {
 	}
 }
 
-func (handler *ProductHandler) Route(r *gin.RouterGroup) {
+func (handler *ProductHandler) Route(r *gin.RouterGroup, redis *redis.Client) {
 	productHandler := r.Group("api/v1")
 
 	productHandler.Use()

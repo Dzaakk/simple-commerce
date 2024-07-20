@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type TransactionHandler struct {
@@ -21,12 +22,12 @@ func NewTransactionHandler(usecase usecase.TransactionUseCase) *TransactionHandl
 	}
 }
 
-func (handler *TransactionHandler) Route(r *gin.RouterGroup) {
+func (handler *TransactionHandler) Route(r *gin.RouterGroup, redis *redis.Client) {
 	transactionHandler := r.Group("api/v1")
 
 	transactionHandler.Use()
 	{
-		transactionHandler.POST("/transaction", auth.JWTMiddleware(), func(ctx *gin.Context) {
+		transactionHandler.POST("/transaction", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
 			if err := handler.Checkout(ctx); err != nil {
 				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "internal server error", err.Error()))
 				return

@@ -4,12 +4,14 @@ import (
 	model "Dzaakk/synapsis/internal/customer/models"
 	usecase "Dzaakk/synapsis/internal/customer/usecase"
 	auth "Dzaakk/synapsis/package/auth"
+	db "Dzaakk/synapsis/package/db"
 	template "Dzaakk/synapsis/package/template"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type CustomerHandler struct {
@@ -22,13 +24,13 @@ func NewCustomerHandler(usecase usecase.CustomerUseCase) *CustomerHandler {
 	}
 }
 
-func (handler *CustomerHandler) Route(r *gin.RouterGroup) {
+func (handler *CustomerHandler) Route(r *gin.RouterGroup, redis *redis.Client) {
 	customerHandler := r.Group("/api/v1")
 
 	customerHandler.Use()
 	{
 		customerHandler.POST("/login", func(ctx *gin.Context) {
-			if err := handler.Login(ctx); err != nil {
+			if err := handler.Login(ctx, redis); err != nil {
 				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "login failed", err.Error()))
 				return
 			}
@@ -39,13 +41,13 @@ func (handler *CustomerHandler) Route(r *gin.RouterGroup) {
 				return
 			}
 		})
-		customerHandler.GET("/customers", auth.JWTMiddleware(), func(ctx *gin.Context) {
+		customerHandler.GET("/customers", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
 			if err := handler.FindCustomerById(ctx); err != nil {
 				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "failed to Get customer", err.Error()))
 				return
 			}
 		})
-		customerHandler.POST("/balance", auth.JWTMiddleware(), func(ctx *gin.Context) {
+		customerHandler.POST("/balance", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
 			if err := handler.UpdateBalance(ctx); err != nil {
 				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "failed to update balance", err.Error()))
 				return
@@ -54,7 +56,7 @@ func (handler *CustomerHandler) Route(r *gin.RouterGroup) {
 	}
 }
 
-func (handler *CustomerHandler) Login(ctx *gin.Context) error {
+func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) error {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
@@ -72,12 +74,12 @@ func (handler *CustomerHandler) Login(ctx *gin.Context) error {
 		return nil
 	}
 
-	token, err := auth.TokenJWTGenerator(*data)
+	_, err = auth.TokenJWTGenerator(db.Redis(), *data)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusInternalServerError, "Internal Server Error", "Error generate JWT token"))
 		return nil
 	}
-	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Login Success", token))
+	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Login Success", "You have 30 mins token Session!"))
 	return nil
 }
 
