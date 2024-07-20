@@ -12,6 +12,7 @@ type ShoppingCartItemRepository interface {
 	CountQuantityByProductAndCartId(productId, cartId int) (int, error)
 	CountByCartId(cartId int) (int, error)
 	Delete(productId, cartId int) error
+	DeleteAll(cartId int) error
 	RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error)
 }
 
@@ -23,6 +24,24 @@ func NewShoppingCartItemRepository(db *sql.DB) ShoppingCartItemRepository {
 	return &ShoppingCartItemRepositoryImpl{
 		DB: db,
 	}
+}
+
+const queryDeleteAllCartItems = "DELETE FROM shopping_cart_item WHERE cart_id=$1"
+
+func (repo *ShoppingCartItemRepositoryImpl) DeleteAll(cartId int) error {
+	fmt.Println("CART ID = ", cartId)
+	result, err := repo.DB.Exec(queryDeleteAllCartItems, cartId)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Number of rows deleted: %d\n", rowsAffected)
+	return nil
 }
 
 const queryCountItemByChartId = `SELECT COUNT(*) FROM public.shopping_cart_item WHERE cart_id=$1`
@@ -78,7 +97,7 @@ func (repo *ShoppingCartItemRepositoryImpl) Delete(productId int, cartId int) er
 	return nil
 }
 
-const queryRetrieveCartItems = "SELECT p.product_name, p.price, sci.quantity FROM public.shopping_cart_item sci JOIN public.product p ON sci.product_id = p.id WHERE sci.cart_id=$1 ORDER BY p.name ASC"
+const queryRetrieveCartItems = "SELECT p.product_name, p.price, sci.quantity FROM public.shopping_cart_item sci JOIN public.product p ON sci.product_id = p.id WHERE sci.cart_id=$1 ORDER BY p.product_name ASC"
 
 func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error) {
 	rows, err := repo.DB.Query(queryRetrieveCartItems, cartId)
