@@ -17,7 +17,7 @@ type TShoppingCartItem struct {
 type TCartItemDetail struct {
 	ProductName string  `json:"product_name"`
 	Price       float32 `json:"price"`
-	Quantity    int     `json:"quantity,omitempty"`
+	Quantity    int     `json:"quantity"`
 }
 
 // request
@@ -50,6 +50,7 @@ type ShoppingCartItem struct {
 	ProductName string `json:"productName"`
 	Price       string `json:"price"`
 	Quantity    string `json:"quantity"`
+	NewCartId   string `json:"cartId,omitempty"`
 }
 
 type ListCartItemRes struct {
