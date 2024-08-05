@@ -1,4 +1,4 @@
-# Welcome to my submission!
+# Welcome to my project!
 
 ### API Spec
 
@@ -17,30 +17,3 @@ Please visit my API Documentation here:
 > air init  
 > air  
 ---
-
-### MVP (Minimum Viable Product)
-
-- [x] Login and register customers
-- [x] Customer can view product list by product category
-- [x] Customer can add product to shopping cart
-- [x] Customers can see a list of products that have been added to the shopping cart
-- [x] Customer can delete product list in shopping cart
-- [x] Customers can checkout and make payment transactions
-
----
-
-### Task List
-
-1. System Design
-   - [x] README Documentation
-   - [x] RESTful API Design
-   - [x] Entity Relationship Diagram
-2. Backend Development
-   - [x] RESTful API
-   - [x] Database Implementation
-   - [x] Commit message
-   - [x] Using cache like redis
-3. Deployment
-   - [x] Dockerfile and docker-compose file
-   - [x] Upload docker image to docker registry (docker hub)
-   - [ ] Deploy app to heroku, AWS or GCP
