@@ -1,8 +1,8 @@
 package product
 
 import (
-	model "Dzaakk/synapsis/internal/product/models"
-	repo "Dzaakk/synapsis/internal/product/repository"
+	model "Dzaakk/simple-commerce/internal/product/models"
+	repo "Dzaakk/simple-commerce/internal/product/repository"
 	"fmt"
 )
 

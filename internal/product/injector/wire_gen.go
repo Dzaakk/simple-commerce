@@ -7,9 +7,9 @@
 package product
 
 import (
-	"Dzaakk/synapsis/internal/product/handler"
-	"Dzaakk/synapsis/internal/product/repository"
-	product2 "Dzaakk/synapsis/internal/product/usecase"
+	"Dzaakk/simple-commerce/internal/product/handler"
+	"Dzaakk/simple-commerce/internal/product/repository"
+	product2 "Dzaakk/simple-commerce/internal/product/usecase"
 	"database/sql"
 )
 

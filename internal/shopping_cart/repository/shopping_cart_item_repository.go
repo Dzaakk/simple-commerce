@@ -1,7 +1,7 @@
 package shopping_cart
 
 import (
-	model "Dzaakk/synapsis/internal/shopping_cart/models"
+	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
 	"database/sql"
 	"fmt"
 )

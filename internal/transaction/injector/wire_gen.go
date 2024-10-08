@@ -7,11 +7,11 @@
 package transaction
 
 import (
-	"Dzaakk/synapsis/internal/customer/repository"
-	"Dzaakk/synapsis/internal/shopping_cart/repository"
-	"Dzaakk/synapsis/internal/transaction/handler"
-	transaction2 "Dzaakk/synapsis/internal/transaction/repository"
-	transaction3 "Dzaakk/synapsis/internal/transaction/usecase"
+	"Dzaakk/simple-commerce/internal/customer/repository"
+	"Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	"Dzaakk/simple-commerce/internal/transaction/handler"
+	transaction2 "Dzaakk/simple-commerce/internal/transaction/repository"
+	transaction3 "Dzaakk/simple-commerce/internal/transaction/usecase"
 	"database/sql"
 )
 

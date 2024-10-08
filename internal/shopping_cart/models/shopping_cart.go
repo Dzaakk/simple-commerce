@@ -1,6 +1,6 @@
 package shopping_cart
 
-import "Dzaakk/synapsis/package/template"
+import "Dzaakk/simple-commerce/package/template"
 
 type TShoppingCart struct {
 	Id         int    `json:"id"`

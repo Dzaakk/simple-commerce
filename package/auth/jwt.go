@@ -1,7 +1,7 @@
 package auth
 
 import (
-	model "Dzaakk/synapsis/internal/customer/models"
+	model "Dzaakk/simple-commerce/internal/customer/models"
 	"context"
 	"fmt"
 	"net/http"

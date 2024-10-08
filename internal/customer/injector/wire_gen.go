@@ -7,9 +7,9 @@
 package customer
 
 import (
-	"Dzaakk/synapsis/internal/customer/handler"
-	customer2 "Dzaakk/synapsis/internal/customer/repository"
-	customer3 "Dzaakk/synapsis/internal/customer/usecase"
+	"Dzaakk/simple-commerce/internal/customer/handler"
+	customer2 "Dzaakk/simple-commerce/internal/customer/repository"
+	customer3 "Dzaakk/simple-commerce/internal/customer/usecase"
 	"database/sql"
 )
 

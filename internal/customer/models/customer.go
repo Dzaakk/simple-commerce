@@ -1,6 +1,6 @@
 package customer
 
-import "Dzaakk/synapsis/package/template"
+import "Dzaakk/simple-commerce/package/template"
 
 type TCustomers struct {
 	Id          int     `json:"id"`

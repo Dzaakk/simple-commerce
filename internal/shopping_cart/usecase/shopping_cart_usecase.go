@@ -1,10 +1,10 @@
 package shopping_cart
 
 import (
-	repoProduct "Dzaakk/synapsis/internal/product/repository"
-	model "Dzaakk/synapsis/internal/shopping_cart/models"
-	repo "Dzaakk/synapsis/internal/shopping_cart/repository"
-	"Dzaakk/synapsis/package/template"
+	repoProduct "Dzaakk/simple-commerce/internal/product/repository"
+	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	repo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
 	"fmt"

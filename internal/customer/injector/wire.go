@@ -4,9 +4,9 @@
 package customer
 
 import (
-	handler "Dzaakk/synapsis/internal/customer/handler"
-	repository "Dzaakk/synapsis/internal/customer/repository"
-	usecase "Dzaakk/synapsis/internal/customer/usecase"
+	handler "Dzaakk/simple-commerce/internal/customer/handler"
+	repository "Dzaakk/simple-commerce/internal/customer/repository"
+	usecase "Dzaakk/simple-commerce/internal/customer/usecase"
 	"database/sql"
 
 	"github.com/google/wire"

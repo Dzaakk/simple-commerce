@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	model "Dzaakk/synapsis/internal/transaction/models"
+	model "Dzaakk/simple-commerce/internal/transaction/models"
 	"database/sql"
 )
 

@@ -1,8 +1,8 @@
 package customer
 
 import (
-	model "Dzaakk/synapsis/internal/customer/models"
-	"Dzaakk/synapsis/package/template"
+	model "Dzaakk/simple-commerce/internal/customer/models"
+	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
 	"log"

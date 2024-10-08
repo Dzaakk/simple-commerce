@@ -1,8 +1,8 @@
 package handler
 
 import (
-	usecase "Dzaakk/synapsis/internal/product/usecase"
-	template "Dzaakk/synapsis/package/template"
+	usecase "Dzaakk/simple-commerce/internal/product/usecase"
+	template "Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"
 	"strconv"

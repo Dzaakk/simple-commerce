@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: dzaakk/synapsis:1.0.2
+    image: dzaakk/simple-commerce:1.0.2
     container_name: my-app
     depends_on:
       - db

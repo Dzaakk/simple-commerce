@@ -4,9 +4,9 @@
 package product
 
 import (
-	handler "Dzaakk/synapsis/internal/product/handler"
-	repository "Dzaakk/synapsis/internal/product/repository"
-	usecase "Dzaakk/synapsis/internal/product/usecase"
+	handler "Dzaakk/simple-commerce/internal/product/handler"
+	repository "Dzaakk/simple-commerce/internal/product/repository"
+	usecase "Dzaakk/simple-commerce/internal/product/usecase"
 	"database/sql"
 
 	"github.com/google/wire"

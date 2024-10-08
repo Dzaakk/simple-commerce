@@ -4,11 +4,11 @@
 package transaction
 
 import (
-	customer "Dzaakk/synapsis/internal/customer/repository"
-	cart "Dzaakk/synapsis/internal/shopping_cart/repository"
-	handler "Dzaakk/synapsis/internal/transaction/handler"
-	repository "Dzaakk/synapsis/internal/transaction/repository"
-	usecase "Dzaakk/synapsis/internal/transaction/usecase"
+	customer "Dzaakk/simple-commerce/internal/customer/repository"
+	cart "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	handler "Dzaakk/simple-commerce/internal/transaction/handler"
+	repository "Dzaakk/simple-commerce/internal/transaction/repository"
+	usecase "Dzaakk/simple-commerce/internal/transaction/usecase"
 	"database/sql"
 
 	"github.com/google/wire"

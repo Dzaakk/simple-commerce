@@ -12,7 +12,7 @@ Please visit my API Documentation here:
 
 ### Run Local
 
-> git clone https://github.com/Dzaakk/synapsis.git    
+> git clone https://github.com/Dzaakk/simple-commerce.git    
 > go install github.com/air-verse/air@latest   
 > air init  
 > air  

@@ -1,8 +1,8 @@
 package product
 
 import (
-	model "Dzaakk/synapsis/internal/product/models"
-	"Dzaakk/synapsis/package/template"
+	model "Dzaakk/simple-commerce/internal/product/models"
+	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
 	"fmt"

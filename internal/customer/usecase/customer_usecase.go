@@ -1,9 +1,9 @@
 package customer
 
 import (
-	model "Dzaakk/synapsis/internal/customer/models"
-	repo "Dzaakk/synapsis/internal/customer/repository"
-	"Dzaakk/synapsis/package/template"
+	model "Dzaakk/simple-commerce/internal/customer/models"
+	repo "Dzaakk/simple-commerce/internal/customer/repository"
+	"Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"time"
 )

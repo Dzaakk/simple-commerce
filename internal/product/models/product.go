@@ -1,6 +1,6 @@
 package product
 
-import "Dzaakk/synapsis/package/template"
+import "Dzaakk/simple-commerce/package/template"
 
 type TProduct struct {
 	Id          int     `json:"int"`

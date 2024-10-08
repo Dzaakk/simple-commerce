@@ -1,12 +1,12 @@
 package transaction
 
 import (
-	customer "Dzaakk/synapsis/internal/customer/repository"
-	modelItem "Dzaakk/synapsis/internal/shopping_cart/models"
-	shoppingCart "Dzaakk/synapsis/internal/shopping_cart/repository"
-	model "Dzaakk/synapsis/internal/transaction/models"
-	repo "Dzaakk/synapsis/internal/transaction/repository"
-	"Dzaakk/synapsis/package/template"
+	customer "Dzaakk/simple-commerce/internal/customer/repository"
+	modelItem "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	model "Dzaakk/simple-commerce/internal/transaction/models"
+	repo "Dzaakk/simple-commerce/internal/transaction/repository"
+	"Dzaakk/simple-commerce/package/template"
 	"errors"
 	"fmt"
 	"strconv"

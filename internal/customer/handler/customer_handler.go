@@ -1,11 +1,11 @@
 package customer
 
 import (
-	model "Dzaakk/synapsis/internal/customer/models"
-	usecase "Dzaakk/synapsis/internal/customer/usecase"
-	auth "Dzaakk/synapsis/package/auth"
-	db "Dzaakk/synapsis/package/db"
-	template "Dzaakk/synapsis/package/template"
+	model "Dzaakk/simple-commerce/internal/customer/models"
+	usecase "Dzaakk/simple-commerce/internal/customer/usecase"
+	auth "Dzaakk/simple-commerce/package/auth"
+	db "Dzaakk/simple-commerce/package/db"
+	template "Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"
 	"strconv"

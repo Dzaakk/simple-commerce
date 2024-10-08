@@ -1,10 +1,10 @@
 package transaction
 
 import (
-	model "Dzaakk/synapsis/internal/transaction/models"
-	usecase "Dzaakk/synapsis/internal/transaction/usecase"
-	auth "Dzaakk/synapsis/package/auth"
-	template "Dzaakk/synapsis/package/template"
+	model "Dzaakk/simple-commerce/internal/transaction/models"
+	usecase "Dzaakk/simple-commerce/internal/transaction/usecase"
+	auth "Dzaakk/simple-commerce/package/auth"
+	template "Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"
 

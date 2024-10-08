@@ -1,13 +1,13 @@
 package main
 
 import (
-	db "Dzaakk/synapsis/package/db"
+	db "Dzaakk/simple-commerce/package/db"
 	"fmt"
 
-	customer "Dzaakk/synapsis/internal/customer/injector"
-	product "Dzaakk/synapsis/internal/product/injector"
-	shoppingCart "Dzaakk/synapsis/internal/shopping_cart/injector"
-	transaction "Dzaakk/synapsis/internal/transaction/injector"
+	customer "Dzaakk/simple-commerce/internal/customer/injector"
+	product "Dzaakk/simple-commerce/internal/product/injector"
+	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/injector"
+	transaction "Dzaakk/simple-commerce/internal/transaction/injector"
 
 	"github.com/gin-gonic/gin"
 )

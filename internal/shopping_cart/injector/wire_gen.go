@@ -7,10 +7,10 @@
 package shopping_cart
 
 import (
-	"Dzaakk/synapsis/internal/product/repository"
-	"Dzaakk/synapsis/internal/shopping_cart/handler"
-	shopping_cart2 "Dzaakk/synapsis/internal/shopping_cart/repository"
-	shopping_cart3 "Dzaakk/synapsis/internal/shopping_cart/usecase"
+	"Dzaakk/simple-commerce/internal/product/repository"
+	"Dzaakk/simple-commerce/internal/shopping_cart/handler"
+	shopping_cart2 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	shopping_cart3 "Dzaakk/simple-commerce/internal/shopping_cart/usecase"
 	"database/sql"
 )
 

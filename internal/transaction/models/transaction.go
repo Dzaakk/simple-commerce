@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"Dzaakk/synapsis/package/template"
+	"Dzaakk/simple-commerce/package/template"
 	"time"
 )
 

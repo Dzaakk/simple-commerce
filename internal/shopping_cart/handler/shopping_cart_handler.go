@@ -1,10 +1,10 @@
 package shopping_cart
 
 import (
-	model "Dzaakk/synapsis/internal/shopping_cart/models"
-	usecase "Dzaakk/synapsis/internal/shopping_cart/usecase"
-	auth "Dzaakk/synapsis/package/auth"
-	template "Dzaakk/synapsis/package/template"
+	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	usecase "Dzaakk/simple-commerce/internal/shopping_cart/usecase"
+	auth "Dzaakk/simple-commerce/package/auth"
+	template "Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"
 	"strconv"
