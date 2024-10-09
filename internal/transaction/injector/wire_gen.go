@@ -10,19 +10,21 @@ import (
 	"Dzaakk/simple-commerce/internal/customer/repository"
 	"Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/internal/transaction/handler"
-	transaction2 "Dzaakk/simple-commerce/internal/transaction/repository"
-	transaction3 "Dzaakk/simple-commerce/internal/transaction/usecase"
+	"Dzaakk/simple-commerce/internal/transaction/repository"
+	"Dzaakk/simple-commerce/internal/transaction/routes"
+	transaction2 "Dzaakk/simple-commerce/internal/transaction/usecase"
 	"database/sql"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *transaction.TransactionHandler {
-	transactionRepository := transaction2.NewTransactionRepository(db)
+func InitializedService(db *sql.DB) *routes.TransactionRoutes {
+	transactionRepository := transaction.NewTransactionRepository(db)
 	shoppingCartRepository := shopping_cart.NewShoppingCartRepository(db)
 	shoppingCartItemRepository := shopping_cart.NewShoppingCartItemRepository(db)
 	customerRepository := customer.NewCustomerRepository(db)
-	transactionUseCase := transaction3.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository)
-	transactionHandler := transaction.NewTransactionHandler(transactionUseCase)
-	return transactionHandler
+	transactionUseCase := transaction2.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository)
+	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
+	transactionRoutes := routes.NewTransactionRoutes(transactionHandler)
+	return transactionRoutes
 }

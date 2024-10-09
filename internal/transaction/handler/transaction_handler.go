@@ -1,15 +1,13 @@
-package transaction
+package handler
 
 import (
 	model "Dzaakk/simple-commerce/internal/transaction/models"
 	usecase "Dzaakk/simple-commerce/internal/transaction/usecase"
-	auth "Dzaakk/simple-commerce/package/auth"
 	template "Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type TransactionHandler struct {
@@ -22,31 +20,17 @@ func NewTransactionHandler(usecase usecase.TransactionUseCase) *TransactionHandl
 	}
 }
 
-func (handler *TransactionHandler) Route(r *gin.RouterGroup, redis *redis.Client) {
-	transactionHandler := r.Group("api/v1")
-
-	transactionHandler.Use()
-	{
-		transactionHandler.POST("/transaction", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
-			if err := handler.Checkout(ctx); err != nil {
-				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "internal server error", err.Error()))
-				return
-			}
-		})
-	}
-}
-
-func (handler *TransactionHandler) Checkout(ctx *gin.Context) error {
+func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 	var data model.TransactionReq
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
-		return nil
+		return
 	}
-	fmt.Printf("input = %v", data)
 
+	fmt.Printf("input = %v", data)
 	template.AuthorizedChecker(ctx, data.CustomerId)
 	if ctx.IsAborted() {
-		return nil
+		return
 	}
 
 	receipt, err := handler.Usecase.CreateTransaction(data)
@@ -60,10 +44,9 @@ func (handler *TransactionHandler) Checkout(ctx *gin.Context) error {
 			statusCode = http.StatusInternalServerError
 			message = "Internal Server Error"
 		}
-
 		ctx.JSON(statusCode, template.Response(statusCode, message, err.Error()))
-		return nil
+		return
 	}
+
 	ctx.JSON(http.StatusCreated, template.Response(http.StatusOK, "Success", receipt))
-	return nil
 }
