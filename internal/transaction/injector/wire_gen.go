@@ -10,19 +10,19 @@ import (
 	"Dzaakk/simple-commerce/internal/customer/repository"
 	"Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/internal/transaction/handler"
-	transaction2 "Dzaakk/simple-commerce/internal/transaction/repository"
-	transaction3 "Dzaakk/simple-commerce/internal/transaction/usecase"
+	"Dzaakk/simple-commerce/internal/transaction/repository"
+	transaction2 "Dzaakk/simple-commerce/internal/transaction/usecase"
 	"database/sql"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *transaction.TransactionHandler {
-	transactionRepository := transaction2.NewTransactionRepository(db)
+func InitializedService(db *sql.DB) *handler.TransactionHandler {
+	transactionRepository := transaction.NewTransactionRepository(db)
 	shoppingCartRepository := shopping_cart.NewShoppingCartRepository(db)
 	shoppingCartItemRepository := shopping_cart.NewShoppingCartItemRepository(db)
 	customerRepository := customer.NewCustomerRepository(db)
-	transactionUseCase := transaction3.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository)
-	transactionHandler := transaction.NewTransactionHandler(transactionUseCase)
+	transactionUseCase := transaction2.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository)
+	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
 	return transactionHandler
 }
