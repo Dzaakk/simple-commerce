@@ -15,16 +15,16 @@ import (
 	"github.com/google/wire"
 )
 
-func InitializedService(db *sql.DB) *handler.TransactionHandler {
+func InitializedService(db *sql.DB) *routes.TransactionRoutes {
 	wire.Build(
 		repository.NewTransactionRepository,
 		usecase.NewTransactionUseCase,
 		handler.NewTransactionHandler,
+		routes.NewTransactionRoutes,
 		cart.NewShoppingCartRepository,
 		cart.NewShoppingCartItemRepository,
 		customer.NewCustomerRepository,
-		routes.NewTransactionRoutes,
 	)
 
-	return &handler.TransactionHandler{}
+	return &routes.TransactionRoutes{}
 }

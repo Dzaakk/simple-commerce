@@ -1,4 +1,4 @@
-package transaction
+package routes
 
 import (
 	handler "Dzaakk/simple-commerce/internal/transaction/handler"
@@ -8,13 +8,21 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func Route(r *gin.RouterGroup, redis *redis.Client) {
+type TransactionRoutes struct {
+	Handler *handler.TransactionHandler
+}
+
+func NewTransactionRoutes(handler *handler.TransactionHandler) *TransactionRoutes {
+	return &TransactionRoutes{
+		Handler: handler,
+	}
+}
+
+func (tr *TransactionRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
 	transactionHandler := r.Group("api/v1")
 
 	transactionHandler.Use()
 	{
-		transactionHandler.POST("/transaction", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
-			handler.Checkout(ctx)
-		})
+		transactionHandler.POST("/transaction", auth.JWTMiddleware(redis), tr.Handler.Checkout)
 	}
 }

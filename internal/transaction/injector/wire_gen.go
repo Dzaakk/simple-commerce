@@ -11,18 +11,20 @@ import (
 	"Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/internal/transaction/handler"
 	"Dzaakk/simple-commerce/internal/transaction/repository"
+	"Dzaakk/simple-commerce/internal/transaction/routes"
 	transaction2 "Dzaakk/simple-commerce/internal/transaction/usecase"
 	"database/sql"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *handler.TransactionHandler {
+func InitializedService(db *sql.DB) *routes.TransactionRoutes {
 	transactionRepository := transaction.NewTransactionRepository(db)
 	shoppingCartRepository := shopping_cart.NewShoppingCartRepository(db)
 	shoppingCartItemRepository := shopping_cart.NewShoppingCartItemRepository(db)
 	customerRepository := customer.NewCustomerRepository(db)
 	transactionUseCase := transaction2.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository)
 	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
-	return transactionHandler
+	transactionRoutes := routes.NewTransactionRoutes(transactionHandler)
+	return transactionRoutes
 }
