@@ -3,7 +3,7 @@ package product
 import "Dzaakk/simple-commerce/package/template"
 
 type TProduct struct {
-	Id          int     `json:"int"`
+	Id          int     `json:"id"`
 	ProductName string  `json:"product_name"`
 	Price       float32 `json:"price"`
 	Stock       int     `json:"stock"`
@@ -12,7 +12,7 @@ type TProduct struct {
 }
 
 type ProductRes struct {
-	Id          string `json:"int,omitempty"`
+	Id          string `json:"id,omitempty"`
 	ProductName string `json:"product_name,omitempty"`
 	Price       string `json:"price,omitempty"`
 	Stock       string `json:"stock,omitempty"`
