@@ -4,20 +4,22 @@
 //go:build !wireinject
 // +build !wireinject
 
-package product
+package injector
 
 import (
 	"Dzaakk/simple-commerce/internal/product/handler"
 	"Dzaakk/simple-commerce/internal/product/repository"
-	product2 "Dzaakk/simple-commerce/internal/product/usecase"
+	"Dzaakk/simple-commerce/internal/product/routes"
+	"Dzaakk/simple-commerce/internal/product/usecase"
 	"database/sql"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *handler.ProductHandler {
-	productRepository := product.NewProductRepository(db)
-	productUseCase := product2.NewProductUseCase(productRepository)
+func InitializedService(db *sql.DB) *routes.ProductRoutes {
+	productRepository := repository.NewProductRepository(db)
+	productUseCase := usecase.NewProductUseCase(productRepository)
 	productHandler := handler.NewProductHandler(productUseCase)
-	return productHandler
+	productRoutes := routes.NewProductRoutes(productHandler)
+	return productRoutes
 }

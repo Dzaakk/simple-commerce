@@ -1,20 +1,10 @@
-package shopping_cart
+package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
 	"database/sql"
 	"fmt"
 )
-
-type ShoppingCartItemRepository interface {
-	Create(data model.TShoppingCartItem) (*model.TShoppingCartItem, error)
-	Update(data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error)
-	CountQuantityByProductAndCartId(productId, cartId int) (int, error)
-	CountByCartId(cartId int) (int, error)
-	Delete(productId, cartId int) error
-	DeleteAll(cartId int) error
-	RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error)
-}
 
 type ShoppingCartItemRepositoryImpl struct {
 	DB *sql.DB

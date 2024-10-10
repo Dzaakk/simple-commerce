@@ -1,4 +1,4 @@
-package transaction
+package usecase
 
 import model "Dzaakk/simple-commerce/internal/transaction/models"
 

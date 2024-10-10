@@ -1,4 +1,4 @@
-package transaction
+package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/transaction/models"

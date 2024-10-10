@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-package transaction
+package injector
 
 import (
 	customer "Dzaakk/simple-commerce/internal/customer/repository"

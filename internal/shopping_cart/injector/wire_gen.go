@@ -4,23 +4,25 @@
 //go:build !wireinject
 // +build !wireinject
 
-package shopping_cart
+package injector
 
 import (
-	"Dzaakk/simple-commerce/internal/product/repository"
+	repository2 "Dzaakk/simple-commerce/internal/product/repository"
 	"Dzaakk/simple-commerce/internal/shopping_cart/handler"
-	shopping_cart2 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
-	shopping_cart3 "Dzaakk/simple-commerce/internal/shopping_cart/usecase"
+	"Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	"Dzaakk/simple-commerce/internal/shopping_cart/routes"
+	"Dzaakk/simple-commerce/internal/shopping_cart/usecase"
 	"database/sql"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *shopping_cart.ShoppingCarthandler {
-	shoppingCartRepository := shopping_cart2.NewShoppingCartRepository(db)
-	shoppingCartItemRepository := shopping_cart2.NewShoppingCartItemRepository(db)
-	productRepository := product.NewProductRepository(db)
-	shoppingCartUseCase := shopping_cart3.NewShoppingCartUseCase(shoppingCartRepository, shoppingCartItemRepository, productRepository)
-	shoppingCarthandler := shopping_cart.NewShoppingCartHandler(shoppingCartUseCase)
-	return shoppingCarthandler
+func InitializedService(db *sql.DB) *routes.ShoppingCartRoutes {
+	shoppingCartRepository := repository.NewShoppingCartRepository(db)
+	shoppingCartItemRepository := repository.NewShoppingCartItemRepository(db)
+	productRepository := repository2.NewProductRepository(db)
+	shoppingCartUseCase := usecase.NewShoppingCartUseCase(shoppingCartRepository, shoppingCartItemRepository, productRepository)
+	shoppingCartHandler := handler.NewShoppingCartHandler(shoppingCartUseCase)
+	shoppingCartRoutes := routes.NewShoppingCartRoutes(shoppingCartHandler)
+	return shoppingCartRoutes
 }
