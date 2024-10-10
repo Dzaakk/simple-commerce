@@ -1,4 +1,4 @@
-package customer
+package handler
 
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
@@ -24,70 +24,38 @@ func NewCustomerHandler(usecase usecase.CustomerUseCase) *CustomerHandler {
 	}
 }
 
-func (handler *CustomerHandler) Route(r *gin.RouterGroup, redis *redis.Client) {
-	customerHandler := r.Group("/api/v1")
-
-	customerHandler.Use()
-	{
-		customerHandler.POST("/login", func(ctx *gin.Context) {
-			if err := handler.Login(ctx, redis); err != nil {
-				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "login failed", err.Error()))
-				return
-			}
-		})
-		customerHandler.POST("/register", func(ctx *gin.Context) {
-			if err := handler.Create(ctx); err != nil {
-				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "failed to create customer", err.Error()))
-				return
-			}
-		})
-		customerHandler.GET("/customers", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
-			if err := handler.FindCustomerById(ctx); err != nil {
-				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "failed to Get customer", err.Error()))
-				return
-			}
-		})
-		customerHandler.POST("/balance", auth.JWTMiddleware(redis), func(ctx *gin.Context) {
-			if err := handler.UpdateBalance(ctx); err != nil {
-				ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "failed to update balance", err.Error()))
-				return
-			}
-		})
-	}
-}
-
-func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) error {
+func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid email or password"))
-		return nil
+		return
 	}
 
 	data, err := handler.Usecase.FindByEmail(reqData.Email)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
-		return nil
+		return
 	}
 	if !template.CheckPasswordHash(reqData.Password, data.Password) {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid email or password"))
-		return nil
+		return
 	}
 
 	_, err = auth.TokenJWTGenerator(db.Redis(), *data)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusInternalServerError, "Internal Server Error", "Error generate JWT token"))
-		return nil
+		return
 	}
 	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Login Success", "You have 30 mins token Session!"))
-	return nil
+	return
 }
 
-func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) error {
+func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
 	id, errParam := strconv.Atoi(ctx.Query("id"))
 	if errParam != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "missing required parameter 'id'", errParam.Error()))
-		return nil
+		return
 	}
 
 	template.AuthorizedChecker(ctx, ctx.Query("id"))
@@ -96,59 +64,59 @@ func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) error {
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, template.Response(http.StatusNotFound, "not found", err.Error()))
 		ctx.Abort()
-		return nil
+		return
 	}
 
 	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Success", data))
-	return nil
+	return
 }
 
-func (handler *CustomerHandler) Create(ctx *gin.Context) error {
+func (handler *CustomerHandler) Create(ctx *gin.Context) {
 	var data model.CustomerReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
-		return nil
+		return
 	}
 	fmt.Printf("input = %v", data)
 	id, err := handler.Usecase.Create(data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
-		return nil
+		return
 	}
 	res := model.CustomerRes{
 		Id: fmt.Sprintf("%d", *id),
 	}
 	ctx.JSON(http.StatusCreated, template.Response(http.StatusCreated, "Success Create User", res))
-	return nil
+	return
 }
 
-func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) error {
+func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	var data model.BalanceUpdateReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
-		return nil
+		return
 	}
 
 	balance, err := strconv.ParseFloat(data.Balance, 32)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data on field 'balance'"))
-		return nil
+		return
 	}
 
 	id, _ := strconv.Atoi(data.Id)
 	oldData, err := handler.Usecase.GetBalance(id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
-		return nil
+		return
 	}
 	template.AuthorizedChecker(ctx, data.Id)
 	newBalance, err := handler.Usecase.UpdateBalance(id, float32(balance), data.ActionType)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, template.Response(http.StatusNotFound, "not found", err.Error()))
 		ctx.Abort()
-		return nil
+		return
 	}
 
 	response := model.BalanceUpdateRes{
@@ -159,5 +127,5 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) error {
 		},
 	}
 	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Success Update Balance", response))
-	return nil
+	return
 }
