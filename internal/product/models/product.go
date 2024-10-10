@@ -1,4 +1,4 @@
-package product
+package models
 
 import "Dzaakk/simple-commerce/package/template"
 
