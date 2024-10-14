@@ -1,5 +1,6 @@
 .env
 postgres.yaml
+db.yaml
 redis.yaml
 db-data
 *.sum
