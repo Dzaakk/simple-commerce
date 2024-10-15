@@ -4,7 +4,6 @@
 
 Please visit my API Documentation here: 
 - [Postman](https://documenter.getpostman.com/view/15530123/2sA3kSoNoz)
-- [Swagger](https://app.swaggerhub.com/apis/Dzaakk/synapsis-challenge/1.0.0)
   
 ### Entity Relational Diagram
 
