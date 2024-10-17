@@ -23,3 +23,39 @@ func BenchmarkCreateCustomer(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkGetBalanceUsecase(b *testing.B) {
+	repo := NewMockRepository()
+	usecase := usecase.NewCustomerUseCase(repo)
+
+	_, _ = repo.Create(models.TCustomers{
+		Username: "user_test",
+		Email:    "test@gmail.com",
+		Balance:  125000,
+	})
+
+	for i := 0; i < b.N; i++ {
+		_, err := usecase.GetBalance(1) // Benchmark the usecase method
+		if err != nil {
+			b.Errorf("unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkGetBalance(b *testing.B) {
+	repo := NewMockRepository()
+
+	_, _ = repo.Create(models.TCustomers{
+		Username: "user_test",
+		Email:    "test@gmail.com",
+		Balance:  125000,
+	})
+
+	// Run the benchmark
+	for i := 0; i < b.N; i++ {
+		_, err := repo.GetBalance(1)
+		if err != nil {
+			b.Errorf("unexpected error: %v", err)
+		}
+	}
+}
