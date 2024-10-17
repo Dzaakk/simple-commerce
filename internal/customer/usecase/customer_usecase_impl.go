@@ -26,7 +26,7 @@ func (c *CustomerUseCaseImpl) Create(data model.CustomerReq) (*int, error) {
 		Username:    data.Username,
 		Email:       data.Email,
 		PhoneNumber: data.PhoneNumber,
-		Password:    hashedPassword,
+		Password:    string(hashedPassword),
 		Balance:     float32(10000000),
 		Base: template.Base{
 			Created:   time.Now(),
