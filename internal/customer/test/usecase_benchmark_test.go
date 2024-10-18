@@ -59,3 +59,48 @@ func BenchmarkGetBalance(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkFindByEmail(b *testing.B) {
+	mockRepo := NewMockRepository()
+
+	customer := models.TCustomers{
+		Username:    "test_user",
+		Email:       "test@example.com",
+		PhoneNumber: "123456789",
+		Password:    "hashed_password",
+		Balance:     100000.0,
+	}
+	mockRepo.Create(customer)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := mockRepo.FindByEmail("test@example.com")
+		if err != nil {
+			b.Fatalf("Failed to find customer by email: %v", err)
+		}
+	}
+}
+
+func BenchmarkFindByEmailUseCase(b *testing.B) {
+	mockRepo := NewMockRepository()
+	usecase := usecase.NewCustomerUseCase(mockRepo)
+
+	customer := models.TCustomers{
+		Username:    "test_user",
+		Email:       "test@example.com",
+		PhoneNumber: "123456789",
+		Password:    "hashed_password",
+		Balance:     100000.0,
+	}
+	_, _ = mockRepo.Create(customer)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := usecase.FindByEmail("test@example.com")
+		if err != nil {
+			b.Fatalf("Failed to find customer by email: %v", err)
+		}
+	}
+}
