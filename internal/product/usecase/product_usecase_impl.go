@@ -10,6 +10,26 @@ type ProductUseCaseImpl struct {
 	repo repo.ProductRepository
 }
 
+// Create implements ProductUseCase.
+func (p *ProductUseCaseImpl) Create(data model.TProduct) (*int, error) {
+	panic("unimplemented")
+}
+
+// FilterByPrice implements ProductUseCase.
+func (p *ProductUseCaseImpl) FilterByPrice(price int) ([]*model.ProductRes, error) {
+	panic("unimplemented")
+}
+
+// Update implements ProductUseCase.
+func (p *ProductUseCaseImpl) Update(data model.TProduct) error {
+	panic("unimplemented")
+}
+
+// UpdateStock implements ProductUseCase.
+func (p *ProductUseCaseImpl) UpdateStock(id int, stock int) (*int, error) {
+	panic("unimplemented")
+}
+
 func NewProductUseCase(repo repo.ProductRepository) ProductUseCase {
 	return &ProductUseCaseImpl{repo}
 }
