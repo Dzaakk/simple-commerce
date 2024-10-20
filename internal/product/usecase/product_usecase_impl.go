@@ -10,28 +10,37 @@ type ProductUseCaseImpl struct {
 	repo repo.ProductRepository
 }
 
-// Create implements ProductUseCase.
-func (p *ProductUseCaseImpl) Create(data model.TProduct) (*int, error) {
-	panic("unimplemented")
+func NewProductUseCase(repo repo.ProductRepository) ProductUseCase {
+	return &ProductUseCaseImpl{repo}
 }
 
-// FilterByPrice implements ProductUseCase.
+func (p *ProductUseCaseImpl) Create(dataReq model.TProduct) (*model.ProductRes, error) {
+	data, err := p.repo.Create(dataReq)
+	if err != nil {
+		return nil, err
+	}
+
+	newProduct := &model.ProductRes{
+		Id:          fmt.Sprintf("%d", data.Id),
+		ProductName: data.ProductName,
+		Price:       fmt.Sprintf("%0.f", data.Price),
+		Stock:       fmt.Sprintf("%d", data.Stock),
+		CategoryId:  fmt.Sprintf("%d", data.CategoryId),
+	}
+	return newProduct, nil
+}
+
 func (p *ProductUseCaseImpl) FilterByPrice(price int) ([]*model.ProductRes, error) {
 	panic("unimplemented")
 }
 
-// Update implements ProductUseCase.
-func (p *ProductUseCaseImpl) Update(data model.TProduct) error {
-	panic("unimplemented")
-}
+func (p *ProductUseCaseImpl) Update(dataReq model.TProduct) error {
+	err := p.repo.Update(dataReq)
+	if err != nil {
+		return err
+	}
 
-// UpdateStock implements ProductUseCase.
-func (p *ProductUseCaseImpl) UpdateStock(id int, stock int) (*int, error) {
-	panic("unimplemented")
-}
-
-func NewProductUseCase(repo repo.ProductRepository) ProductUseCase {
-	return &ProductUseCaseImpl{repo}
+	return nil
 }
 
 func (p *ProductUseCaseImpl) FindByCategoryId(categoryId int) ([]*model.ProductRes, error) {
