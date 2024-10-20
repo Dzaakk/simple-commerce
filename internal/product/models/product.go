@@ -3,11 +3,11 @@ package models
 import "Dzaakk/simple-commerce/package/template"
 
 type TProduct struct {
-	Id          int     `json:"id"`
+	Id          int     `json:"id,omitempty,string"`
 	ProductName string  `json:"product_name"`
-	Price       float32 `json:"price"`
-	Stock       int     `json:"stock"`
-	CategoryId  int     `json:"category_id"`
+	Price       float32 `json:"price,string"`
+	Stock       int     `json:"stock,string"`
+	CategoryId  int     `json:"category_id,string"`
 	template.Base
 }
 
