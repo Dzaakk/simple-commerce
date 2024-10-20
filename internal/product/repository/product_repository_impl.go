@@ -20,7 +20,7 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 
 const queryCreateProduct = `INSERT INTO public.product (product_name, price, stock, category_id, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
-func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.ProductRes, error) {
+func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.TProduct, error) {
 	statement, err := repo.DB.Prepare(queryCreateProduct)
 	if err != nil {
 		return nil, err
@@ -34,18 +34,25 @@ func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.ProductRe
 		return nil, err
 	}
 
-	newProduct := &model.ProductRes{
-		Id:          fmt.Sprintf("%d", id),
-		ProductName: data.ProductName,
-		Price:       fmt.Sprintf("%0.f", data.Price),
-		Stock:       fmt.Sprintf("%d", data.Stock),
-		CategoryId:  fmt.Sprintf("%d", data.CategoryId),
-	}
-	return newProduct, nil
+	data.Id = id
+	return &data, nil
 }
 
-func (repo *ProductRepositoryImpl) Update(data model.TProduct) (*model.ProductRes, error) {
-	panic("unimplemented")
+const queryUpdate = `UPDATE public.product SET product_name=$1, price=$2, stock=$3, updated=NOW(), updated_by=$4 WHERE id=$5`
+
+func (repo *ProductRepositoryImpl) Update(data model.TProduct) error {
+	statement, err := repo.DB.Prepare(queryUpdate)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 const queryFindByCategoryId = `SELECT * FROM public.product WHERE category_id = $1`
