@@ -12,6 +12,10 @@ type CustomerUseCaseImpl struct {
 	repo repo.CustomerRepository
 }
 
+func (c *CustomerUseCaseImpl) Update(dataReq model.TCustomers) (*model.CustomerRes, error) {
+	panic("unimplemented")
+}
+
 func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
 	return &CustomerUseCaseImpl{repo}
 }

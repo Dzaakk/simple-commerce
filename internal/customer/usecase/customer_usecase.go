@@ -10,4 +10,5 @@ type CustomerUseCase interface {
 	UpdateBalance(id int, balance float32, actionType string) (*float32, error)
 	GetBalance(id int) (*model.CustomerBalance, error)
 	FindByEmail(email string) (*model.TCustomers, error)
+	Update(data model.TCustomers) (*model.CustomerRes, error)
 }
