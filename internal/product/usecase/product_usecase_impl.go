@@ -10,6 +10,10 @@ type ProductUseCaseImpl struct {
 	repo repo.ProductRepository
 }
 
+func (p *ProductUseCaseImpl) FindByName(productName string) (*model.ProductRes, error) {
+	panic("unimplemented")
+}
+
 func NewProductUseCase(repo repo.ProductRepository) ProductUseCase {
 	return &ProductUseCaseImpl{repo}
 }
