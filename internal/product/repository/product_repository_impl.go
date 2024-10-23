@@ -121,6 +121,23 @@ func (repo *ProductRepositoryImpl) GetStockById(id int) (int, error) {
 	return stock, nil
 }
 
+const queryFindByName = `SELECT * FROM public.product WHERE product_name like '%' || $1 || '%'`
+
+func (repo *ProductRepositoryImpl) FindByName(name string) (*model.TProduct, error) {
+
+	rows, err := repo.DB.Query(queryFindByName, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	product, err := retrieveProduct(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
 func rowsToProduct(rows *sql.Rows) (*model.TProduct, error) {
 	base := template.Base{}
 	product := model.TProduct{}

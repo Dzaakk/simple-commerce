@@ -10,10 +10,6 @@ type ProductUseCaseImpl struct {
 	repo repo.ProductRepository
 }
 
-func (p *ProductUseCaseImpl) FindByName(productName string) (*model.ProductRes, error) {
-	panic("unimplemented")
-}
-
 func NewProductUseCase(repo repo.ProductRepository) ProductUseCase {
 	return &ProductUseCaseImpl{repo}
 }
@@ -64,4 +60,18 @@ func (p *ProductUseCaseImpl) FindByCategoryId(categoryId int) ([]*model.ProductR
 	}
 
 	return listProduct, nil
+}
+
+func (p *ProductUseCaseImpl) FindByName(productName string) (*model.ProductRes, error) {
+	data, err := p.repo.FindByName(productName)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ProductRes{
+		Id:          fmt.Sprintf("%d", data.Id),
+		ProductName: productName,
+		Price:       fmt.Sprintf("%.0f", data.Price),
+		Stock:       fmt.Sprintf("%d", data.Stock),
+		CategoryId:  fmt.Sprintf("%d", data.CategoryId),
+	}, nil
 }
