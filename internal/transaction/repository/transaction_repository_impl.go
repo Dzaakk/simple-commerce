@@ -32,3 +32,7 @@ func (repo *TransactionRepositoryImpl) Create(data model.TTransaction) (*model.T
 	}
 	return &data, nil
 }
+
+func (repo *TransactionRepositoryImpl) FindByCustomerId(customerId int64) {
+	panic("unimplemented")
+}

@@ -6,4 +6,5 @@ import (
 
 type TransactionRepository interface {
 	Create(data model.TTransaction) (*model.TTransaction, error)
+	FindByCustomerId(customerId int64)
 }

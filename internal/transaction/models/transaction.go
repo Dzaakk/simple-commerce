@@ -36,3 +36,15 @@ type TCartItemDetail struct {
 	Price       float32 `json:"price"`
 	Quantity    int     `json:"quantity"`
 }
+
+type CustomerListTransactionRes struct {
+	CustomerId      string                `json:"customerId"`
+	ListTransaction []CustomerTransaction `json:"listTransaction"`
+}
+
+type CustomerTransaction struct {
+	ProductName     string `json:"product_name"`
+	Price           string `json:"price"`
+	Quantity        string `json:"quantity"`
+	TransactionDate string `json:"transactionDate"`
+}
