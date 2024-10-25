@@ -116,3 +116,8 @@ func generateReceipt(listItem []*modelItem.TCartItemDetail) (*model.TransactionR
 func (t *TransactionUseCaseImpl) GetTransaction(customerId int64) ([]*model.CustomerListTransactionRes, error) {
 	panic("unimplemented")
 }
+
+// GetDetailTransaction implements TransactionUseCase.
+func (t *TransactionUseCaseImpl) GetDetailTransaction(transactionId int64) ([]*model.CustomerListTransactionRes, error) {
+	panic("unimplemented")
+}
