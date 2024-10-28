@@ -2,6 +2,7 @@ package usecase
 
 import (
 	customer "Dzaakk/simple-commerce/internal/customer/repository"
+	product "Dzaakk/simple-commerce/internal/product/repository"
 	modelItem "Dzaakk/simple-commerce/internal/shopping_cart/models"
 	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	model "Dzaakk/simple-commerce/internal/transaction/models"
@@ -18,10 +19,11 @@ type TransactionUseCaseImpl struct {
 	repoCart     shoppingCart.ShoppingCartRepository
 	repoCartItem shoppingCart.ShoppingCartItemRepository
 	repoCustomer customer.CustomerRepository
+	repoProduct  product.ProductRepository
 }
 
-func NewTransactionUseCase(repo repo.TransactionRepository, repoCart shoppingCart.ShoppingCartRepository, repoCartItem shoppingCart.ShoppingCartItemRepository, repoCustomer customer.CustomerRepository) TransactionUseCase {
-	return &TransactionUseCaseImpl{repo, repoCart, repoCartItem, repoCustomer}
+func NewTransactionUseCase(repo repo.TransactionRepository, repoCart shoppingCart.ShoppingCartRepository, repoCartItem shoppingCart.ShoppingCartItemRepository, repoCustomer customer.CustomerRepository, repoProduct product.ProductRepository) TransactionUseCase {
+	return &TransactionUseCaseImpl{repo, repoCart, repoCartItem, repoCustomer, repoProduct}
 }
 
 func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*model.TransactionRes, error) {
@@ -55,7 +57,6 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 	if err != nil {
 		return nil, err
 	}
-
 	transactionDate, err := insertToTableTransaction(t, customerId, cartId, totalTransaction)
 	if err != nil {
 		return nil, err
@@ -63,6 +64,10 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 
 	newBalance := customer.Balance - float32(totalTransaction)
 	_, err = t.repoCustomer.UpdateBalance(customerId, newBalance) // update balance customer
+	if err != nil {
+		return nil, err
+	}
+	err = t.repoProduct.UpdateStock(listItem, "System")
 	if err != nil {
 		return nil, err
 	}

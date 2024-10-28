@@ -8,6 +8,7 @@ package injector
 
 import (
 	repository3 "Dzaakk/simple-commerce/internal/customer/repository"
+	repository4 "Dzaakk/simple-commerce/internal/product/repository"
 	repository2 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/internal/transaction/handler"
 	"Dzaakk/simple-commerce/internal/transaction/repository"
@@ -23,7 +24,8 @@ func InitializedService(db *sql.DB) *routes.TransactionRoutes {
 	shoppingCartRepository := repository2.NewShoppingCartRepository(db)
 	shoppingCartItemRepository := repository2.NewShoppingCartItemRepository(db)
 	customerRepository := repository3.NewCustomerRepository(db)
-	transactionUseCase := usecase.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository)
+	productRepository := repository4.NewProductRepository(db)
+	transactionUseCase := usecase.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository, productRepository)
 	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
 	transactionRoutes := routes.NewTransactionRoutes(transactionHandler)
 	return transactionRoutes

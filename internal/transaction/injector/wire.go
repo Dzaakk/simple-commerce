@@ -5,6 +5,7 @@ package injector
 
 import (
 	customer "Dzaakk/simple-commerce/internal/customer/repository"
+	product "Dzaakk/simple-commerce/internal/product/repository"
 	cart "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	handler "Dzaakk/simple-commerce/internal/transaction/handler"
 	repository "Dzaakk/simple-commerce/internal/transaction/repository"
@@ -24,6 +25,7 @@ func InitializedService(db *sql.DB) *routes.TransactionRoutes {
 		cart.NewShoppingCartRepository,
 		cart.NewShoppingCartItemRepository,
 		customer.NewCustomerRepository,
+		product.NewProductRepository,
 	)
 
 	return &routes.TransactionRoutes{}
