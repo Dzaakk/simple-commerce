@@ -2,6 +2,7 @@ package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/product/models"
+	modelCart "Dzaakk/simple-commerce/internal/shopping_cart/models"
 )
 
 type ProductRepository interface {
@@ -12,4 +13,5 @@ type ProductRepository interface {
 	FindByName(name string) (*model.TProduct, error)
 	GetPriceById(id int) (*float32, error)
 	GetStockById(id int) (int, error)
+	UpdateStock(listData []*modelCart.TCartItemDetail, name string) error
 }

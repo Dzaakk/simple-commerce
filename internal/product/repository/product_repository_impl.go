@@ -2,10 +2,12 @@ package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/product/models"
+	"Dzaakk/simple-commerce/internal/shopping_cart/models"
 	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type ProductRepositoryImpl struct {
@@ -136,6 +138,39 @@ func (repo *ProductRepositoryImpl) FindByName(name string) (*model.TProduct, err
 	}
 
 	return product, nil
+}
+
+func (repo *ProductRepositoryImpl) UpdateStock(listData []*models.TCartItemDetail, name string) error {
+	query, args := generateMultipleStockUpdateQuery(listData, name)
+	_, err := repo.DB.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func generateMultipleStockUpdateQuery(listData []*models.TCartItemDetail, name string) (string, []interface{}) {
+	var query strings.Builder
+	var args []interface{}
+	query.WriteString("UPDATE public.product SET ")
+	query.WriteString("stock = CASE id ")
+
+	for _, item := range listData {
+		query.WriteString(fmt.Sprintf("WHEN $%d THEN stock - $%d ", len(args)+1, len(args)+2))
+		args = append(args, item.ProductId, item.Quantity)
+	}
+
+	query.WriteString(fmt.Sprintf(" END, updated_by = '%s', updated = NOW() WHERE id IN (", name))
+
+	for i, item := range listData {
+		if i > 0 {
+			query.WriteString(", ")
+		}
+		query.WriteString(fmt.Sprintf("$%d", len(args)+1))
+		args = append(args, item.ProductId)
+	}
+
+	query.WriteString(")")
+	return query.String(), args
 }
 
 func rowsToProduct(rows *sql.Rows) (*model.TProduct, error) {
