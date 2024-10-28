@@ -15,6 +15,7 @@ type TShoppingCartItem struct {
 	template.Base
 }
 type TCartItemDetail struct {
+	ProductId   int     `json:"productId"`
 	ProductName string  `json:"product_name"`
 	Price       float32 `json:"price"`
 	Quantity    int     `json:"quantity"`

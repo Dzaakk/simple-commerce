@@ -87,7 +87,7 @@ func (repo *ShoppingCartItemRepositoryImpl) Delete(productId int, cartId int) er
 	return nil
 }
 
-const queryRetrieveCartItems = "SELECT p.product_name, p.price, sci.quantity FROM public.shopping_cart_item sci JOIN public.product p ON sci.product_id = p.id WHERE sci.cart_id=$1 ORDER BY p.product_name ASC"
+const queryRetrieveCartItems = "SELECT sci.product_id, p.product_name, p.price, sci.quantity FROM public.shopping_cart_item sci JOIN public.product p ON sci.product_id = p.id WHERE sci.cart_id=$1 ORDER BY p.product_name ASC"
 
 func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error) {
 	rows, err := repo.DB.Query(queryRetrieveCartItems, cartId)
@@ -99,7 +99,7 @@ func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartId(cartId int
 	var cartItems []*model.TCartItemDetail
 	for rows.Next() {
 		var ci model.TCartItemDetail
-		err := rows.Scan(&ci.ProductName, &ci.Price, &ci.Quantity)
+		err := rows.Scan(&ci.ProductId, &ci.ProductName, &ci.Price, &ci.Quantity)
 		if err != nil {
 			return nil, err
 		}
