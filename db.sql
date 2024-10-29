@@ -72,6 +72,20 @@ CREATE TABLE public.transaction (
     FOREIGN KEY (cart_id) REFERENCES public.shopping_cart(id)
 );
 
+CREATE TABLE public.transaction_item (
+    id SERIAL PRIMARY KEY,
+    customer_id INT NOT NULL,
+    product_name VARCHAR(100),
+    price NUMERIC(10, 2) NOT NULL,
+    quantity INT NOT NULL,
+    created TIMESTAMP NOT NULL,
+    created_by VARCHAR(100),
+    updated  TIMESTAMP,
+    updated_by VARCHAR(100),
+    status varchar(20) NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES public.customer(id)
+);
+
 INSERT INTO public.category (name, created_by, created)
 VALUES ('Electronics', 'Admin', now()),
        ('Clothing', 'Admin', now()),
