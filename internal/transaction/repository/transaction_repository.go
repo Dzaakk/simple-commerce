@@ -11,5 +11,5 @@ type TransactionRepository interface {
 }
 
 type TransactionItemRepository interface {
-	Create(data []*modelItem.TCartItemDetail) error
+	Create(data []*modelItem.TCartItemDetail, customerId int64) error
 }

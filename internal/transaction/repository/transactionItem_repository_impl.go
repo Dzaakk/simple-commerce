@@ -17,9 +17,36 @@ func NewTransactionItemRepository(db *sql.DB) TransactionItemRepository {
 	}
 }
 
-func (t *TransactionItemRepositoryImpl) Create(data []*models.TCartItemDetail) error {
+func (t *TransactionItemRepositoryImpl) Create(data []*models.TCartItemDetail, customerId int64) error {
+	if len(data) == 0 {
+		return nil
+	}
 
+	listQuery := generateInsertStatements(data, customerId)
+
+	tx, err := t.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Commit()
+	}()
+
+	for _, query := range listQuery {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return fmt.Errorf("failed to execute insert: %v, error: %w", query, err)
+		}
+	}
+
+	return nil
 }
+
 func generateInsertStatements(listData []*models.TCartItemDetail, customerId int64) []string {
 	var sqlInserts []string
 	columns := "customer_id, productName, price, quantity, status"
