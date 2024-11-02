@@ -30,76 +30,50 @@ func NewTransactionUseCase(repo repo.TransactionRepository, repoCart shoppingCar
 }
 
 func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*model.TransactionRes, error) {
-	tx, err := t.db.Begin()
-	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction : %w", err)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			panic(r)
-		}
-	}()
-
 	cartId, _ := strconv.Atoi(data.CartId)
 	customerId, _ := strconv.Atoi(data.CustomerId)
 
 	listItem, err := t.repoCartItem.RetrieveCartItemsByCartId(cartId) // get all items on cart
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 	res, err := generateReceipt(listItem) // generate receipt and calculate total transaction
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
 	customer, err := t.repoCustomer.GetBalance(customerId) // check customer current balance
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 	totalTransaction, _ := strconv.Atoi(res.TotalTransaction)
 	if totalTransaction > int(customer.Balance) {
-		tx.Rollback()
 		return nil, errors.New("insufficient balance")
 	}
 
 	err = t.repoCartItem.DeleteAll(cartId) // delete all item on cart
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
 	_, err = t.repoCart.UpdateStatusById(cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
 	transactionDate, err := insertToTableTransaction(t, customerId, cartId, totalTransaction)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
 	newBalance := customer.Balance - float32(totalTransaction)
 	_, err = t.repoCustomer.UpdateBalance(customerId, newBalance) // update balance customer
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 	err = t.repoProduct.UpdateStock(listItem, "System")
 	if err != nil {
-		tx.Rollback()
 		return nil, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("failed to commit transaction : %w", err)
 	}
 
 	res.CustomerId = data.CustomerId
