@@ -3,6 +3,7 @@ package main
 import (
 	db "Dzaakk/simple-commerce/package/db"
 	"fmt"
+	"log"
 
 	customer "Dzaakk/simple-commerce/internal/customer/injector"
 	product "Dzaakk/simple-commerce/internal/product/injector"
@@ -13,7 +14,10 @@ import (
 )
 
 func main() {
-	postgres := db.Postgres()
+	postgres, err := db.Postgres()
+	if err != nil {
+		log.Fatalf("error connect to database : %v", err)
+	}
 	redis := db.Redis()
 	r := gin.Default()
 	fmt.Println("START")

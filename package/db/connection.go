@@ -4,40 +4,45 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-func Postgres() *sql.DB {
-	err := godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
+func Postgres() (*sql.DB, error) {
+	var db *sql.DB
+	var err error
+	for i := 0; i < 5; i++ {
+
+		err = godotenv.Load()
+		if err != nil {
+			return nil, fmt.Errorf("Error loading .env file : %w", err)
+		}
+
+		host := os.Getenv("POSTGRES_HOST")
+		port := os.Getenv("POSTGRES_PORT")
+		dbname := os.Getenv("POSTGRES_DB")
+		user := os.Getenv("POSTGRES_USER")
+		password := os.Getenv("POSTGRES_PASSWORD")
+
+		connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+
+		db, err = sql.Open("postgres", connectionString)
+		if err == nil {
+			err = db.Ping()
+			if err == nil {
+				log.Print("Success connect to Postgres")
+				return db, nil
+			}
+		}
+		log.Print("Postgres is not ready, retrying...")
+		time.Sleep(5 * time.Second)
 	}
-
-	host := os.Getenv("POSTGRES_HOST")
-	port := os.Getenv("POSTGRES_PORT")
-	dbname := os.Getenv("POSTGRES_DB")
-	user := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-
-	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
-	db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		panic("Failed to connect to Postgres")
-	}
-
-	err = db.Ping()
-	if err != nil {
-		panic("Error pinging Postgres")
-	}
-
-	fmt.Println("Success connect to Postgres")
-
-	return db
+	return nil, fmt.Errorf("failed to connect to Postgres after multiple attempts : %w", err)
 }
 
 func Redis() *redis.Client {
