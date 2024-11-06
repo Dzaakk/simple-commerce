@@ -32,6 +32,25 @@ func (repo *TransactionRepositoryImpl) Create(data model.TTransaction) (*model.T
 	}
 	return &data, nil
 }
+func (repo *TransactionRepositoryImpl) CreateWithTx(tx *sql.Tx, data model.TTransaction) (*model.TTransaction, error) {
+	statement, err := tx.Prepare(queryCreateTransaction)
+	if err != nil {
+		return nil, err
+	}
+	defer statement.Close()
+
+	var id int
+
+	err = statement.QueryRow(data.CustomerId, data.CartId, data.TotalAmount, data.TransactionDate, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+func (repo *TransactionRepositoryImpl) BeginTransaction() (*sql.Tx, error) {
+	return repo.DB.Begin()
+}
 
 func (repo *TransactionRepositoryImpl) FindByCustomerId(customerId int64) {
 	panic("unimplemented")
