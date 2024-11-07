@@ -30,10 +30,15 @@ func NewTransactionUseCase(repo repo.TransactionRepository, repoCart shoppingCar
 }
 
 func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*model.TransactionRes, error) {
+	tx, err := t.repo.BeginTransaction()
+	if err != nil {
+		return nil, err
+	}
+
 	cartId, _ := strconv.Atoi(data.CartId)
 	customerId, _ := strconv.Atoi(data.CustomerId)
 
-	listItem, err := t.repoCartItem.RetrieveCartItemsByCartId(cartId) // get all items on cart
+	listItem, err := t.repoCartItem.RetrieveCartItemsByCartIdWithTx(tx, cartId) // get all items on cart
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +76,12 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 	if err != nil {
 		return nil, err
 	}
-	err = t.repoProduct.UpdateStock(listItem, "System")
+	emptyProducts, err := t.repoProduct.UpdateStockWithTx(tx, listItem) // update stock and get list for empty product
+	if err != nil {
+		return nil, err
+	}
+
+	err = t.repoCartItem.SetQuantityWithTx(tx, emptyProducts) // set empty product to zero in all customer cart
 	if err != nil {
 		return nil, err
 	}
