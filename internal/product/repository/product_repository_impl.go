@@ -20,7 +20,24 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 	}
 }
 
-const queryCreateProduct = `INSERT INTO public.product (product_name, price, stock, category_id, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+const (
+	queryCreateProduct    = `INSERT INTO public.product (product_name, price, stock, category_id, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	queryUpdate           = `UPDATE public.product SET product_name=$1, price=$2, stock=$3, updated=NOW(), updated_by=$4 WHERE id=$5`
+	queryFindByCategoryId = `SELECT * FROM public.product WHERE category_id = $1`
+	queryFindById         = `SELECT * FROM public.product WHERE id = $1`
+	queryGetPriceById     = `SELECT price FROM public.product WHERE id = $1`
+	queryGetStockById     = `SELECT stock FROM public.product WHERE id = $1`
+	queryFindByName       = `SELECT * FROM public.product WHERE product_name like '%' || $1 || '%'`
+	querySetStockById     = `UPDATE public.product SET stock = $1 WHERE id = $2`
+)
+
+func (repo *ProductRepositoryImpl) SetStockById(id int, stock int) error {
+	_, err := repo.DB.Exec(querySetStockById, stock, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.TProduct, error) {
 	statement, err := repo.DB.Prepare(queryCreateProduct)
@@ -40,8 +57,6 @@ func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.TProduct,
 	return &data, nil
 }
 
-const queryUpdate = `UPDATE public.product SET product_name=$1, price=$2, stock=$3, updated=NOW(), updated_by=$4 WHERE id=$5`
-
 func (repo *ProductRepositoryImpl) Update(data model.TProduct) error {
 	statement, err := repo.DB.Prepare(queryUpdate)
 	if err != nil {
@@ -56,8 +71,6 @@ func (repo *ProductRepositoryImpl) Update(data model.TProduct) error {
 
 	return nil
 }
-
-const queryFindByCategoryId = `SELECT * FROM public.product WHERE category_id = $1`
 
 func (repo *ProductRepositoryImpl) FindByCategoryId(categoryId int) ([]*model.TProduct, error) {
 	rows, err := repo.DB.Query(queryFindByCategoryId, categoryId)
@@ -74,15 +87,12 @@ func (repo *ProductRepositoryImpl) FindByCategoryId(categoryId int) ([]*model.TP
 		}
 		listProduct = append(listProduct, product)
 	}
-	fmt.Println("LEN = ", len(listProduct))
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
 	return listProduct, nil
 }
-
-const queryFindById = `SELECT * FROM public.product WHERE id = $1`
 
 func (repo *ProductRepositoryImpl) FindById(id int) (*model.TProduct, error) {
 	rows, err := repo.DB.Query(queryFindById, id)
@@ -99,8 +109,6 @@ func (repo *ProductRepositoryImpl) FindById(id int) (*model.TProduct, error) {
 	return product, nil
 }
 
-const queryGetPriceById = `SELECT price FROM public.product WHERE id = $1`
-
 func (repo *ProductRepositoryImpl) GetPriceById(id int) (*float32, error) {
 	var balance float32
 	err := repo.DB.QueryRow(queryGetPriceById, id).Scan(&balance)
@@ -111,8 +119,6 @@ func (repo *ProductRepositoryImpl) GetPriceById(id int) (*float32, error) {
 	return &balance, nil
 }
 
-const queryGetStockById = `SELECT stock FROM public.product WHERE id = $1`
-
 func (repo *ProductRepositoryImpl) GetStockById(id int) (int, error) {
 	var stock int
 	err := repo.DB.QueryRow(queryGetPriceById, id).Scan(stock)
@@ -122,8 +128,6 @@ func (repo *ProductRepositoryImpl) GetStockById(id int) (int, error) {
 
 	return stock, nil
 }
-
-const queryFindByName = `SELECT * FROM public.product WHERE product_name like '%' || $1 || '%'`
 
 func (repo *ProductRepositoryImpl) FindByName(name string) (*model.TProduct, error) {
 
@@ -141,25 +145,94 @@ func (repo *ProductRepositoryImpl) FindByName(name string) (*model.TProduct, err
 }
 
 func (repo *ProductRepositoryImpl) UpdateStock(listData []*models.TCartItemDetail, name string) error {
-	query, args := generateMultipleStockUpdateQuery(listData, name)
+	query, args := generateMultipleStockUpdateQuery(listData)
 	_, err := repo.DB.Exec(query, args...)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func generateMultipleStockUpdateQuery(listData []*models.TCartItemDetail, name string) (string, []interface{}) {
+
+func (repo *ProductRepositoryImpl) UpdateStockWithTx(tx *sql.Tx, listItem []*models.TCartItemDetail) ([]*int, error) {
+	listEmptyProductId, err := verifyStockAvailability(tx, listItem)
+	if err != nil {
+		return nil, err
+	}
+	query, args := generateMultipleStockUpdateQuery(listItem)
+	result, err := tx.Exec(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error update product stock: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("error getting rows affected: %w", err)
+	}
+
+	if int(rowsAffected) != len(listItem) {
+		return nil, fmt.Errorf("expected to update %d products, but updated %d", len(listItem), rowsAffected)
+	}
+	return listEmptyProductId, nil
+}
+
+func verifyStockAvailability(tx *sql.Tx, listItem []*models.TCartItemDetail) ([]*int, error) {
 	var query strings.Builder
 	var args []interface{}
-	query.WriteString("UPDATE public.product SET ")
-	query.WriteString("stock = CASE id ")
+	listEmptyProductId := []*int{}
+
+	query.WriteString(`SELECT id, stock FROM public.product WHERE id IN (`)
+
+	for i, item := range listItem {
+		if i > 0 {
+			query.WriteString(",")
+		}
+		query.WriteString(fmt.Sprintf("$%d", i+1))
+		args = append(args, item.ProductId)
+	}
+
+	query.WriteString(") FOR UPDATE")
+
+	rows, err := tx.Query(query.String(), args...)
+	if err != nil {
+		return nil, fmt.Errorf("error locking products: %w", err)
+	}
+	defer rows.Close()
+
+	stockMap := make(map[int]int)
+	for rows.Next() {
+		var id, stock int
+		if err := rows.Scan(&id, &stock); err != nil {
+			return nil, fmt.Errorf("error scanning product stock: %w", err)
+		}
+		stockMap[id] = stock
+	}
+
+	for _, item := range listItem {
+		currentStock, exists := stockMap[item.ProductId]
+		if !exists {
+			return nil, fmt.Errorf("product %d not found", item.ProductId)
+		}
+		if currentStock == 1 {
+			listEmptyProductId = append(listEmptyProductId, &item.ProductId)
+		}
+		if currentStock < item.Quantity {
+			return nil, fmt.Errorf("insufficient stock for product %d: requested %d, available %d", item.ProductId, item.Quantity, currentStock)
+		}
+	}
+	return listEmptyProductId, nil
+}
+
+func generateMultipleStockUpdateQuery(listData []*models.TCartItemDetail) (string, []interface{}) {
+	var query strings.Builder
+	var args []interface{}
+	query.WriteString("UPDATE public.product SET stock = CASE id ")
 
 	for _, item := range listData {
 		query.WriteString(fmt.Sprintf("WHEN $%d THEN stock - $%d ", len(args)+1, len(args)+2))
 		args = append(args, item.ProductId, item.Quantity)
 	}
 
-	query.WriteString(fmt.Sprintf(" END, updated_by = '%s', updated = NOW() WHERE id IN (", name))
+	query.WriteString(" END, updated_by = 'SYSTEM', updated = NOW() WHERE id IN (")
 
 	for i, item := range listData {
 		if i > 0 {

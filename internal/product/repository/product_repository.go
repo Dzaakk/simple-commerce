@@ -3,6 +3,7 @@ package repository
 import (
 	model "Dzaakk/simple-commerce/internal/product/models"
 	modelCart "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	"database/sql"
 )
 
 type ProductRepository interface {
@@ -14,4 +15,5 @@ type ProductRepository interface {
 	GetPriceById(id int) (*float32, error)
 	GetStockById(id int) (int, error)
 	UpdateStock(listData []*modelCart.TCartItemDetail, name string) error
+	UpdateStockWithTx(tx *sql.Tx, listData []*modelCart.TCartItemDetail) ([]*int, error)
 }
