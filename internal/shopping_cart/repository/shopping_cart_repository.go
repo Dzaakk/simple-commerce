@@ -2,6 +2,7 @@ package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	"database/sql"
 )
 
 type ShoppingCartRepository interface {
@@ -20,4 +21,6 @@ type ShoppingCartItemRepository interface {
 	Delete(productId, cartId int) error
 	DeleteAll(cartId int) error
 	RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error)
+	RetrieveCartItemsByCartIdWithTx(tx *sql.Tx, cartId int) ([]*model.TCartItemDetail, error)
+	SetQuantityWithTx(tx *sql.Tx, listProductId []*int) error
 }
