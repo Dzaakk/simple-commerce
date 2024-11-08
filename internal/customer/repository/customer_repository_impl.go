@@ -5,6 +5,7 @@ import (
 	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 )
@@ -19,7 +20,15 @@ func NewCustomerRepository(db *sql.DB) CustomerRepository {
 	}
 }
 
-const queryCreateCustomer = `INSERT INTO public.customer (username, email, password, phone_number, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+const (
+	queryFindCustomerByEmail    = `SELECT * FROM public.customer WHERE email = $1`
+	queryCreateCustomer         = `INSERT INTO public.customer (username, email, password, phone_number, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+	queryFindCustomerById       = `SELECT * FROM public.customer WHERE id = $1`
+	queryUpdateBalance          = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
+	queryUpdateBalanceWithLock  = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
+	queryGetBalanceById         = `SELECT id, balance FROM public.customer WHERE id = $1`
+	queryGetBalanceByIdWithLock = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
+)
 
 func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (*int, error) {
 	log.Println("Enter Create Customer Repo")
@@ -38,8 +47,6 @@ func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (*int, error) 
 	return &id, err
 }
 
-const queryFindCustomerById = `SELECT * FROM public.customer WHERE id = $1`
-
 func (repo *CustomerRepositoryImpl) FindById(id int) (*model.TCustomers, error) {
 	rows, err := repo.DB.Query(queryFindCustomerById, id)
 	if err != nil {
@@ -54,8 +61,6 @@ func (repo *CustomerRepositoryImpl) FindById(id int) (*model.TCustomers, error) 
 
 	return customer, nil
 }
-
-const queryFindCustomerByEmail = `SELECT * FROM public.customer WHERE email = $1`
 
 func (repo *CustomerRepositoryImpl) FindByEmail(email string) (*model.TCustomers, error) {
 	rows, err := repo.DB.Query(queryFindCustomerByEmail, email)
@@ -72,18 +77,16 @@ func (repo *CustomerRepositoryImpl) FindByEmail(email string) (*model.TCustomers
 	return customer, nil
 }
 
-const queryUpdateBalance = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
-
-func (repo *CustomerRepositoryImpl) UpdateBalance(id int, balance float32) (*float32, error) {
+func (repo *CustomerRepositoryImpl) UpdateBalance(id int, newBalance float64) (*float64, error) {
 	statement, err := repo.DB.Prepare(queryUpdateBalance)
 	if err != nil {
 		return nil, err
 	}
 	defer statement.Close()
 
-	var updatedBalance float32
+	var updatedBalance float64
 	idString := strconv.Itoa(id)
-	err = statement.QueryRow(balance, idString, id).Scan(&updatedBalance)
+	err = statement.QueryRow(newBalance, idString, id).Scan(&updatedBalance)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +94,23 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(id int, balance float32) (*flo
 	return &updatedBalance, nil
 }
 
-const queryGetBalanceById = `SELECT id, balance FROM public.customer WHERE id = $1`
+func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(tx *sql.Tx, id int, newBalance float64) error {
+	_, err := tx.Exec(queryUpdateBalanceWithLock, newBalance, id)
+	return err
+}
+
+func (repo *CustomerRepositoryImpl) GetBalanceWithTx(tx *sql.Tx, id int) (*model.CustomerBalance, error) {
+	var customerBalance model.CustomerBalance
+	err := tx.QueryRow(queryGetBalanceByIdWithLock, id).
+		Scan(&customerBalance.Id, &customerBalance.Balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("customer with id %d not found", id)
+		}
+		return nil, fmt.Errorf("unable to retrieve customer balance : %w", err)
+	}
+	return &customerBalance, nil
+}
 
 func (repo *CustomerRepositoryImpl) GetBalance(id int) (*model.CustomerBalance, error) {
 	var customerBalance model.CustomerBalance

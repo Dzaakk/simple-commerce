@@ -8,7 +8,7 @@ type TCustomers struct {
 	Email       string  `json:"email"`
 	PhoneNumber string  `json:"phone_number"`
 	Password    string  `json:"password"`
-	Balance     float32 `json:"balance"`
+	Balance     float64 `json:"balance"`
 	template.Base
 }
 type CustomerReq struct {
@@ -20,7 +20,7 @@ type CustomerReq struct {
 
 type CustomerBalance struct {
 	Id      int     `json:"id"`
-	Balance float32 `json:"balance"`
+	Balance float64 `json:"balance"`
 }
 type CustomerRes struct {
 	Id          string `json:"id"`
