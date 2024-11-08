@@ -47,7 +47,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, err
 	}
 
-	customer, err := t.repoCustomer.GetBalance(customerId) // check customer current balance
+	customer, err := t.repoCustomer.GetBalanceWithTx(tx, customerId) // check customer current balance
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +56,13 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, errors.New("insufficient balance")
 	}
 
-	err = t.repoCartItem.DeleteAll(cartId) // delete all item on cart
+	_, err = t.repoCart.UpdateStatusById(cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = t.repoCart.UpdateStatusById(cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
+	newBalance := customer.Balance - float64(totalTransaction)
+	err = t.repoCustomer.UpdateBalanceWithTx(tx, customerId, newBalance) // update balance customer
 	if err != nil {
 		return nil, err
 	}
@@ -71,17 +72,17 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, err
 	}
 
-	newBalance := customer.Balance - float32(totalTransaction)
-	_, err = t.repoCustomer.UpdateBalance(customerId, newBalance) // update balance customer
-	if err != nil {
-		return nil, err
-	}
 	emptyProducts, err := t.repoProduct.UpdateStockWithTx(tx, listItem) // update stock and get list for empty product
 	if err != nil {
 		return nil, err
 	}
 
 	err = t.repoCartItem.SetQuantityWithTx(tx, emptyProducts) // set empty product to zero in all customer cart
+	if err != nil {
+		return nil, err
+	}
+
+	err = t.repoCartItem.DeleteAll(cartId) // delete all item on cart
 	if err != nil {
 		return nil, err
 	}
