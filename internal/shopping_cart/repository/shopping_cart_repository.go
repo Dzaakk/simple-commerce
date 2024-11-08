@@ -20,6 +20,7 @@ type ShoppingCartItemRepository interface {
 	CountByCartId(cartId int) (int, error)
 	Delete(productId, cartId int) error
 	DeleteAll(cartId int) error
+	DeleteAllWithTx(tx *sql.Tx, cartId int) error
 	RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error)
 	RetrieveCartItemsByCartIdWithTx(tx *sql.Tx, cartId int) ([]*model.TCartItemDetail, error)
 	SetQuantityWithTx(tx *sql.Tx, listProductId []*int) error
