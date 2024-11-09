@@ -35,19 +35,28 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, err
 	}
 
-	cartId, _ := strconv.Atoi(data.CartId)
-	customerId, _ := strconv.Atoi(data.CustomerId)
+	defer tx.Rollback()
+
+	cartId, err := strconv.Atoi(data.CartId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid data: %v", err)
+	}
+	customerId, err := strconv.Atoi(data.CustomerId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid data: %v", err)
+	}
 
 	listItem, err := t.repoCartItem.RetrieveCartItemsByCartIdWithTx(tx, cartId) // get all items on cart
 	if err != nil {
 		return nil, err
 	}
+
 	res, err := generateReceipt(listItem) // generate receipt and calculate total transaction
 	if err != nil {
 		return nil, err
 	}
 
-	customer, err := t.repoCustomer.GetBalanceWithTx(tx, customerId) // check customer current balance
+	customer, err := t.repoCustomer.GetBalanceWithTx(tx, customerId) // check customer current balance with locking
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +65,17 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, errors.New("insufficient balance")
 	}
 
-	_, err = t.repoCart.UpdateStatusById(cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
+	err = t.repoCart.UpdateStatusByIdWithTx(tx, cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
+	if err != nil {
+		return nil, err
+	}
+
+	emptyProducts, err := t.repoProduct.UpdateStockWithTx(tx, listItem) // update stock and get list fo empty product
+	if err != nil {
+		return nil, err
+	}
+
+	err = t.repoCartItem.SetQuantityWithTx(tx, emptyProducts)
 	if err != nil {
 		return nil, err
 	}
@@ -67,22 +86,17 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, err
 	}
 
-	transactionDate, err := insertToTableTransaction(t, customerId, cartId, totalTransaction)
+	transactionDate, err := insertToTableTransactionWithTx(tx, t, customerId, cartId, totalTransaction) // insert to table transaction
 	if err != nil {
 		return nil, err
 	}
 
-	emptyProducts, err := t.repoProduct.UpdateStockWithTx(tx, listItem) // update stock and get list for empty product
+	err = t.repoCartItem.DeleteAllWithTx(tx, cartId) // delete all item on cart item
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.repoCartItem.SetQuantityWithTx(tx, emptyProducts) // set empty product to zero in all customer cart
-	if err != nil {
-		return nil, err
-	}
-
-	err = t.repoCartItem.DeleteAll(cartId) // delete all item on cart
+	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +106,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 	return res, nil
 }
 
-func insertToTableTransaction(t *TransactionUseCaseImpl, customerId, cartId, totalTransaction int) (*string, error) {
+func insertToTableTransactionWithTx(tx *sql.Tx, t *TransactionUseCaseImpl, customerId, cartId, totalTransaction int) (*string, error) {
 	newTransaction := model.TTransaction{
 		CustomerId:      customerId,
 		CartId:          cartId,
@@ -105,7 +119,7 @@ func insertToTableTransaction(t *TransactionUseCaseImpl, customerId, cartId, tot
 		},
 	}
 
-	data, err := t.repo.Create(newTransaction)
+	data, err := t.repo.CreateWithTx(tx, newTransaction)
 	if err != nil {
 		return nil, err
 	}
