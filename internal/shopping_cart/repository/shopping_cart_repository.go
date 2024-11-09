@@ -11,6 +11,8 @@ type ShoppingCartRepository interface {
 	FindById(id int) (*model.ShoppingCartRes, error)
 	CheckStatus(id, customerId int) (*string, error)
 	UpdateStatusById(id int, status, customerid string) (*model.TShoppingCart, error)
+	UpdateStatusByIdWithTx(tx *sql.Tx, cartId int, status, customerid string) error
+	DeleteShoppingCart(cartId int) error
 }
 
 type ShoppingCartItemRepository interface {
