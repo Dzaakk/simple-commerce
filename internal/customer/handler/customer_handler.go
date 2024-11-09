@@ -112,7 +112,7 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 		return
 	}
 	template.AuthorizedChecker(ctx, data.Id)
-	newBalance, err := handler.Usecase.UpdateBalance(id, float32(balance), data.ActionType)
+	newBalance, err := handler.Usecase.UpdateBalance(id, float64(balance), data.ActionType)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, template.Response(http.StatusNotFound, "not found", err.Error()))
 		ctx.Abort()

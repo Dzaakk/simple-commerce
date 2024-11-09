@@ -31,7 +31,7 @@ func (c *CustomerUseCaseImpl) Create(data model.CustomerReq) (*int, error) {
 		Email:       data.Email,
 		PhoneNumber: data.PhoneNumber,
 		Password:    string(hashedPassword),
-		Balance:     float32(10000000),
+		Balance:     float64(10000000),
 		Base: template.Base{
 			Created:   time.Now(),
 			CreatedBy: "system",
@@ -85,7 +85,7 @@ func (c *CustomerUseCaseImpl) GetBalance(id int) (*model.CustomerBalance, error)
 	return customer, nil
 }
 
-func (c *CustomerUseCaseImpl) UpdateBalance(id int, balance float32, actionType string) (*float32, error) {
+func (c *CustomerUseCaseImpl) UpdateBalance(id int, balance float64, actionType string) (*float64, error) {
 	data, err := c.repo.GetBalance(id)
 	if err != nil {
 		return nil, err
