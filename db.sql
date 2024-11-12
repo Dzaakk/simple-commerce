@@ -72,7 +72,7 @@ CREATE TABLE public.transaction (
     FOREIGN KEY (cart_id) REFERENCES public.shopping_cart(id)
 );
 
-CREATE TABLE public.transaction_item (
+CREATE TABLE public.history_transaction(
     id SERIAL PRIMARY KEY,
     customer_id INT NOT NULL,
     product_name VARCHAR(100),

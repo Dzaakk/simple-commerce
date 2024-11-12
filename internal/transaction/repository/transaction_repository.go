@@ -13,6 +13,7 @@ type TransactionRepository interface {
 	BeginTransaction() (*sql.Tx, error)
 }
 
-type TransactionItemRepository interface {
+type HistoryTransactionRepository interface {
 	Create(data []*modelItem.TCartItemDetail, customerId int64) error
+	FindByCustomerId(customerId int64)
 }

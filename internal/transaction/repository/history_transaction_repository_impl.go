@@ -7,17 +7,17 @@ import (
 	"strings"
 )
 
-type TransactionItemRepositoryImpl struct {
+type HistoryTransactionRepositoryImpl struct {
 	DB *sql.DB
 }
 
-func NewTransactionItemRepository(db *sql.DB) TransactionItemRepository {
-	return &TransactionItemRepositoryImpl{
+func NewHistoryTransactionRepository(db *sql.DB) HistoryTransactionRepository {
+	return &HistoryTransactionRepositoryImpl{
 		DB: db,
 	}
 }
 
-func (t *TransactionItemRepositoryImpl) Create(data []*models.TCartItemDetail, customerId int64) error {
+func (t *HistoryTransactionRepositoryImpl) Create(data []*models.TCartItemDetail, customerId int64) error {
 	if len(data) == 0 {
 		return nil
 	}
@@ -45,6 +45,10 @@ func (t *TransactionItemRepositoryImpl) Create(data []*models.TCartItemDetail, c
 	}
 
 	return nil
+}
+
+func (t *HistoryTransactionRepositoryImpl) FindByCustomerId(customerId int64) {
+	panic("unimplemented")
 }
 
 func generateInsertStatements(listData []*models.TCartItemDetail, customerId int64) []string {
