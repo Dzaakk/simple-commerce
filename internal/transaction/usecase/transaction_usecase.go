@@ -10,7 +10,7 @@ type TransactionUseCase interface {
 	GetDetailTransaction(transactionId int64) ([]*model.CustomerListTransactionRes, error)
 }
 type HistoryTransactionUseCase interface {
-	GetListTransaction(customerId int)
-	GetTransactionItemDetail(transactionItemId int64)
-	CreateTransactionItemDetail(transactionItem model.THistoryTransaction)
+	GetListHistoryTransaction(customerId int64) ([]*model.HistoryTransaction, error)
+	GetHistoryTransactionDetail(transactionId int64)
+	CreateHistoryTransaction(transactionItem model.THistoryTransaction)
 }
