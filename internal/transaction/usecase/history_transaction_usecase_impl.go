@@ -33,12 +33,12 @@ func (t *HistoryTransactionUseCaseImpl) GetListHistoryTransaction(customerId int
 
 	for _, d := range listData {
 		data := &model.HistoryTransaction{
-			Id:          fmt.Sprintf("%d", d.Id),
-			CustomerId:  fmt.Sprintf("%d", d.CustomerId),
-			ProductName: d.ProductName,
-			Price:       fmt.Sprintf("%.2f", d.Price),
-			Quantity:    fmt.Sprintf("%d", d.Quantity),
-			Status:      d.Status,
+			TransactionId: fmt.Sprintf("%d", d.TransactionId),
+			CustomerId:    fmt.Sprintf("%d", d.CustomerId),
+			ProductName:   d.ProductName,
+			Price:         fmt.Sprintf("%.2f", d.Price),
+			Quantity:      fmt.Sprintf("%d", d.Quantity),
+			Status:        d.Status,
 		}
 		result = append(result, data)
 	}

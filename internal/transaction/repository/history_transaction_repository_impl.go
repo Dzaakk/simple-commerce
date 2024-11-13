@@ -113,7 +113,7 @@ func rowsToProduct(rows *sql.Rows) (*model.THistoryTransaction, error) {
 	base := template.Base{}
 	ht := model.THistoryTransaction{}
 
-	err := rows.Scan(ht.Id, ht.CustomerId, ht.Price, ht.ProductName, ht.Status, ht.Quantity, base.Created, base.CreatedBy, base.Updated, base.UpdatedBy)
+	err := rows.Scan(ht.TransactionId, ht.CustomerId, ht.Price, ht.ProductName, ht.Status, ht.Quantity, base.Created, base.CreatedBy, base.Updated, base.UpdatedBy)
 	if err != nil {
 		return nil, err
 	}
