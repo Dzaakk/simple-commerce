@@ -11,3 +11,11 @@ type THistoryTransaction struct {
 	Status      string  `json:"status"`
 	template.Base
 }
+type HistoryTransaction struct {
+	Id          string `json:"id"`
+	CustomerId  string `json:"customer_id"`
+	ProductName string `json:"productName"`
+	Price       string `json:"price"`
+	Quantity    string `json:"quantity"`
+	Status      string `json:"status"`
+}
