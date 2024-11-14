@@ -2,7 +2,7 @@ package usecase
 
 import (
 	model "Dzaakk/simple-commerce/internal/product/models"
-	repo "Dzaakk/simple-commerce/internal/product/repository"
+	repo "Dzaakk/simple-commerce/internal/product/repositories"
 	"fmt"
 )
 

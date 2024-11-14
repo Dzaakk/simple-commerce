@@ -1,7 +1,7 @@
 package handler
 
 import (
-	usecase "Dzaakk/simple-commerce/internal/product/usecase"
+	usecase "Dzaakk/simple-commerce/internal/product/usecases"
 	template "Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"

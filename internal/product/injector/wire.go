@@ -4,10 +4,10 @@
 package injector
 
 import (
-	handler "Dzaakk/simple-commerce/internal/product/handler"
-	repository "Dzaakk/simple-commerce/internal/product/repository"
+	handler "Dzaakk/simple-commerce/internal/product/handlers"
+	repository "Dzaakk/simple-commerce/internal/product/repositories"
 	routes "Dzaakk/simple-commerce/internal/product/routes"
-	usecase "Dzaakk/simple-commerce/internal/product/usecase"
+	usecase "Dzaakk/simple-commerce/internal/product/usecases"
 	"database/sql"
 
 	"github.com/google/wire"

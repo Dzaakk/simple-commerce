@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"Dzaakk/simple-commerce/internal/product/handler"
+	handler "Dzaakk/simple-commerce/internal/product/handlers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"

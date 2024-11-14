@@ -7,10 +7,10 @@
 package injector
 
 import (
-	"Dzaakk/simple-commerce/internal/product/handler"
-	"Dzaakk/simple-commerce/internal/product/repository"
+	"Dzaakk/simple-commerce/internal/product/handlers"
+	"Dzaakk/simple-commerce/internal/product/repositories"
 	"Dzaakk/simple-commerce/internal/product/routes"
-	"Dzaakk/simple-commerce/internal/product/usecase"
+	"Dzaakk/simple-commerce/internal/product/usecases"
 	"database/sql"
 )
 
