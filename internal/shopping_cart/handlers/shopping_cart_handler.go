@@ -2,7 +2,7 @@ package handler
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	usecase "Dzaakk/simple-commerce/internal/shopping_cart/usecase"
+	usecase "Dzaakk/simple-commerce/internal/shopping_cart/usecases"
 	template "Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"

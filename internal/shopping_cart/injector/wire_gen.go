@@ -7,11 +7,11 @@
 package injector
 
 import (
-	repository2 "Dzaakk/simple-commerce/internal/product/repository"
-	"Dzaakk/simple-commerce/internal/shopping_cart/handler"
-	"Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	repository2 "Dzaakk/simple-commerce/internal/product/repositories"
+	"Dzaakk/simple-commerce/internal/shopping_cart/handlers"
+	"Dzaakk/simple-commerce/internal/shopping_cart/repositories"
 	"Dzaakk/simple-commerce/internal/shopping_cart/routes"
-	"Dzaakk/simple-commerce/internal/shopping_cart/usecase"
+	"Dzaakk/simple-commerce/internal/shopping_cart/usecases"
 	"database/sql"
 )
 

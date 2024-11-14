@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	repoProduct "Dzaakk/simple-commerce/internal/product/repository"
+	repoProduct "Dzaakk/simple-commerce/internal/product/repositories"
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	repo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	repo "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
 	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
