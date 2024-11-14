@@ -4,10 +4,10 @@
 package injector
 
 import (
-	handler "Dzaakk/simple-commerce/internal/customer/handler"
-	repository "Dzaakk/simple-commerce/internal/customer/repository"
+	handlers "Dzaakk/simple-commerce/internal/customer/handlers"
+	repositories "Dzaakk/simple-commerce/internal/customer/repositories"
 	routes "Dzaakk/simple-commerce/internal/customer/routes"
-	usecase "Dzaakk/simple-commerce/internal/customer/usecase"
+	usecases "Dzaakk/simple-commerce/internal/customer/usecases"
 	"database/sql"
 
 	"github.com/google/wire"
@@ -15,9 +15,9 @@ import (
 
 func InitializedService(db *sql.DB) *routes.CustomerRoutes {
 	wire.Build(
-		repository.NewCustomerRepository,
-		usecase.NewCustomerUseCase,
-		handler.NewCustomerHandler,
+		repositories.NewCustomerRepository,
+		usecases.NewCustomerUseCase,
+		handlers.NewCustomerHandler,
 		routes.NewCustomerRoutes,
 	)
 

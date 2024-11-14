@@ -1,7 +1,7 @@
 package routes
 
 import (
-	handler "Dzaakk/simple-commerce/internal/customer/handler"
+	handler "Dzaakk/simple-commerce/internal/customer/handlers"
 	"Dzaakk/simple-commerce/package/auth"
 
 	"github.com/gin-gonic/gin"
