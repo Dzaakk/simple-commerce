@@ -3,7 +3,7 @@ package usecase
 import (
 	"Dzaakk/simple-commerce/internal/transaction/models"
 	model "Dzaakk/simple-commerce/internal/transaction/models"
-	repo "Dzaakk/simple-commerce/internal/transaction/repository"
+	repo "Dzaakk/simple-commerce/internal/transaction/repositories"
 	"fmt"
 )
 

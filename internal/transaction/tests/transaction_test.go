@@ -1,14 +1,14 @@
 package test
 
 import (
-	customer "Dzaakk/simple-commerce/internal/customer/repository"
-	product "Dzaakk/simple-commerce/internal/product/repository"
+	customer "Dzaakk/simple-commerce/internal/customer/repositories"
+	product "Dzaakk/simple-commerce/internal/product/repositories"
 	scModel "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/repository"
-	sc "Dzaakk/simple-commerce/internal/shopping_cart/usecase"
+	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
+	sc "Dzaakk/simple-commerce/internal/shopping_cart/usecases"
 	"Dzaakk/simple-commerce/internal/transaction/models"
-	repo "Dzaakk/simple-commerce/internal/transaction/repository"
-	"Dzaakk/simple-commerce/internal/transaction/usecase"
+	repo "Dzaakk/simple-commerce/internal/transaction/repositories"
+	usecase "Dzaakk/simple-commerce/internal/transaction/usecases"
 	"database/sql"
 	"fmt"
 	"log"

@@ -7,13 +7,13 @@
 package injector
 
 import (
-	repository3 "Dzaakk/simple-commerce/internal/customer/repository"
-	repository4 "Dzaakk/simple-commerce/internal/product/repository"
-	repository2 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
-	"Dzaakk/simple-commerce/internal/transaction/handler"
-	"Dzaakk/simple-commerce/internal/transaction/repository"
+	repository3 "Dzaakk/simple-commerce/internal/customer/repositories"
+	repository4 "Dzaakk/simple-commerce/internal/product/repositories"
+	repository2 "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
+	"Dzaakk/simple-commerce/internal/transaction/handlers"
+	"Dzaakk/simple-commerce/internal/transaction/repositories"
 	"Dzaakk/simple-commerce/internal/transaction/routes"
-	"Dzaakk/simple-commerce/internal/transaction/usecase"
+	"Dzaakk/simple-commerce/internal/transaction/usecases"
 	"database/sql"
 )
 
