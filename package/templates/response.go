@@ -1,4 +1,4 @@
-package template
+package templates
 
 type Meta struct {
 	Code    int    `json:"code"`
