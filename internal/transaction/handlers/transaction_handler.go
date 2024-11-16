@@ -3,7 +3,7 @@ package handler
 import (
 	model "Dzaakk/simple-commerce/internal/transaction/models"
 	usecase "Dzaakk/simple-commerce/internal/transaction/usecases"
-	template "Dzaakk/simple-commerce/package/template"
+	template "Dzaakk/simple-commerce/package/templates"
 	"fmt"
 	"net/http"
 

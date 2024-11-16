@@ -1,6 +1,6 @@
 package models
 
-import "Dzaakk/simple-commerce/package/template"
+import template "Dzaakk/simple-commerce/package/templates"
 
 type TShoppingCart struct {
 	Id         int    `json:"id"`

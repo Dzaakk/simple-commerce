@@ -4,7 +4,7 @@ import (
 	repoProduct "Dzaakk/simple-commerce/internal/product/repositories"
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
 	repo "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
-	"Dzaakk/simple-commerce/package/template"
+	template "Dzaakk/simple-commerce/package/templates"
 	"database/sql"
 	"errors"
 	"fmt"

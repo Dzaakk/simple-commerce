@@ -5,7 +5,7 @@ import (
 	usecase "Dzaakk/simple-commerce/internal/customer/usecases"
 	auth "Dzaakk/simple-commerce/package/auth"
 	db "Dzaakk/simple-commerce/package/db"
-	template "Dzaakk/simple-commerce/package/template"
+	template "Dzaakk/simple-commerce/package/templates"
 	"fmt"
 	"net/http"
 	"strconv"

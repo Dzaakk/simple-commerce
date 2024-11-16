@@ -2,7 +2,7 @@ package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
-	"Dzaakk/simple-commerce/package/template"
+	template "Dzaakk/simple-commerce/package/templates"
 	"database/sql"
 	"errors"
 	"fmt"

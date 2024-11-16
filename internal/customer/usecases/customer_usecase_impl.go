@@ -3,7 +3,7 @@ package usecase
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
 	repo "Dzaakk/simple-commerce/internal/customer/repositories"
-	"Dzaakk/simple-commerce/package/template"
+	template "Dzaakk/simple-commerce/package/templates"
 	"fmt"
 	"time"
 )

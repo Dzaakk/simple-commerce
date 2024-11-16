@@ -2,7 +2,7 @@ package handler
 
 import (
 	usecase "Dzaakk/simple-commerce/internal/product/usecases"
-	template "Dzaakk/simple-commerce/package/template"
+	template "Dzaakk/simple-commerce/package/templates"
 	"fmt"
 	"net/http"
 	"strconv"
