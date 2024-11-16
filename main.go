@@ -2,7 +2,6 @@ package main
 
 import (
 	db "Dzaakk/simple-commerce/package/db"
-	"fmt"
 	"log"
 
 	customer "Dzaakk/simple-commerce/internal/customer/injector"
@@ -20,7 +19,6 @@ func main() {
 	}
 	redis := db.Redis()
 	r := gin.Default()
-	fmt.Println("START")
 
 	customer.InitializedService(postgres).Route(&r.RouterGroup, redis)
 	product.InitializedService(postgres).Route(&r.RouterGroup, redis)

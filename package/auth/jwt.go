@@ -39,7 +39,6 @@ func JWTMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 			return
 		}
 
-		fmt.Printf("STORED TOKEN= %v\n\n", storedToken)
 		redisToken := strings.Split(storedToken[0], ":")
 		// Validate the token retrieved from Redis
 		token, err := jwt.Parse(redisToken[2], func(token *jwt.Token) (interface{}, error) {
@@ -90,7 +89,6 @@ func TokenJWTGenerator(redisClient *redis.Client, customer model.TCustomers) (st
 	tokenPattern := os.Getenv("TOKEN_PATTERN")
 	ctx := context.Background()
 	tokenKey := tokenPattern + tokenString
-	fmt.Printf("TOKEN KEY i = %s\n\n", tokenKey)
 
 	err = redisClient.Set(ctx, tokenKey, customer.Id, time.Minute*5).Err()
 	if err != nil {

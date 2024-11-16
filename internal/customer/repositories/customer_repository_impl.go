@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 )
 
@@ -31,7 +30,6 @@ const (
 )
 
 func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (*int, error) {
-	log.Println("Enter Create Customer Repo")
 	statement, err := repo.DB.Prepare(queryCreateCustomer)
 	if err != nil {
 		return nil, err

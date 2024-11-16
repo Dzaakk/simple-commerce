@@ -76,7 +76,6 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 	productId, _ := strconv.Atoi(data.ProductId)
 
 	dataProduct, err := s.repoProduct.FindById(productId) //find product and check the stock
-	fmt.Printf("DATA PRODUCT = %v\n", dataProduct)
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +105,6 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 		return &item, nil
 	} else {
 		itemQuantity, _ := s.repoItem.CountQuantityByProductAndCartId(productId, shoppingCart.Id) //check current quantity product
-		fmt.Printf("QUANTITY =%v\n", quantity)
-		fmt.Printf("ITEM QUANTITY =%v\n\n", itemQuantity)
 		if itemQuantity+quantity == 0 {
 			err = s.repoItem.Delete(productId, shoppingCart.Id) //delete from cart item
 			if err != nil {

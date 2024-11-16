@@ -78,7 +78,6 @@ func (handler *CustomerHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
 		return
 	}
-	fmt.Printf("input = %v", data)
 	id, err := handler.Usecase.Create(data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))

@@ -4,7 +4,6 @@ import (
 	model "Dzaakk/simple-commerce/internal/transaction/models"
 	usecase "Dzaakk/simple-commerce/internal/transaction/usecases"
 	template "Dzaakk/simple-commerce/package/templates"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +26,6 @@ func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Printf("input = %v", data)
 	template.AuthorizedChecker(ctx, data.CustomerId)
 	if ctx.IsAborted() {
 		return

@@ -53,11 +53,9 @@ func Redis() *redis.Client {
 
 	redisAddr := os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT")
 	redisPassword := os.Getenv("REDIS_PASSWORD")
-	fmt.Printf("CONNECTION LINK = %v\n", redisAddr)
-	fmt.Printf("PASS = %v\n", redisPassword)
 	client := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
-		Password: "",
+		Password: redisPassword,
 		DB:       0,
 	})
 

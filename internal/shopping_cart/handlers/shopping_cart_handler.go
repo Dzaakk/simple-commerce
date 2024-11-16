@@ -4,7 +4,6 @@ import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
 	usecase "Dzaakk/simple-commerce/internal/shopping_cart/usecases"
 	template "Dzaakk/simple-commerce/package/templates"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -71,7 +70,6 @@ func (handler *ShoppingCartHandler) DeleteShoppingList(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
 		return
 	}
-	fmt.Printf("input = %v", data)
 	template.AuthorizedChecker(ctx, data.CustomerId)
 	if ctx.IsAborted() {
 		return
