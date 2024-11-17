@@ -85,6 +85,15 @@ CREATE TABLE public.history_transaction(
     status varchar(20) NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES public.customer(id)
 );
+CREATE TABLE seller (
+    id SERIAL PRIMARY KEY,
+    seller_name VARCHAR(255) NOT NULL,
+    seller_balance NUMERIC(10,2) DEFAULT 0.00,
+    created TIMESTAMP NOT NULL,
+    created_by VARCHAR(100),
+    updated  TIMESTAMP,
+    updated_by VARCHAR(100),
+);
 
 INSERT INTO public.category (name, created_by, created)
 VALUES ('Electronics', 'Admin', now()),
