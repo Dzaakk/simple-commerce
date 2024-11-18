@@ -26,6 +26,7 @@ CREATE TABLE public.product (
     price NUMERIC(10, 2) NOT NULL,
     stock INT NOT NULL,
     category_id INT,  
+    seller_id INT,
     created TIMESTAMP NOT NULL,
     created_by VARCHAR(100),
     updated  TIMESTAMP,

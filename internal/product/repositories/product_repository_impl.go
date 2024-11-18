@@ -14,6 +14,11 @@ type ProductRepositoryImpl struct {
 	DB *sql.DB
 }
 
+// FindBySellerId implements ProductRepository.
+func (repo *ProductRepositoryImpl) FindBySellerId(id int) (*model.TProduct, error) {
+	panic("unimplemented")
+}
+
 func NewProductRepository(db *sql.DB) ProductRepository {
 	return &ProductRepositoryImpl{
 		DB: db,
