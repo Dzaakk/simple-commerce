@@ -17,9 +17,9 @@ import (
 // Injectors from wire.go:
 
 func InitializedService(db *sql.DB) *routes.ProductRoutes {
-	productRepository := repository.NewProductRepository(db)
-	productUseCase := usecase.NewProductUseCase(productRepository)
-	productHandler := handler.NewProductHandler(productUseCase)
+	productRepository := repositories.NewProductRepository(db)
+	productUseCase := usecases.NewProductUseCase(productRepository)
+	productHandler := handlers.NewProductHandler(productUseCase)
 	productRoutes := routes.NewProductRoutes(productHandler)
 	return productRoutes
 }

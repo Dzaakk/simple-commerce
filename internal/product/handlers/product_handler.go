@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	usecase "Dzaakk/simple-commerce/internal/product/usecases"
