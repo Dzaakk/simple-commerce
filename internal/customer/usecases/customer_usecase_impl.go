@@ -1,4 +1,4 @@
-package usecase
+package usecases
 
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"

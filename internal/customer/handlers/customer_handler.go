@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
