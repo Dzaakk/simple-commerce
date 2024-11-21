@@ -95,6 +95,10 @@ func (repo *ProductRepositoryImpl) FindBySellerId(sellerId int) ([]*model.TProdu
 	return listProduct, nil
 }
 
+func (repo *ProductRepositoryImpl) FindBySellerIdAndCategoryId(sellerId int, categoryId int) ([]*model.TProduct, error) {
+	panic("unimplemented")
+}
+
 func (repo *ProductRepositoryImpl) FindByCategoryId(categoryId int) ([]*model.TProduct, error) {
 	rows, err := repo.DB.Query(queryFindByCategoryId, categoryId)
 	if err != nil {
