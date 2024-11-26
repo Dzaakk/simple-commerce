@@ -3,8 +3,7 @@ package handlers
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
 	usecase "Dzaakk/simple-commerce/internal/customer/usecases"
-	auth "Dzaakk/simple-commerce/package/auth"
-	db "Dzaakk/simple-commerce/package/db"
+	"Dzaakk/simple-commerce/package/response"
 	template "Dzaakk/simple-commerce/package/templates"
 	"fmt"
 	"net/http"
@@ -28,33 +27,33 @@ func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
-		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
 		return
 	}
 
 	data, err := handler.Usecase.FindByEmail(reqData.Email)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 	if !template.CheckPasswordHash(reqData.Password, data.Password) {
-		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
 		return
 	}
 
-	_, err = auth.TokenJWTGenerator(db.Redis(), *data)
+	// _, err = auth.TokenJWTGenerator(db.Redis(), *data)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusInternalServerError, "Internal Server Error", "Error generate JWT token"))
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
-	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Login Success", "You have 30 mins token Session!"))
+	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 	return
 }
 
 func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
-	id, errParam := strconv.Atoi(ctx.Query("id"))
-	if errParam != nil {
-		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "missing required parameter 'id'", errParam.Error()))
+	id, err := strconv.Atoi(ctx.Query("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, response.BadRequest(err.Error()))
 		return
 	}
 
@@ -62,12 +61,12 @@ func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
 
 	data, err := handler.Usecase.FindById(id)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, template.Response(http.StatusNotFound, "not found", err.Error()))
+		ctx.JSON(http.StatusBadRequest, response.NotFound(err.Error()))
 		ctx.Abort()
 		return
 	}
 
-	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Success", data))
+	ctx.JSON(http.StatusOK, response.Success(data))
 	return
 }
 
