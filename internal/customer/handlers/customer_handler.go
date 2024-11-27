@@ -5,7 +5,6 @@ import (
 	usecase "Dzaakk/simple-commerce/internal/customer/usecases"
 	"Dzaakk/simple-commerce/package/response"
 	template "Dzaakk/simple-commerce/package/templates"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -41,7 +40,7 @@ func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) {
 		return
 	}
 
-	// _, err = auth.TokenJWTGenerator(db.Redis(), *data)
+	// _, err = auth.NewTokenGenerator(db.Redis(), *data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -74,18 +73,15 @@ func (handler *CustomerHandler) Create(ctx *gin.Context) {
 	var data model.CustomerReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
+		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
 		return
 	}
-	id, err := handler.Usecase.Create(data)
+	_, err := handler.Usecase.Create(data)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
-	res := model.CustomerRes{
-		Id: fmt.Sprintf("%d", *id),
-	}
-	ctx.JSON(http.StatusCreated, template.Response(http.StatusCreated, "Success Create User", res))
+	ctx.JSON(http.StatusOK, response.Success("Success Create User"))
 	return
 }
 
@@ -93,37 +89,37 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	var data model.BalanceUpdateReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data"))
+		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
 		return
 	}
 
 	balance, err := strconv.ParseFloat(data.Balance, 32)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, template.Response(http.StatusBadRequest, "Bad Request", "Invalid input data on field 'balance'"))
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 
 	id, _ := strconv.Atoi(data.Id)
 	oldData, err := handler.Usecase.GetBalance(id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 	template.AuthorizedChecker(ctx, data.Id)
 	newBalance, err := handler.Usecase.UpdateBalance(id, float64(balance), data.ActionType)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, template.Response(http.StatusNotFound, "not found", err.Error()))
+		ctx.JSON(http.StatusNotFound, response.NotFound(err.Error()))
 		ctx.Abort()
 		return
 	}
 
-	response := model.BalanceUpdateRes{
+	res := model.BalanceUpdateRes{
 		BalanceOld: *oldData,
 		BalanceNew: model.CustomerBalance{
 			Id:      id,
 			Balance: *newBalance,
 		},
 	}
-	ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Success Update Balance", response))
+	ctx.JSON(http.StatusOK, response.Success(res))
 	return
 }
