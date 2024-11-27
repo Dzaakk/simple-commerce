@@ -46,7 +46,6 @@ func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) {
 		return
 	}
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
-	return
 }
 
 func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
@@ -66,7 +65,6 @@ func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response.Success(data))
-	return
 }
 
 func (handler *CustomerHandler) Create(ctx *gin.Context) {
@@ -82,7 +80,6 @@ func (handler *CustomerHandler) Create(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, response.Success("Success Create User"))
-	return
 }
 
 func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
@@ -121,5 +118,4 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 		},
 	}
 	ctx.JSON(http.StatusOK, response.Success(res))
-	return
 }
