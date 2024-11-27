@@ -2,8 +2,7 @@ package handlers
 
 import (
 	usecase "Dzaakk/simple-commerce/internal/product/usecases"
-	template "Dzaakk/simple-commerce/package/templates"
-	"fmt"
+	"Dzaakk/simple-commerce/package/response"
 	"net/http"
 	"strconv"
 
@@ -27,22 +26,25 @@ func (handler *ProductHandler) GetProduct(ctx *gin.Context) {
 	if categoryId != 0 {
 		listProduct, err := handler.Usecase.FindByCategoryId(categoryId)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
+			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+			return
 		}
 		if listProduct == nil {
-			ctx.JSON(http.StatusNotFound, template.Response(http.StatusNotFound, "not found", fmt.Sprintf("product with category %v is not found", categoryId)))
-			ctx.Abort()
+			ctx.JSON(http.StatusOK, response.Success("Product Not Found"))
+			return
 		}
-		ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Success", listProduct))
+		ctx.JSON(http.StatusOK, response.Success(listProduct))
 	}
 	if productName != "" {
 		product, err := handler.Usecase.FindByName(productName)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, template.Response(http.StatusInternalServerError, "Internal Server Error", err.Error()))
+			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+			return
 		} else if product == nil {
-			ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Product Not Found", product))
+			ctx.JSON(http.StatusOK, response.Success("Product Not Found"))
+			return
 		}
-		ctx.JSON(http.StatusOK, template.Response(http.StatusOK, "Success", product))
+		ctx.JSON(http.StatusOK, response.Success(product))
 	}
 
 }
