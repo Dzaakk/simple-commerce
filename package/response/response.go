@@ -1,5 +1,7 @@
 package response
 
+import "net/http"
+
 type Meta struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -23,25 +25,32 @@ func Response(code int, message string, data interface{}) ApiResponse {
 
 func InternalServerError(message string) ApiResponse {
 	if message != "" {
-		return Response(500, "Internal Server Error", message)
+		return Response(http.StatusInternalServerError, "Internal Server Error", message)
 	}
-	return Response(500, "Internal Server Error", nil)
+	return Response(http.StatusInternalServerError, "Internal Server Error", nil)
 }
 
 func BadRequest(message string) ApiResponse {
 	if message != "" {
-		return Response(400, "Bad Request", message)
+		return Response(http.StatusBadRequest, "Bad Request", message)
 	}
-	return Response(400, "Bad Request", nil)
+	return Response(http.StatusBadRequest, "Bad Request", nil)
 }
 
 func Success(data interface{}) ApiResponse {
-	return Response(200, "Success", data)
+	return Response(http.StatusOK, "Success", data)
 }
 
 func NotFound(message any) ApiResponse {
 	if message != "" {
-		return Response(404, "Not Found", message)
+		return Response(http.StatusNotFound, "Not Found", message)
 	}
-	return Response(404, "Not Found", nil)
+	return Response(http.StatusNotFound, "Not Found", nil)
+}
+
+func Unauthorized(message any) ApiResponse {
+	if message != "" {
+		return Response(http.StatusUnauthorized, "Unauthorized", message)
+	}
+	return Response(http.StatusUnauthorized, "Unauthorized", nil)
 }
