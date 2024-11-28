@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"Dzaakk/simple-commerce/package/response"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,13 +19,8 @@ func CheckPasswordHash(password, hash string) bool {
 
 func AuthorizedChecker(ctx *gin.Context, customerId string) {
 	currentId, exists := ctx.Get("customerId")
-	if !exists {
-		ctx.JSON(http.StatusUnauthorized, Response(http.StatusUnauthorized, "Unauthorized", "User not authorized"))
-		ctx.Abort()
-		return
-	}
-	if currentId != customerId {
-		ctx.JSON(http.StatusInternalServerError, Response(http.StatusInternalServerError, "Internal Server Error", "Internal Server Error"))
+	if !exists || currentId != customerId {
+		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(nil))
 		ctx.Abort()
 		return
 	}
