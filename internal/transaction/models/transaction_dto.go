@@ -1,8 +1,8 @@
 package models
 
 type TransactionReq struct {
-	CustomerId string `json:"customerId"`
-	CartId     string `json:"cartId"`
+	CustomerId string `json:"customerId" validate:"required,min=1,numeric"`
+	CartId     string `json:"cartId" validate:"required,min=1,numeric"`
 }
 type TransactionRes struct {
 	CustomerId       string        `json:"customerId"`
