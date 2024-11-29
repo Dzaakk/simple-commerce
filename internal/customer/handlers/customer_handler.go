@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type CustomerHandler struct {
@@ -22,7 +21,7 @@ func NewCustomerHandler(usecase usecase.CustomerUseCase) *CustomerHandler {
 	}
 }
 
-func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) {
+func (handler *CustomerHandler) Login(ctx *gin.Context) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
@@ -39,7 +38,7 @@ func (handler *CustomerHandler) Login(ctx *gin.Context, redis *redis.Client) {
 		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
 		return
 	}
-
+	// cache token
 	// _, err = auth.NewTokenGenerator(db.Redis(), *data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
