@@ -1,10 +1,10 @@
 package models
 
 type CustomerReq struct {
-	Username    string `json:"username"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phoneNumber"`
-	Password    string `json:"password"`
+	Username    string `json:"username" validate:"required"`
+	Email       string `json:"email" validate:"required,email"`
+	PhoneNumber string `json:"phoneNumber" validate:"required"`
+	Password    string `json:"password" validate:"required"`
 }
 
 type CustomerRes struct {
@@ -16,9 +16,9 @@ type CustomerRes struct {
 }
 
 type BalanceUpdateReq struct {
-	Id         string `json:"id"`
-	ActionType string `json:"actionType"`
-	Balance    string `json:"balance"`
+	Id         string `json:"id" validate:"required,numeric,min=1"`
+	ActionType string `json:"actionType" validate:"required"`
+	Balance    string `json:"balance" validate:"required"`
 }
 type BalanceUpdateRes struct {
 	BalanceOld CustomerBalance `json:"oldData"`
@@ -26,6 +26,6 @@ type BalanceUpdateRes struct {
 }
 
 type LoginReq struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }

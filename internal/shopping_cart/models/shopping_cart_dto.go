@@ -2,15 +2,15 @@ package models
 
 // request
 type ShoppingCartReq struct {
-	Id         string `json:"id,omitempty"`
-	CustomerId string `json:"customerId,omitempty"`
-	ProductId  string `json:"productId,omitempty"`
-	Quantity   string `json:"quantity,omitempty"`
+	Id         string `json:"id" validate:"required,min=1,numeric"`
+	CustomerId string `json:"customerId" validate:"required,min=1,numeric"`
+	ProductId  string `json:"productId" validate:"required,min=1,numeric"`
+	Quantity   string `json:"quantity" validate:"required,min=1,numeric"`
 }
 type DeleteReq struct {
-	CustomerId string `json:"customerId,omitempty"`
-	CartId     string `json:"cartId,omitempty"`
-	ProductId  string `json:"productId,omitempty"`
+	CustomerId string `json:"customerId" validate:"required,min=1,numeric"`
+	ProductId  string `json:"productId" validate:"required,min=1,numeric"`
+	CartId     string `json:"cartId" validate:"required,min=1,numeric"`
 }
 
 // response
