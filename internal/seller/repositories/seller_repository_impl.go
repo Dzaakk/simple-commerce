@@ -3,6 +3,7 @@ package repositories
 import (
 	"Dzaakk/simple-commerce/internal/seller/models"
 	"database/sql"
+	"time"
 )
 
 type SellerRepositoryImpl struct {
@@ -22,22 +23,32 @@ const (
 	queryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$3"
 )
 
-// Create implements SellerRepository.
-func (s *SellerRepositoryImpl) Create(models.SellerReq) error {
+func (repo *SellerRepositoryImpl) Create(data models.SellerReq) error {
+	statement, err := repo.DB.Prepare(queryCreateSeller)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(data.Name, data.Email, data.Password, 0, time.Now(), "SYSTEM")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Update implements SellerRepository.
+func (repo *SellerRepositoryImpl) Update(data models.SellerReq) error {
 	panic("unimplemented")
 }
 
 // FindById implements SellerRepository.
-func (s *SellerRepositoryImpl) FindById(sellerId int64) (*models.TSeller, error) {
+func (repo *SellerRepositoryImpl) FindById(sellerId int64) (*models.TSeller, error) {
 	panic("unimplemented")
 }
 
 // InsertBalance implements SellerRepository.
-func (s *SellerRepositoryImpl) InsertBalance(sellerId int64, balance int64) error {
-	panic("unimplemented")
-}
-
-// Update implements SellerRepository.
-func (s *SellerRepositoryImpl) Update(models.SellerReq) error {
+func (repo *SellerRepositoryImpl) InsertBalance(sellerId int64, balance int64) error {
 	panic("unimplemented")
 }
