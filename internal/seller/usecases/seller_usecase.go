@@ -5,4 +5,5 @@ type SellerUseCase interface {
 	Update()
 	FindById()
 	FindByName()
+	Deactivate()
 }
