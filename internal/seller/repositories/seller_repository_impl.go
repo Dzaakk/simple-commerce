@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"Dzaakk/simple-commerce/internal/seller/models"
+	model "Dzaakk/simple-commerce/internal/seller/models"
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -53,12 +55,39 @@ func (repo *SellerRepositoryImpl) Update(data models.SellerReq) error {
 	return nil
 }
 
-// FindById implements SellerRepository.
 func (repo *SellerRepositoryImpl) FindById(sellerId int64) (*models.TSeller, error) {
-	panic("unimplemented")
+	rows, err := repo.DB.Query(queryFindById, sellerId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	data, err := retrieveData(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 // InsertBalance implements SellerRepository.
 func (repo *SellerRepositoryImpl) InsertBalance(sellerId int64, balance int64) error {
 	panic("unimplemented")
+}
+
+func rowsToData(rows *sql.Rows) (*model.TSeller, error) {
+	s := model.TSeller{}
+
+	err := rows.Scan(&s.Id, &s.Name, &s.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	return &s, nil
+}
+func retrieveData(rows *sql.Rows) (*model.TSeller, error) {
+	if rows.Next() {
+		return rowsToData(rows)
+	}
+	return nil, errors.New("product not found")
 }
