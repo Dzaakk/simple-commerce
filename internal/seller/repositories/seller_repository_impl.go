@@ -70,9 +70,19 @@ func (repo *SellerRepositoryImpl) FindById(sellerId int64) (*models.TSeller, err
 	return data, nil
 }
 
-// InsertBalance implements SellerRepository.
 func (repo *SellerRepositoryImpl) InsertBalance(sellerId int64, balance int64) error {
-	panic("unimplemented")
+	statement, err := repo.DB.Prepare(queryUpdateBalance)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(sellerId, balance)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func rowsToData(rows *sql.Rows) (*model.TSeller, error) {
