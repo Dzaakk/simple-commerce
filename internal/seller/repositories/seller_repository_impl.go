@@ -22,7 +22,7 @@ const (
 	queryCreateSeller  = "INSERT INTO public.seller (name, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6)"
 	queryUpdateSeler   = "UPDATE public.seller SET name=$1, email=$2, password=$3, updated=NOW(), updated_by=$4 WHERE id=$5"
 	queryFindById      = "SELECT * FROM public.seller WHERE id = $1"
-	queryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$3"
+	queryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
 )
 
 func (repo *SellerRepositoryImpl) Create(data models.SellerReq) error {
@@ -77,7 +77,7 @@ func (repo *SellerRepositoryImpl) InsertBalance(sellerId int64, balance int64) e
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(sellerId, balance)
+	_, err = statement.Exec(balance, sellerId)
 	if err != nil {
 		return err
 	}
