@@ -17,3 +17,11 @@ func (m *MockCustomerRepository) Create(customer *model.TCustomers) (*int, error
 	}
 	return args.Get(0).(*int), args.Error(1)
 }
+
+func (m *MockCustomerRepository) FindById(id int) (*model.TCustomers, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.TCustomers), args.Error(1)
+}
