@@ -25,3 +25,11 @@ func (m *MockCustomerRepository) FindById(id int) (*model.TCustomers, error) {
 	}
 	return args.Get(0).(*model.TCustomers), args.Error(1)
 }
+
+func (m *MockCustomerRepository) UpdateBalance(id int, balance float64) (*float64, error) {
+	args := m.Called(id, balance)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*float64), args.Error(1)
+}

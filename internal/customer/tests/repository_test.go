@@ -17,7 +17,8 @@ var (
 		Password:    "password123",
 		Balance:     1000000.00,
 	}
-	expectedID int
+	expectedID      int
+	expectedBalance float64
 )
 
 func TestCreateCustomer(t *testing.T) {
@@ -53,20 +54,19 @@ func TestFindById(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-// func TestUpdateBalance(t *testing.T) {
-// 	repo := NewMockRepository()
+func TestUpdateBalance(t *testing.T) {
+	expectedID = 1
+	expectedBalance = 1500000
+	mockRepo.On("UpdateBalance", expectedID, expectedBalance).Return(&expectedBalance, nil)
 
-// 	_, _ = repo.Create(models.TCustomers{
-// 		Username: "user_test",
-// 		Email:    "test@gmail.com",
-// 		Balance:  125000.00,
-// 	})
-// 	updateBalance, err := repo.UpdateBalance(1, 125000.00)
+	updatedBalance, err := mockRepo.UpdateBalance(expectedID, expectedBalance)
 
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, updateBalance)
-// 	assert.Equal(t, float32(125000.00), *updateBalance, "Expected balance to be 125000.00")
-// }
+	assert.NoError(t, err)
+	assert.NotNil(t, updatedBalance)
+	assert.Equal(t, expectedBalance, &updatedBalance)
+
+	mockRepo.AssertExpectations(t)
+}
 
 // func TestGetBalance(t *testing.T) {
 // 	repo := NewMockRepository()
