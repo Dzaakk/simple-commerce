@@ -33,3 +33,11 @@ func (m *MockCustomerRepository) UpdateBalance(id int, balance float64) (*float6
 	}
 	return args.Get(0).(*float64), args.Error(1)
 }
+
+func (m *MockCustomerRepository) GetBalance(id int) (*model.CustomerBalance, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.CustomerBalance), args.Error(1)
+}

@@ -9,7 +9,7 @@ import (
 
 var (
 	mockRepo     = new(MockCustomerRepository)
-	CustomerMock = &models.TCustomers{
+	testCustomer = &models.TCustomers{
 		Id:          1,
 		Username:    "user_test",
 		Email:       "test@gmail.com",
@@ -17,71 +17,73 @@ var (
 		Password:    "password123",
 		Balance:     1000000.00,
 	}
-	expectedID      int
+	expectedCustomerBalance = &models.CustomerBalance{
+		Id:      1,
+		Balance: 100000,
+	}
+	testCustomerID  int
 	expectedBalance float64
 )
 
 func TestCreateCustomer(t *testing.T) {
-	expectedID = 1
+	testCustomerID = 1
 
-	mockRepo.On("Create", CustomerMock).Return(&expectedID, nil)
+	mockRepo.On("Create", testCustomer).Return(&testCustomerID, nil)
 
-	createdID, err := mockRepo.Create(CustomerMock)
+	createdID, err := mockRepo.Create(testCustomer)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, createdID)
-	assert.Equal(t, expectedID, *createdID)
+	assert.Equal(t, testCustomerID, *createdID)
 
 	mockRepo.AssertExpectations(t)
 }
 
 func TestFindById(t *testing.T) {
-	expectedID = 1
+	testCustomerID = 1
 
-	mockRepo.On("FindById", expectedID).Return(CustomerMock, nil)
+	mockRepo.On("FindById", testCustomerID).Return(testCustomer, nil)
 
-	foundCustomer, err := mockRepo.FindById(expectedID)
+	foundCustomer, err := mockRepo.FindById(testCustomerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, foundCustomer)
 
-	assert.Equal(t, CustomerMock.Username, foundCustomer.Username)
-	assert.Equal(t, CustomerMock.Email, foundCustomer.Email)
-	assert.Equal(t, CustomerMock.PhoneNumber, foundCustomer.PhoneNumber)
-	assert.Equal(t, CustomerMock.Balance, foundCustomer.Balance)
+	assert.Equal(t, testCustomer.Username, foundCustomer.Username)
+	assert.Equal(t, testCustomer.Email, foundCustomer.Email)
+	assert.Equal(t, testCustomer.PhoneNumber, foundCustomer.PhoneNumber)
+	assert.Equal(t, testCustomer.Balance, foundCustomer.Balance)
 
-	// Verify that the expected method was called
 	mockRepo.AssertExpectations(t)
 }
 
 func TestUpdateBalance(t *testing.T) {
-	expectedID = 1
+	testCustomerID = 1
 	expectedBalance = 1500000
-	mockRepo.On("UpdateBalance", expectedID, expectedBalance).Return(&expectedBalance, nil)
+	mockRepo.On("UpdateBalance", testCustomerID, expectedBalance).Return(&expectedBalance, nil)
 
-	updatedBalance, err := mockRepo.UpdateBalance(expectedID, expectedBalance)
+	updatedBalance, err := mockRepo.UpdateBalance(testCustomerID, expectedBalance)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, updatedBalance)
-	assert.Equal(t, expectedBalance, &updatedBalance)
+	assert.Equal(t, &expectedBalance, updatedBalance)
 
 	mockRepo.AssertExpectations(t)
 }
+func TestGetBalance(t *testing.T) {
+	testCustomerID = 1
+	mockRepo.On("GetBalance", testCustomerID).Return(expectedCustomerBalance, nil)
 
-// func TestGetBalance(t *testing.T) {
-// 	repo := NewMockRepository()
+	actualCustomerBalance, err := mockRepo.GetBalance(testCustomerID)
 
-// 	_, _ = repo.Create(models.TCustomers{
-// 		Username: "user_test",
-// 		Email:    "test@gmail.com",
-// 		Balance:  125000,
-// 	})
-// 	customer, err := repo.GetBalance(1)
+	assert.NoError(t, err)
+	assert.NotNil(t, actualCustomerBalance)
 
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, customer)
-// 	assert.Equal(t, float32(125000), customer.Balance, "Expected balance to be 125000.00")
-// }
+	assert.Equal(t, expectedCustomerBalance.Id, actualCustomerBalance.Id)
+	assert.Equal(t, expectedCustomerBalance.Balance, actualCustomerBalance.Balance)
+
+	mockRepo.AssertExpectations(t)
+}
 
 // func TestFindByEmail(t *testing.T) {
 // 	repo := NewMockRepository()
