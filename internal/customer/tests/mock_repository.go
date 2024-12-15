@@ -41,3 +41,12 @@ func (m *MockCustomerRepository) GetBalance(id int) (*model.CustomerBalance, err
 	}
 	return args.Get(0).(*model.CustomerBalance), args.Error(1)
 }
+
+func (m *MockCustomerRepository) FindByEmail(email string) (*model.TCustomers, error) {
+	args := m.Called(email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*model.TCustomers), args.Error(1)
+}

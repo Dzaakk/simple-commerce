@@ -21,8 +21,9 @@ var (
 		Id:      1,
 		Balance: 100000,
 	}
-	testCustomerID  int
-	expectedBalance float64
+	testCustomerID    int
+	testCustomerEmail string
+	expectedBalance   float64
 )
 
 func TestCreateCustomer(t *testing.T) {
@@ -81,6 +82,23 @@ func TestGetBalance(t *testing.T) {
 
 	assert.Equal(t, expectedCustomerBalance.Id, actualCustomerBalance.Id)
 	assert.Equal(t, expectedCustomerBalance.Balance, actualCustomerBalance.Balance)
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestFindByEmail(t *testing.T) {
+	testCustomerEmail = "test@gmail.com"
+	mockRepo.On("FindByEmail", testCustomerEmail).Return(testCustomer, nil)
+
+	foundCustomer, err := mockRepo.FindByEmail(testCustomerEmail)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, foundCustomer)
+
+	assert.Equal(t, testCustomer.Username, foundCustomer.Username)
+	assert.Equal(t, testCustomer.Email, foundCustomer.Email)
+	assert.Equal(t, testCustomer.PhoneNumber, foundCustomer.PhoneNumber)
+	assert.Equal(t, testCustomer.Balance, foundCustomer.Balance)
 
 	mockRepo.AssertExpectations(t)
 }
