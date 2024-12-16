@@ -47,8 +47,22 @@ func (p *ProductUseCaseImpl) FilterByPrice(price int) ([]*model.ProductRes, erro
 	panic("unimplemented")
 }
 
-func (p *ProductUseCaseImpl) Update(dataReq model.TProduct) error {
-	err := p.repo.Update(dataReq)
+func (p *ProductUseCaseImpl) Update(dataReq model.ProductReq) error {
+	price, _ := strconv.ParseFloat(dataReq.Price, 32)
+	sellerId, _ := strconv.ParseInt(dataReq.SellerId, 0, 64)
+	id, _ := strconv.ParseInt(dataReq.Id, 0, 64)
+	categoryId, _ := strconv.ParseInt(dataReq.CategoryId, 0, 0)
+	stock, _ := strconv.ParseInt(dataReq.Stock, 0, 0)
+	updatedProduct := model.TProduct{
+		Id:          int(id),
+		ProductName: dataReq.ProductName,
+		Price:       float32(price),
+		Stock:       int(stock),
+		CategoryId:  int(categoryId),
+		SellerId:    int(sellerId),
+	}
+
+	err := p.repo.Update(updatedProduct)
 	if err != nil {
 		return err
 	}
