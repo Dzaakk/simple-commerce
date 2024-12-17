@@ -17,7 +17,7 @@ var (
 		CategoryId:  3,
 		SellerId:    1,
 	}
-	// testProductID int
+	testProductID int
 )
 
 func TestCreateProduct(t *testing.T) {
@@ -34,6 +34,26 @@ func TestCreateProduct(t *testing.T) {
 	assert.Equal(t, testProduct.Stock, createdProduct.Stock)
 	assert.Equal(t, testProduct.CategoryId, createdProduct.CategoryId)
 	assert.Equal(t, testProduct.SellerId, createdProduct.SellerId)
-	mockRepo.AssertExpectations(t)
 
+	mockRepo.AssertExpectations(t)
+}
+
+func TestFindByCategoryId(t *testing.T) {
+	testProductID = 1
+
+	mockRepo.On("FindById", testProductID).Return(&testProduct, nil)
+
+	foundProduct, err := mockRepo.FindById(testProductID)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, foundProduct)
+
+	assert.Equal(t, testProduct.Id, foundProduct.Id)
+	assert.Equal(t, testProduct.ProductName, foundProduct.ProductName)
+	assert.Equal(t, testProduct.Price, foundProduct.Price)
+	assert.Equal(t, testProduct.Stock, foundProduct.Stock)
+	assert.Equal(t, testProduct.CategoryId, foundProduct.CategoryId)
+	assert.Equal(t, testProduct.SellerId, foundProduct.SellerId)
+
+	mockRepo.AssertExpectations(t)
 }

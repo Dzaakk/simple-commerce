@@ -18,3 +18,12 @@ func (m *MockProductRepository) Create(product model.TProduct) (*model.TProduct,
 
 	return args.Get(0).(*model.TProduct), args.Error(1)
 }
+
+func (m *MockProductRepository) FindById(id int) (*model.TProduct, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*model.TProduct), args.Error(1)
+}
