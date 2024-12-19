@@ -34,11 +34,12 @@ func JWTMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 
 		ctxRedis := context.Background()
 		customerId, err := redisClient.Get(ctxRedis, tokenKey).Result()
-		if err == redis.Nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Session Expired"})
-			ctx.Abort()
-			return
-		} else if err != nil {
+		if err != nil {
+			if err == redis.Nil {
+				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Session Expired"})
+				ctx.Abort()
+				return
+			}
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			ctx.Abort()
 			return
@@ -48,14 +49,12 @@ func JWTMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
+			if err != nil {
+				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+				ctx.Abort()
+			}
 			return jwtSecret, nil
 		})
-
-		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			ctx.Abort()
-			return
-		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			if exp, ok := claims["exp"].(float64); ok {
