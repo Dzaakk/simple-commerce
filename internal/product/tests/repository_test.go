@@ -17,9 +17,19 @@ var (
 		CategoryId:  3,
 		SellerId:    1,
 	}
-	testProductID   int
-	testProductName string
+	testProductID       int
+	testProductName     string
+	testProductSellerID int
 )
+
+func assertProductEquality(t *testing.T, expected, actual *model.TProduct) {
+	assert.Equal(t, expected.Id, actual.Id)
+	assert.Equal(t, expected.ProductName, actual.ProductName)
+	assert.Equal(t, expected.Price, actual.Price)
+	assert.Equal(t, expected.Stock, actual.Stock)
+	assert.Equal(t, expected.CategoryId, actual.CategoryId)
+	assert.Equal(t, expected.SellerId, actual.SellerId)
+}
 
 func TestCreateProduct(t *testing.T) {
 	mockRepo.On("Create", testProduct).Return(&testProduct, nil)
@@ -28,14 +38,7 @@ func TestCreateProduct(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, createdProduct)
-
-	assert.Equal(t, testProduct.Id, createdProduct.Id)
-	assert.Equal(t, testProduct.ProductName, createdProduct.ProductName)
-	assert.Equal(t, testProduct.Price, createdProduct.Price)
-	assert.Equal(t, testProduct.Stock, createdProduct.Stock)
-	assert.Equal(t, testProduct.CategoryId, createdProduct.CategoryId)
-	assert.Equal(t, testProduct.SellerId, createdProduct.SellerId)
-
+	assertProductEquality(t, &testProduct, createdProduct)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -49,15 +52,11 @@ func TestFindByCategoryId(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, foundProduct)
 
-	assert.Equal(t, testProduct.Id, foundProduct.Id)
-	assert.Equal(t, testProduct.ProductName, foundProduct.ProductName)
-	assert.Equal(t, testProduct.Price, foundProduct.Price)
-	assert.Equal(t, testProduct.Stock, foundProduct.Stock)
-	assert.Equal(t, testProduct.CategoryId, foundProduct.CategoryId)
-	assert.Equal(t, testProduct.SellerId, foundProduct.SellerId)
+	assertProductEquality(t, &testProduct, foundProduct)
 
 	mockRepo.AssertExpectations(t)
 }
+
 func TestFindByName(t *testing.T) {
 	testProductName = "Monitor"
 	mockRepo.On("FindByName", testProductName).Return(&testProduct, nil)
@@ -67,12 +66,21 @@ func TestFindByName(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, foundProduct)
 
-	assert.Equal(t, testProduct.Id, foundProduct.Id)
-	assert.Equal(t, testProduct.ProductName, foundProduct.ProductName)
-	assert.Equal(t, testProduct.Price, foundProduct.Price)
-	assert.Equal(t, testProduct.Stock, foundProduct.Stock)
-	assert.Equal(t, testProduct.CategoryId, foundProduct.CategoryId)
-	assert.Equal(t, testProduct.SellerId, foundProduct.SellerId)
+	assertProductEquality(t, &testProduct, foundProduct)
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestFindBySellerId(t *testing.T) {
+	testProductSellerID = 1
+	mockRepo.On("FindBySellerId", testProductSellerID).Return(&testProduct, nil)
+
+	foundProduct, err := mockRepo.FindBySellerId(testProductSellerID)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, foundProduct)
+
+	assertProductEquality(t, &testProduct, foundProduct)
 
 	mockRepo.AssertExpectations(t)
 }
