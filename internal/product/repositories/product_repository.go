@@ -8,7 +8,7 @@ import (
 
 type ProductRepository interface {
 	Create(data model.TProduct) (*model.TProduct, error)
-	Update(data model.TProduct) error
+	Update(data model.TProduct) (int64, error)
 	FindByCategoryId(categoryId int) ([]*model.TProduct, error)
 	FindById(id int) (*model.TProduct, error)
 	FindByName(name string) (*model.TProduct, error)

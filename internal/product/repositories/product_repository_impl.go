@@ -58,19 +58,21 @@ func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.TProduct,
 	return &data, nil
 }
 
-func (repo *ProductRepositoryImpl) Update(data model.TProduct) error {
+func (repo *ProductRepositoryImpl) Update(data model.TProduct) (int64, error) {
 	statement, err := repo.DB.Prepare(queryUpdate)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.Id)
+	result, err := statement.Exec(data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.Id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	rowsAffected, _ := result.RowsAffected()
+
+	return rowsAffected, nil
 }
 
 func (repo *ProductRepositoryImpl) FindBySellerId(sellerId int) ([]*model.TProduct, error) {
