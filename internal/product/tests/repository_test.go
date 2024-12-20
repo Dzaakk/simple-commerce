@@ -41,6 +41,17 @@ func TestCreateProduct(t *testing.T) {
 	assertProductEquality(t, &testProduct, createdProduct)
 	mockRepo.AssertExpectations(t)
 }
+func TestUpdateProduct(t *testing.T) {
+	testProduct.ProductName = "Laptop"
+
+	mockRepo.On("Update", testProduct).Return(int64(1), nil)
+
+	rowsAffected, err := mockRepo.Update(testProduct)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), rowsAffected)
+	mockRepo.AssertExpectations(t)
+}
 
 func TestFindByCategoryId(t *testing.T) {
 	testProductID = 1
