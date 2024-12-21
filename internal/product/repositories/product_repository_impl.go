@@ -32,14 +32,6 @@ const (
 	querySetStockById     = `UPDATE public.product SET stock = $1 WHERE id = $2`
 )
 
-func (repo *ProductRepositoryImpl) SetStockById(id int, stock int) error {
-	_, err := repo.DB.Exec(querySetStockById, stock, id)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.TProduct, error) {
 	statement, err := repo.DB.Prepare(queryCreateProduct)
 	if err != nil {
@@ -59,13 +51,14 @@ func (repo *ProductRepositoryImpl) Create(data model.TProduct) (*model.TProduct,
 }
 
 func (repo *ProductRepositoryImpl) Update(data model.TProduct) (int64, error) {
-	statement, err := repo.DB.Prepare(queryUpdate)
-	if err != nil {
-		return 0, err
-	}
-	defer statement.Close()
+	result, err := repo.DB.Exec(
+		queryUpdate,
+		data.ProductName,
+		data.Price,
+		data.Stock,
+		data.UpdatedBy,
+		data.Id)
 
-	result, err := statement.Exec(data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.Id)
 	if err != nil {
 		return 0, err
 	}
@@ -156,6 +149,15 @@ func (repo *ProductRepositoryImpl) GetStockById(id int) (int, error) {
 	}
 
 	return stock, nil
+}
+
+func (repo *ProductRepositoryImpl) SetStockById(id int, stock int) (int64, error) {
+	result, err := repo.DB.Exec(querySetStockById, stock, id)
+	if err != nil {
+		return 0, err
+	}
+	rowsAffected, _ := result.RowsAffected()
+	return rowsAffected, nil
 }
 
 func (repo *ProductRepositoryImpl) FindByName(name string) (*model.TProduct, error) {
