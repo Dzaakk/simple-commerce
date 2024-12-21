@@ -2,6 +2,7 @@ package tests
 
 import (
 	model "Dzaakk/simple-commerce/internal/product/models"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,15 +43,30 @@ func TestCreateProduct(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 func TestUpdateProduct(t *testing.T) {
-	testProduct.ProductName = "Laptop"
+	t.Run("Success", func(t *testing.T) {
+		testProduct.ProductName = "Laptop"
 
-	mockRepo.On("Update", testProduct).Return(int64(1), nil)
+		mockRepo.On("Update", testProduct).Return(int64(1), nil)
 
-	rowsAffected, err := mockRepo.Update(testProduct)
+		rowsAffected, err := mockRepo.Update(testProduct)
 
-	assert.NoError(t, err)
-	assert.Equal(t, int64(1), rowsAffected)
-	mockRepo.AssertExpectations(t)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), rowsAffected)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Failed", func(t *testing.T) {
+		testProduct.Id = 2
+		expectedErr := errors.New("failed to update product")
+		mockRepo.On("Update", testProduct).Return(int64(0), expectedErr)
+
+		rowsAffected, err := mockRepo.Update(testProduct)
+
+		assert.Error(t, err)
+		assert.Equal(t, expectedErr, err)
+		assert.Equal(t, int64(0), rowsAffected)
+		mockRepo.AssertExpectations(t)
+	})
 }
 
 func TestFindByCategoryId(t *testing.T) {
