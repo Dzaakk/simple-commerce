@@ -21,6 +21,8 @@ var (
 	testProductID       int
 	testProductName     string
 	testProductSellerID int
+	testProductStock    int
+	expectedError       error
 )
 
 func assertProductEquality(t *testing.T, expected, actual *model.TProduct) {
@@ -57,18 +59,17 @@ func TestUpdateProduct(t *testing.T) {
 
 	t.Run("Failed", func(t *testing.T) {
 		testProduct.Id = 2
-		expectedErr := errors.New("failed to update product")
-		mockRepo.On("Update", testProduct).Return(int64(0), expectedErr)
+		expectedError = errors.New("failed to update product")
+		mockRepo.On("Update", testProduct).Return(int64(0), expectedError)
 
 		rowsAffected, err := mockRepo.Update(testProduct)
 
 		assert.Error(t, err)
-		assert.Equal(t, expectedErr, err)
+		assert.Equal(t, expectedError, err)
 		assert.Equal(t, int64(0), rowsAffected)
 		mockRepo.AssertExpectations(t)
 	})
 }
-
 func TestFindByCategoryId(t *testing.T) {
 	testProductID = 1
 
@@ -83,7 +84,6 @@ func TestFindByCategoryId(t *testing.T) {
 
 	mockRepo.AssertExpectations(t)
 }
-
 func TestFindByName(t *testing.T) {
 	testProductName = "Monitor"
 	mockRepo.On("FindByName", testProductName).Return(&testProduct, nil)
@@ -97,7 +97,6 @@ func TestFindByName(t *testing.T) {
 
 	mockRepo.AssertExpectations(t)
 }
-
 func TestFindBySellerId(t *testing.T) {
 	testProductSellerID = 1
 	mockRepo.On("FindBySellerId", testProductSellerID).Return(&testProduct, nil)
@@ -110,4 +109,30 @@ func TestFindBySellerId(t *testing.T) {
 	assertProductEquality(t, &testProduct, foundProduct)
 
 	mockRepo.AssertExpectations(t)
+}
+func TestSetStockById(t *testing.T) {
+	testProductStock = 10
+	t.Run("Success", func(t *testing.T) {
+		testProductID = 1
+
+		mockRepo.On("SetStockById", testProductID, testProductStock).Return(int64(1), nil)
+
+		rowsAffected, err := mockRepo.SetStockById(testProductID, testProductStock)
+
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), rowsAffected)
+		mockRepo.AssertExpectations(t)
+	})
+	t.Run("Failed", func(t *testing.T) {
+		testProductID = 2
+		expectedError = errors.New("failed to update stock product")
+		mockRepo.On("SetStockById", testProductID, testProductStock).Return(int64(0), expectedError)
+
+		rowsAffected, err := mockRepo.SetStockById(testProductID, testProductStock)
+
+		assert.Error(t, err)
+		assert.Equal(t, expectedError, err)
+		assert.Equal(t, int64(0), rowsAffected)
+		mockRepo.AssertExpectations(t)
+	})
 }

@@ -22,6 +22,10 @@ func (m *MockProductRepository) Update(product model.TProduct) (int64, error) {
 	args := m.Called(product)
 	return args.Get(0).(int64), args.Error(1)
 }
+func (m *MockProductRepository) SetStockById(id, stock int) (int64, error) {
+	args := m.Called(id, stock)
+	return args.Get(0).(int64), args.Error(1)
+}
 func (m *MockProductRepository) FindById(id int) (*model.TProduct, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
