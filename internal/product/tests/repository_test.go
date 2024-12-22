@@ -18,11 +18,24 @@ var (
 		CategoryId:  3,
 		SellerId:    1,
 	}
-	testProductID       int
-	testProductName     string
-	testProductSellerID int
-	testProductStock    int
-	expectedError       error
+	testProduct2 = model.TProduct{
+		Id:          2,
+		ProductName: "Cooling Fan Ultra",
+		Price:       650000,
+		Stock:       20,
+		CategoryId:  3,
+		SellerId:    1,
+	}
+	testListProduct = []*model.TProduct{
+		&testProduct, &testProduct2,
+	}
+	emptyListProduct      = []*model.TProduct{}
+	testProductID         int
+	testProductCategoryID int
+	testProductName       string
+	testProductSellerID   int
+	testProductStock      int
+	expectedError         error
 )
 
 func assertProductEquality(t *testing.T, expected, actual *model.TProduct) {
@@ -71,18 +84,34 @@ func TestUpdateProduct(t *testing.T) {
 	})
 }
 func TestFindByCategoryId(t *testing.T) {
-	testProductID = 1
+	t.Run("Success", func(t *testing.T) {
+		testProductCategoryID = 3
+		mockRepo.On("FindByCategoryId", testProductCategoryID).Return(testListProduct, nil)
 
-	mockRepo.On("FindById", testProductID).Return(&testProduct, nil)
+		foundListProduct, err := mockRepo.FindByCategoryId(testProductCategoryID)
 
-	foundProduct, err := mockRepo.FindById(testProductID)
+		assert.NoError(t, err)
+		assert.NotNil(t, foundListProduct)
+		assert.Equal(t, len(testListProduct), len(foundListProduct))
 
-	assert.NoError(t, err)
-	assert.NotNil(t, foundProduct)
+		for i, expectedProduct := range testListProduct {
+			assertProductEquality(t, expectedProduct, foundListProduct[i])
+		}
 
-	assertProductEquality(t, &testProduct, foundProduct)
+		mockRepo.AssertExpectations(t)
+	})
 
-	mockRepo.AssertExpectations(t)
+	t.Run("NotFound", func(t *testing.T) {
+		testProductCategoryID = 99
+		mockRepo.On("FindByCategoryId", testProductCategoryID).Return(emptyListProduct, nil)
+
+		foundListProduct, err := mockRepo.FindByCategoryId(testProductCategoryID)
+
+		assert.NoError(t, err)
+		assert.Empty(t, foundListProduct)
+		mockRepo.AssertExpectations(t)
+	})
+
 }
 func TestFindByName(t *testing.T) {
 	testProductName = "Monitor"
