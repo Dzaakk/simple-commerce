@@ -25,14 +25,14 @@ const (
 	queryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
 )
 
-func (repo *SellerRepositoryImpl) Create(data models.SellerReq) error {
+func (repo *SellerRepositoryImpl) Create(data models.ReqCreate) error {
 	statement, err := repo.DB.Prepare(queryCreateSeller)
 	if err != nil {
 		return err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(data.Name, data.Email, data.Password, 0, time.Now(), "SYSTEM")
+	_, err = statement.Exec(data.Username, data.Email, data.Password, 0, time.Now(), "SYSTEM")
 	if err != nil {
 		return err
 	}
@@ -40,19 +40,19 @@ func (repo *SellerRepositoryImpl) Create(data models.SellerReq) error {
 	return nil
 }
 
-func (repo *SellerRepositoryImpl) Update(data models.SellerReq) error {
+func (repo *SellerRepositoryImpl) Update(data models.ReqUpdate) (int64, error) {
 	statement, err := repo.DB.Prepare(queryUpdateSeler)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(data.Name, data.Email, data.Password, time.Now(), data.Name)
+	result, err := statement.Exec(data.Username, data.Email, data.Password, time.Now(), data.Username)
 	if err != nil {
-		return err
+		return 0, err
 	}
-
-	return nil
+	rowsAffected, _ := result.RowsAffected()
+	return rowsAffected, nil
 }
 
 func (repo *SellerRepositoryImpl) FindById(sellerId int64) (*models.TSeller, error) {
@@ -85,10 +85,14 @@ func (repo *SellerRepositoryImpl) InsertBalance(sellerId int64, balance int64) e
 	return nil
 }
 
+func (repo *SellerRepositoryImpl) FindByUsername(username int64) (*model.TSeller, error) {
+	panic("unimplemented")
+}
+
 func rowsToData(rows *sql.Rows) (*model.TSeller, error) {
 	s := model.TSeller{}
 
-	err := rows.Scan(&s.Id, &s.Name, &s.Email)
+	err := rows.Scan(&s.Id, &s.Username, &s.Email)
 	if err != nil {
 		return nil, err
 	}
