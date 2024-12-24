@@ -88,7 +88,7 @@ CREATE TABLE public.history_transaction(
 );
 CREATE TABLE seller (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
     balance NUMERIC(10,2) DEFAULT 0.00,
