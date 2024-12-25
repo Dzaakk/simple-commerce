@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"Dzaakk/simple-commerce/internal/seller/models"
 	model "Dzaakk/simple-commerce/internal/seller/models"
 	"database/sql"
 	"errors"
@@ -25,7 +24,7 @@ const (
 	queryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
 )
 
-func (repo *SellerRepositoryImpl) Create(data models.ReqCreate) error {
+func (repo *SellerRepositoryImpl) Create(data model.TSeller) error {
 	statement, err := repo.DB.Prepare(queryCreateSeller)
 	if err != nil {
 		return err
@@ -40,7 +39,7 @@ func (repo *SellerRepositoryImpl) Create(data models.ReqCreate) error {
 	return nil
 }
 
-func (repo *SellerRepositoryImpl) Update(data models.ReqUpdate) (int64, error) {
+func (repo *SellerRepositoryImpl) Update(data model.TSeller) (int64, error) {
 	statement, err := repo.DB.Prepare(queryUpdateSeler)
 	if err != nil {
 		return 0, err
@@ -55,7 +54,7 @@ func (repo *SellerRepositoryImpl) Update(data models.ReqUpdate) (int64, error) {
 	return rowsAffected, nil
 }
 
-func (repo *SellerRepositoryImpl) FindById(sellerId int64) (*models.TSeller, error) {
+func (repo *SellerRepositoryImpl) FindById(sellerId int64) (*model.TSeller, error) {
 	rows, err := repo.DB.Query(queryFindById, sellerId)
 	if err != nil {
 		return nil, err
