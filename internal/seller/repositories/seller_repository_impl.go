@@ -18,25 +18,26 @@ func NewProductRepository(db *sql.DB) SellerRepository {
 }
 
 const (
-	queryCreateSeller  = "INSERT INTO public.seller (name, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6)"
+	queryCreateSeller  = "INSERT INTO public.seller (name, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
 	queryUpdateSeler   = "UPDATE public.seller SET name=$1, email=$2, password=$3, updated=NOW(), updated_by=$4 WHERE id=$5"
 	queryFindById      = "SELECT * FROM public.seller WHERE id = $1"
 	queryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
 )
 
-func (repo *SellerRepositoryImpl) Create(data model.TSeller) error {
+func (repo *SellerRepositoryImpl) Create(data model.TSeller) (int64, error) {
 	statement, err := repo.DB.Prepare(queryCreateSeller)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(data.Username, data.Email, data.Password, 0, time.Now(), "SYSTEM")
+	var id int64
+	err = statement.QueryRow(data.Username, data.Email, data.Password, 0, time.Now(), "SYSTEM").Scan(id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return id, nil
 }
 
 func (repo *SellerRepositoryImpl) Update(data model.TSeller) (int64, error) {
