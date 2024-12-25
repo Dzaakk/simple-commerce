@@ -15,10 +15,10 @@ func NewSellerUseCase(repo repo.SellerRepository) SellerUseCase {
 	return &SellerUseCaseImpl{repo}
 }
 
-func (s *SellerUseCaseImpl) Create(data model.SellerReq) (*model.TSeller, error) {
+func (s *SellerUseCaseImpl) Create(data model.ReqCreate) (int64, error) {
 	hashedPassword, err := template.HashPassword(data.Password)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	seller := model.TSeller{
@@ -32,8 +32,9 @@ func (s *SellerUseCaseImpl) Create(data model.SellerReq) (*model.TSeller, error)
 		},
 	}
 
-	sellerId, err := 
-	
+	sellerId, err := s.repo.Create(seller)
+
+	return sellerId, nil
 }
 
 // Deactivate implements SellerUseCase.
@@ -42,16 +43,16 @@ func (s *SellerUseCaseImpl) Deactivate(sellerId int) (int64, error) {
 }
 
 // FindById implements SellerUseCase.
-func (s *SellerUseCaseImpl) FindById(sellerId int) (*model.TSeller, error) {
+func (s *SellerUseCaseImpl) FindById(sellerId int) (*model.ResData, error) {
 	panic("unimplemented")
 }
 
 // FindByUsername implements SellerUseCase.
-func (s *SellerUseCaseImpl) FindByUsername(username string) (*model.TSeller, error) {
+func (s *SellerUseCaseImpl) FindByUsername(username string) (*model.ResData, error) {
 	panic("unimplemented")
 }
 
 // Update implements SellerUseCase.
-func (s *SellerUseCaseImpl) Update(data model.TSeller) (int64, error) {
+func (s *SellerUseCaseImpl) Update(data model.ReqUpdate) (int64, error) {
 	panic("unimplemented")
 }
