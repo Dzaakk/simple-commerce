@@ -2,6 +2,7 @@ package repositories
 
 import (
 	model "Dzaakk/simple-commerce/internal/seller/models"
+	// template "Dzaakk/simple-commerce/package/templates"
 	"database/sql"
 	"errors"
 	"time"
@@ -18,10 +19,11 @@ func NewProductRepository(db *sql.DB) SellerRepository {
 }
 
 const (
-	queryCreateSeller  = "INSERT INTO public.seller (name, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-	queryUpdateSeler   = "UPDATE public.seller SET name=$1, email=$2, password=$3, updated=NOW(), updated_by=$4 WHERE id=$5"
-	queryFindById      = "SELECT * FROM public.seller WHERE id = $1"
-	queryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
+	queryCreateSeller   = "INSERT INTO public.seller (name, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+	queryUpdateSeler    = "UPDATE public.seller SET name=$1, email=$2, password=$3, updated=NOW(), updated_by=$4 WHERE id=$5"
+	queryFindById       = "SELECT * FROM public.seller WHERE id = $1"
+	queryFindByUsername = "SELECT * FROM public.seller WHERE username = $1"
+	queryUpdateBalance  = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
 )
 
 func (repo *SellerRepositoryImpl) Create(data model.TSeller) (int64, error) {
@@ -85,14 +87,25 @@ func (repo *SellerRepositoryImpl) InsertBalance(sellerId int64, balance int64) e
 	return nil
 }
 
-func (repo *SellerRepositoryImpl) FindByUsername(username int64) (*model.TSeller, error) {
-	panic("unimplemented")
+func (repo *SellerRepositoryImpl) FindByUsername(username string) (*model.TSeller, error) {
+	rows, err := repo.DB.Query(queryFindByUsername, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	data, err := retrieveData(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func rowsToData(rows *sql.Rows) (*model.TSeller, error) {
 	s := model.TSeller{}
-
-	err := rows.Scan(&s.Id, &s.Username, &s.Email)
+	// b := template.Base{}
+	err := rows.Scan(&s.Id, &s.Username, &s.Email, &s.Balance, &s.Password, &s.Created, s.CreatedBy, s.Updated, s.UpdatedBy)
 	if err != nil {
 		return nil, err
 	}
