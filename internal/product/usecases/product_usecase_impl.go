@@ -62,7 +62,7 @@ func (p *ProductUseCaseImpl) Update(dataReq model.ProductReq) error {
 		SellerId:    int(sellerId),
 	}
 
-	err := p.repo.Update(updatedProduct)
+	_, err := p.repo.Update(updatedProduct)
 	if err != nil {
 		return err
 	}
