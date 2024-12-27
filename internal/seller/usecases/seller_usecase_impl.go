@@ -4,6 +4,7 @@ import (
 	model "Dzaakk/simple-commerce/internal/seller/models"
 	repo "Dzaakk/simple-commerce/internal/seller/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
+	"fmt"
 	"time"
 )
 
@@ -33,6 +34,9 @@ func (s *SellerUseCaseImpl) Create(data model.ReqCreate) (int64, error) {
 	}
 
 	sellerId, err := s.repo.Create(seller)
+	if err != nil {
+		return 0, err
+	}
 
 	return sellerId, nil
 }
@@ -42,9 +46,20 @@ func (s *SellerUseCaseImpl) Deactivate(sellerId int) (int64, error) {
 	panic("unimplemented")
 }
 
-// FindById implements SellerUseCase.
-func (s *SellerUseCaseImpl) FindById(sellerId int) (*model.ResData, error) {
-	panic("unimplemented")
+func (s *SellerUseCaseImpl) FindById(sellerId int64) (*model.ResData, error) {
+	sellerData, err := s.repo.FindById(sellerId)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &model.ResData{
+		Id:       fmt.Sprintf("%d", sellerData.Id),
+		Username: sellerData.Username,
+		Email:    sellerData.Email,
+		Balance:  fmt.Sprintf("%.2f", sellerData.Balance),
+	}
+
+	return res, nil
 }
 
 // FindByUsername implements SellerUseCase.
