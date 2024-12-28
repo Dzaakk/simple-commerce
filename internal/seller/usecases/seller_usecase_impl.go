@@ -62,9 +62,20 @@ func (s *SellerUseCaseImpl) FindById(sellerId int64) (*model.ResData, error) {
 	return res, nil
 }
 
-// FindByUsername implements SellerUseCase.
 func (s *SellerUseCaseImpl) FindByUsername(username string) (*model.ResData, error) {
-	panic("unimplemented")
+	sellerData, err := s.repo.FindByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &model.ResData{
+		Id:       fmt.Sprintf("%d", sellerData.Id),
+		Username: sellerData.Username,
+		Email:    sellerData.Email,
+		Balance:  fmt.Sprintf("%.2f", sellerData.Balance),
+	}
+
+	return res, nil
 }
 
 // Update implements SellerUseCase.
