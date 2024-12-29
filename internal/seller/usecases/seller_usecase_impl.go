@@ -42,7 +42,7 @@ func (s *SellerUseCaseImpl) Create(data model.ReqCreate) (int64, error) {
 }
 
 // Deactivate implements SellerUseCase.
-func (s *SellerUseCaseImpl) Deactivate(sellerId int) (int64, error) {
+func (s *SellerUseCaseImpl) Deactivate(sellerId int64) (int64, error) {
 	panic("unimplemented")
 }
 
@@ -80,5 +80,10 @@ func (s *SellerUseCaseImpl) FindByUsername(username string) (*model.ResData, err
 
 // Update implements SellerUseCase.
 func (s *SellerUseCaseImpl) Update(data model.ReqUpdate) (int64, error) {
+	panic("unimplemented")
+}
+
+// ChangePassword implements SellerUseCase.
+func (s *SellerUseCaseImpl) ChangePassword(sellerId int64, newPassword string) (int64, error) {
 	panic("unimplemented")
 }

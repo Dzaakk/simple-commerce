@@ -7,5 +7,6 @@ type SellerUseCase interface {
 	Update(data model.ReqUpdate) (int64, error)
 	FindById(sellerId int64) (*model.ResData, error)
 	FindByUsername(username string) (*model.ResData, error)
-	Deactivate(sellerId int) (int64, error)
+	Deactivate(sellerId int64) (int64, error)
+	ChangePassword(sellerId int64, newPassword string) (int64, error)
 }
