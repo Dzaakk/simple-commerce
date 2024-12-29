@@ -7,5 +7,6 @@ type SellerRepository interface {
 	FindById(sellerId int64) (*model.TSeller, error)
 	FindByUsername(username string) (*model.TSeller, error)
 	Update(data model.TSeller) (int64, error)
+	UpdatePassword(sellerId int64, newPassword string) (int64, error)
 	InsertBalance(sellerId, balance int64) error
 }

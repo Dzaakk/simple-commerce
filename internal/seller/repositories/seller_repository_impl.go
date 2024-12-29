@@ -19,15 +19,16 @@ func NewProductRepository(db *sql.DB) SellerRepository {
 }
 
 const (
-	queryCreateSeller   = "INSERT INTO public.seller (username, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-	queryUpdateSeler    = "UPDATE public.seller SET username=$1, email=$2, updated=NOW(), updated_by=$3 WHERE id=$4"
+	queryCreate         = "INSERT INTO public.seller (username, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+	queryUpdate         = "UPDATE public.seller SET username=$1, email=$2, updated=NOW(), updated_by=$3 WHERE id=$4"
+	queryUpdatePassword = "UPDATE public.seller set password=$1 WHERE id=$2"
 	queryFindById       = "SELECT * FROM public.seller WHERE id = $1"
 	queryFindByUsername = "SELECT * FROM public.seller WHERE username = $1"
 	queryUpdateBalance  = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
 )
 
 func (repo *SellerRepositoryImpl) Create(data model.TSeller) (int64, error) {
-	statement, err := repo.DB.Prepare(queryCreateSeller)
+	statement, err := repo.DB.Prepare(queryCreate)
 	if err != nil {
 		return 0, err
 	}
@@ -43,7 +44,7 @@ func (repo *SellerRepositoryImpl) Create(data model.TSeller) (int64, error) {
 }
 
 func (repo *SellerRepositoryImpl) Update(data model.TSeller) (int64, error) {
-	statement, err := repo.DB.Prepare(queryUpdateSeler)
+	statement, err := repo.DB.Prepare(queryUpdate)
 	if err != nil {
 		return 0, err
 	}
@@ -102,6 +103,21 @@ func (repo *SellerRepositoryImpl) FindByUsername(username string) (*model.TSelle
 	return data, nil
 }
 
+func (repo *SellerRepositoryImpl) UpdatePassword(sellerId int64, newPassword string) (int64, error) {
+	statement, err := repo.DB.Prepare(queryUpdatePassword)
+	if err != nil {
+		return 0, err
+	}
+	defer statement.Close()
+
+	result, err := statement.Exec(newPassword, sellerId)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	return rowsAffected, nil
+}
 func rowsToData(rows *sql.Rows) (*model.TSeller, error) {
 	s := model.TSeller{}
 	// b := template.Base{}
