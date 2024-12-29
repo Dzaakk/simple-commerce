@@ -19,8 +19,8 @@ func NewProductRepository(db *sql.DB) SellerRepository {
 }
 
 const (
-	queryCreateSeller   = "INSERT INTO public.seller (name, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-	queryUpdateSeler    = "UPDATE public.seller SET name=$1, email=$2, password=$3, updated=NOW(), updated_by=$4 WHERE id=$5"
+	queryCreateSeller   = "INSERT INTO public.seller (username, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+	queryUpdateSeler    = "UPDATE public.seller SET username=$1, email=$2, updated=NOW(), updated_by=$3 WHERE id=$4"
 	queryFindById       = "SELECT * FROM public.seller WHERE id = $1"
 	queryFindByUsername = "SELECT * FROM public.seller WHERE username = $1"
 	queryUpdateBalance  = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
@@ -49,7 +49,7 @@ func (repo *SellerRepositoryImpl) Update(data model.TSeller) (int64, error) {
 	}
 	defer statement.Close()
 
-	result, err := statement.Exec(data.Username, data.Email, data.Password, time.Now(), data.Username)
+	result, err := statement.Exec(data.Username, data.Email, time.Now(), data.Username)
 	if err != nil {
 		return 0, err
 	}
