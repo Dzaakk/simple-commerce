@@ -83,7 +83,16 @@ func (s *SellerUseCaseImpl) Update(data model.ReqUpdate) (int64, error) {
 	panic("unimplemented")
 }
 
-// ChangePassword implements SellerUseCase.
 func (s *SellerUseCaseImpl) ChangePassword(sellerId int64, newPassword string) (int64, error) {
-	panic("unimplemented")
+	hashedPassword, err := template.HashPassword(newPassword)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := s.repo.UpdatePassword(sellerId, string(hashedPassword))
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }
