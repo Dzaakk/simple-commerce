@@ -9,7 +9,6 @@ type ReqUpdate struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
-	Password string `json:"password"`
 }
 
 type ResCreate struct {
