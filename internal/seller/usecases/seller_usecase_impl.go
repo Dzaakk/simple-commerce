@@ -5,6 +5,7 @@ import (
 	repo "Dzaakk/simple-commerce/internal/seller/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -78,9 +79,42 @@ func (s *SellerUseCaseImpl) FindByUsername(username string) (*model.ResData, err
 	return res, nil
 }
 
-// Update implements SellerUseCase.
 func (s *SellerUseCaseImpl) Update(data model.ReqUpdate) (int64, error) {
-	panic("unimplemented")
+	sellerId, _ := strconv.ParseInt(data.Id, 0, 64)
+	existingData, err := s.repo.FindById(sellerId)
+	if err != nil {
+		return 0, err
+	}
+	updatedData := generateDataUpdate(*existingData, data)
+
+	rowsAffected, err := s.repo.Update(updatedData)
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
+}
+
+func generateDataUpdate(existingData model.TSeller, newData model.ReqUpdate) model.TSeller {
+	updatedData := existingData
+	var email, username string
+
+	if newData.Email != existingData.Email {
+		email = newData.Email
+	} else {
+		email = existingData.Email
+	}
+
+	if newData.Username != existingData.Username {
+		username = newData.Username
+	} else {
+		username = existingData.Username
+	}
+
+	updatedData.Email = email
+	updatedData.Username = username
+
+	return updatedData
 }
 
 func (s *SellerUseCaseImpl) ChangePassword(sellerId int64, newPassword string) (int64, error) {
