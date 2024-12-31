@@ -92,6 +92,7 @@ CREATE TABLE seller (
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
     balance NUMERIC(10,2) DEFAULT 0.00,
+    status varchar(1) NOT NULL, 
     created TIMESTAMP NOT NULL,
     created_by VARCHAR(100),
     updated  TIMESTAMP,

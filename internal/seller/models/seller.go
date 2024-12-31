@@ -8,5 +8,6 @@ type TSeller struct {
 	Email    string  `json:"email"`
 	Password string  `json:"password"`
 	Balance  float64 `json:"balance"`
+	Status   string  `json:"status"`
 	templates.Base
 }
