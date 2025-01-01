@@ -22,6 +22,7 @@ const (
 	queryCreate         = "INSERT INTO public.seller (username, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
 	queryUpdate         = "UPDATE public.seller SET username=$1, email=$2, updated=NOW(), updated_by=$3 WHERE id=$4"
 	queryUpdatePassword = "UPDATE public.seller set password=$1 WHERE id=$2"
+	queryDeactive       = "UPDATE public.seller set status=$1 WHERE id=$2"
 	queryFindById       = "SELECT * FROM public.seller WHERE id = $1"
 	queryFindByUsername = "SELECT * FROM public.seller WHERE username = $1"
 	queryUpdateBalance  = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
@@ -118,6 +119,23 @@ func (repo *SellerRepositoryImpl) UpdatePassword(sellerId int64, newPassword str
 	rowsAffected, _ := result.RowsAffected()
 	return rowsAffected, nil
 }
+
+func (repo *SellerRepositoryImpl) Deactive(sellerId int64) (int64, error) {
+	statement, err := repo.DB.Prepare(queryUpdatePassword)
+	if err != nil {
+		return 0, err
+	}
+	defer statement.Close()
+
+	result, err := statement.Exec("I", sellerId)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	return rowsAffected, nil
+}
+
 func rowsToData(rows *sql.Rows) (*model.TSeller, error) {
 	s := model.TSeller{}
 	// b := template.Base{}
