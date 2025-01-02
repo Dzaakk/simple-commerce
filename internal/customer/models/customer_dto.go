@@ -1,13 +1,13 @@
 package models
 
-type CustomerReq struct {
+type CreateReq struct {
 	Username    string `json:"username" validate:"required"`
 	Email       string `json:"email" validate:"required,email"`
 	PhoneNumber string `json:"phoneNumber" validate:"required"`
 	Password    string `json:"password" validate:"required"`
 }
 
-type CustomerRes struct {
+type DataRes struct {
 	Id          string `json:"id"`
 	Username    string `json:"username,omitempty"`
 	Email       string `json:"email,omitempty"`
