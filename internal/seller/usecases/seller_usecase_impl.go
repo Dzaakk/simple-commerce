@@ -42,9 +42,15 @@ func (s *SellerUseCaseImpl) Create(data model.ReqCreate) (int64, error) {
 	return sellerId, nil
 }
 
-// Deactivate implements SellerUseCase.
 func (s *SellerUseCaseImpl) Deactivate(sellerId int64) (int64, error) {
-	panic("unimplemented")
+
+	rowsAffected, err := s.repo.Deactive(sellerId)
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
+
 }
 
 func (s *SellerUseCaseImpl) FindById(sellerId int64) (*model.ResData, error) {
