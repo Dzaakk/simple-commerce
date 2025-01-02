@@ -67,7 +67,7 @@ func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
 }
 
 func (handler *CustomerHandler) Create(ctx *gin.Context) {
-	var data model.CustomerReq
+	var data model.CreateReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
