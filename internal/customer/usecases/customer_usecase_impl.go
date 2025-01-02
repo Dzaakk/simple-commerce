@@ -12,7 +12,7 @@ type CustomerUseCaseImpl struct {
 	repo repo.CustomerRepository
 }
 
-func (c *CustomerUseCaseImpl) Update(dataReq model.TCustomers) (*model.CustomerRes, error) {
+func (c *CustomerUseCaseImpl) Update(dataReq model.TCustomers) (int64, error) {
 	panic("unimplemented")
 }
 
@@ -20,7 +20,7 @@ func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
 	return &CustomerUseCaseImpl{repo}
 }
 
-func (c *CustomerUseCaseImpl) Create(data model.CustomerReq) (*int, error) {
+func (c *CustomerUseCaseImpl) Create(data model.CreateReq) (*int, error) {
 	hashedPassword, err := template.HashPassword(data.Password)
 	if err != nil {
 		return nil, err
@@ -53,13 +53,13 @@ func (c *CustomerUseCaseImpl) FindByEmail(email string) (*model.TCustomers, erro
 	return data, nil
 }
 
-func (c *CustomerUseCaseImpl) FindById(id int) (*model.CustomerRes, error) {
+func (c *CustomerUseCaseImpl) FindById(id int) (*model.DataRes, error) {
 	data, err := c.repo.FindById(id)
 	if err != nil {
 		return nil, err
 	}
 
-	customer := &model.CustomerRes{
+	customer := &model.DataRes{
 		Id:          fmt.Sprintf("%v", data.Id),
 		Username:    data.Username,
 		Email:       data.Email,
