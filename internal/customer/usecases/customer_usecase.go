@@ -6,9 +6,11 @@ import (
 
 type CustomerUseCase interface {
 	Create(data model.CreateReq) (*int, error)
-	FindById(id int) (*model.DataRes, error)
-	UpdateBalance(id int, balance float64, actionType string) (*float64, error)
-	GetBalance(id int) (*model.CustomerBalance, error)
+	FindById(id int64) (*model.DataRes, error)
+	UpdateBalance(id int64, balance float64, actionType string) (*float64, error)
+	GetBalance(id int64) (*model.CustomerBalance, error)
 	FindByEmail(email string) (*model.TCustomers, error)
 	Update(data model.TCustomers) (int64, error)
+	UpdatePassword(id int64, newPassword string) (int64, error)
+	Deactivate(id int64) (int64, error)
 }
