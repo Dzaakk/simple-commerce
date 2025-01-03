@@ -5,6 +5,7 @@ CREATE TABLE public.customer (
     password VARCHAR(255) NOT NULL,
     phone_number VARCHAR(100) NOT NULL,
     balance NUMERIC(10,2),
+    status VARCHAR(1) NOT NULL, 
     created TIMESTAMP NOT NULL,
     created_by VARCHAR(100),
     updated  TIMESTAMP,
