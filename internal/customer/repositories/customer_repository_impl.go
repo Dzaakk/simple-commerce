@@ -29,23 +29,23 @@ const (
 	queryGetBalanceByIdWithLock = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
 )
 
-func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (*int, error) {
+func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (int64, error) {
 	statement, err := repo.DB.Prepare(queryCreateCustomer)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	defer statement.Close()
 
-	var id int
+	var id int64
 	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Base.Created, data.Base.CreatedBy).Scan(&id)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &id, err
+	return id, err
 }
 
-func (repo *CustomerRepositoryImpl) FindById(id int) (*model.TCustomers, error) {
+func (repo *CustomerRepositoryImpl) FindById(id int64) (*model.TCustomers, error) {
 	rows, err := repo.DB.Query(queryFindCustomerById, id)
 	if err != nil {
 		return nil, err
@@ -75,29 +75,29 @@ func (repo *CustomerRepositoryImpl) FindByEmail(email string) (*model.TCustomers
 	return customer, nil
 }
 
-func (repo *CustomerRepositoryImpl) UpdateBalance(id int, newBalance float64) (*float64, error) {
+func (repo *CustomerRepositoryImpl) UpdateBalance(id int64, newBalance float64) (float64, error) {
 	statement, err := repo.DB.Prepare(queryUpdateBalance)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	defer statement.Close()
 
 	var updatedBalance float64
-	idString := strconv.Itoa(id)
+	idString := strconv.FormatInt(id, 64)
 	err = statement.QueryRow(newBalance, idString, id).Scan(&updatedBalance)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &updatedBalance, nil
+	return updatedBalance, nil
 }
 
-func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(tx *sql.Tx, id int, newBalance float64) error {
+func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(tx *sql.Tx, id int64, newBalance float64) error {
 	_, err := tx.Exec(queryUpdateBalanceWithLock, newBalance, id)
 	return err
 }
 
-func (repo *CustomerRepositoryImpl) GetBalanceWithTx(tx *sql.Tx, id int) (*model.CustomerBalance, error) {
+func (repo *CustomerRepositoryImpl) GetBalanceWithTx(tx *sql.Tx, id int64) (*model.CustomerBalance, error) {
 	var customerBalance model.CustomerBalance
 	err := tx.QueryRow(queryGetBalanceByIdWithLock, id).
 		Scan(&customerBalance.Id, &customerBalance.Balance)
@@ -110,7 +110,7 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(tx *sql.Tx, id int) (*model
 	return &customerBalance, nil
 }
 
-func (repo *CustomerRepositoryImpl) GetBalance(id int) (*model.CustomerBalance, error) {
+func (repo *CustomerRepositoryImpl) GetBalance(id int64) (*model.CustomerBalance, error) {
 	var customerBalance model.CustomerBalance
 	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&customerBalance.Id, &customerBalance.Balance)
 	if err != nil {
