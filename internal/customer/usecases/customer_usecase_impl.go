@@ -12,7 +12,8 @@ type CustomerUseCaseImpl struct {
 	repo repo.CustomerRepository
 }
 
-func (c *CustomerUseCaseImpl) Update(dataReq model.TCustomers) (int64, error) {
+// Deactivate implements CustomerUseCase.
+func (c *CustomerUseCaseImpl) Deactivate(id int64) (int64, error) {
 	panic("unimplemented")
 }
 
@@ -20,10 +21,10 @@ func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
 	return &CustomerUseCaseImpl{repo}
 }
 
-func (c *CustomerUseCaseImpl) Create(data model.CreateReq) (*int, error) {
+func (c *CustomerUseCaseImpl) Create(data model.CreateReq) (int64, error) {
 	hashedPassword, err := template.HashPassword(data.Password)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	customer := model.TCustomers{
@@ -32,6 +33,7 @@ func (c *CustomerUseCaseImpl) Create(data model.CreateReq) (*int, error) {
 		PhoneNumber: data.PhoneNumber,
 		Password:    string(hashedPassword),
 		Balance:     float64(10000000),
+		Status:      "A",
 		Base: template.Base{
 			Created:   time.Now(),
 			CreatedBy: "system",
@@ -40,10 +42,11 @@ func (c *CustomerUseCaseImpl) Create(data model.CreateReq) (*int, error) {
 
 	customerId, err := c.repo.Create(customer)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	return customerId, nil
 }
+
 func (c *CustomerUseCaseImpl) FindByEmail(email string) (*model.TCustomers, error) {
 	data, err := c.repo.FindByEmail(email)
 	if err != nil {
@@ -53,7 +56,7 @@ func (c *CustomerUseCaseImpl) FindByEmail(email string) (*model.TCustomers, erro
 	return data, nil
 }
 
-func (c *CustomerUseCaseImpl) FindById(id int) (*model.DataRes, error) {
+func (c *CustomerUseCaseImpl) FindById(id int64) (*model.DataRes, error) {
 	data, err := c.repo.FindById(id)
 	if err != nil {
 		return nil, err
@@ -71,7 +74,7 @@ func (c *CustomerUseCaseImpl) FindById(id int) (*model.DataRes, error) {
 
 }
 
-func (c *CustomerUseCaseImpl) GetBalance(id int) (*model.CustomerBalance, error) {
+func (c *CustomerUseCaseImpl) GetBalance(id int64) (*model.CustomerBalance, error) {
 	data, err := c.repo.GetBalance(id)
 	if err != nil {
 		return nil, err
@@ -85,10 +88,10 @@ func (c *CustomerUseCaseImpl) GetBalance(id int) (*model.CustomerBalance, error)
 	return customer, nil
 }
 
-func (c *CustomerUseCaseImpl) UpdateBalance(id int, balance float64, actionType string) (*float64, error) {
+func (c *CustomerUseCaseImpl) UpdateBalance(id int64, balance float64, actionType string) (float64, error) {
 	data, err := c.repo.GetBalance(id)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	//Add Balance
@@ -96,7 +99,7 @@ func (c *CustomerUseCaseImpl) UpdateBalance(id int, balance float64, actionType 
 		balance += data.Balance
 		balance, err := c.repo.UpdateBalance(id, balance)
 		if err != nil {
-			return nil, err
+			return 0, err
 		}
 
 		return balance, nil
@@ -107,11 +110,19 @@ func (c *CustomerUseCaseImpl) UpdateBalance(id int, balance float64, actionType 
 		balance = data.Balance - balance
 		balance, err := c.repo.UpdateBalance(id, balance)
 		if err != nil {
-			return nil, err
+			return 0, err
 		}
 
 		return balance, nil
 	}
 
-	return nil, nil
+	return 0, nil
+}
+
+func (c *CustomerUseCaseImpl) UpdatePassword(id int64, newPassword string) (int64, error) {
+	panic("unimplemented")
+}
+
+func (c *CustomerUseCaseImpl) Update(dataReq model.TCustomers) (int64, error) {
+	panic("unimplemented")
 }
