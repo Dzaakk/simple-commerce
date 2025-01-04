@@ -74,15 +74,15 @@ func (c *CustomerUseCaseImpl) FindById(id int64) (*model.DataRes, error) {
 
 }
 
-func (c *CustomerUseCaseImpl) GetBalance(id int64) (*model.CustomerBalance, error) {
+func (c *CustomerUseCaseImpl) GetBalance(id int64) (*model.CustomerBalanceRes, error) {
 	data, err := c.repo.GetBalance(id)
 	if err != nil {
 		return nil, err
 	}
 
-	customer := &model.CustomerBalance{
-		Id:      data.Id,
-		Balance: data.Balance,
+	customer := &model.CustomerBalanceRes{
+		Id:      fmt.Sprintf("%d", data.Id),
+		Balance: fmt.Sprintf("%.2f", data.Balance),
 	}
 
 	return customer, nil
