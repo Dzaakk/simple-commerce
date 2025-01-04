@@ -21,7 +21,7 @@ func NewCustomerRepository(db *sql.DB) CustomerRepository {
 
 const (
 	queryFindCustomerByEmail    = `SELECT * FROM public.customer WHERE email = $1`
-	queryCreateCustomer         = `INSERT INTO public.customer (username, email, password, phone_number, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+	queryCreateCustomer         = `INSERT INTO public.customer (username, email, password, phone_number, balance, status, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 	queryFindCustomerById       = `SELECT * FROM public.customer WHERE id = $1`
 	queryUpdateBalance          = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
 	queryUpdateBalanceWithLock  = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
@@ -37,7 +37,7 @@ func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (int64, error)
 	defer statement.Close()
 
 	var id int64
-	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Base.Created, data.Base.CreatedBy).Scan(&id)
+	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -83,7 +83,7 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(id int64, newBalance float64) 
 	defer statement.Close()
 
 	var updatedBalance float64
-	idString := strconv.FormatInt(id, 64)
+	idString := strconv.FormatInt(id, 8)
 	err = statement.QueryRow(newBalance, idString, id).Scan(&updatedBalance)
 	if err != nil {
 		return 0, err
@@ -124,7 +124,7 @@ func rowsToCustomer(rows *sql.Rows) (*model.TCustomers, error) {
 	base := template.Base{}
 	customer := model.TCustomers{}
 
-	err := rows.Scan(&customer.Id, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &base.Created, &base.CreatedBy, &base.Updated, &base.UpdatedBy)
+	err := rows.Scan(&customer.Id, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &customer.Status, &base.Created, &base.CreatedBy, &base.Updated, &base.UpdatedBy)
 
 	if err != nil {
 		return nil, err
