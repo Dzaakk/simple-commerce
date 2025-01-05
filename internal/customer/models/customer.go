@@ -13,6 +13,6 @@ type TCustomers struct {
 	template.Base
 }
 type CustomerBalance struct {
-	Id      int     `json:"id"`
+	Id      int64   `json:"id"`
 	Balance float64 `json:"balance"`
 }
