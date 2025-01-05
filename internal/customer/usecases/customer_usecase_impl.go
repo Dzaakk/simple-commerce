@@ -12,11 +12,6 @@ type CustomerUseCaseImpl struct {
 	repo repo.CustomerRepository
 }
 
-// Deactivate implements CustomerUseCase.
-func (c *CustomerUseCaseImpl) Deactivate(id int64) (int64, error) {
-	panic("unimplemented")
-}
-
 func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
 	return &CustomerUseCaseImpl{repo}
 }
@@ -117,6 +112,54 @@ func (c *CustomerUseCaseImpl) UpdateBalance(id int64, balance float64, actionTyp
 	}
 
 	return 0, nil
+}
+
+func (c *CustomerUseCaseImpl) DecreaseBalance(id int64, amount float64) (*model.CustomerBalanceRes, error) {
+	if amount < 0 {
+		return nil, fmt.Errorf("invalid amount")
+	}
+
+	data, err := c.repo.GetBalance(id)
+	if err != nil {
+		return nil, err
+	}
+
+	amount += data.Balance
+	balance, err := c.repo.UpdateBalance(id, amount)
+	if err != nil {
+		return nil, err
+	}
+	res := &model.CustomerBalanceRes{
+		Id:      fmt.Sprintf("%d", id),
+		Balance: fmt.Sprintf("%.2f", balance),
+	}
+	return res, nil
+}
+
+func (c *CustomerUseCaseImpl) IncreaseBalance(id int64, amount float64) (*model.CustomerBalanceRes, error) {
+	if amount < 0 {
+		return nil, fmt.Errorf("invalid amount")
+	}
+
+	data, err := c.repo.GetBalance(id)
+	if err != nil {
+		return nil, err
+	}
+
+	data.Balance -= amount
+	balance, err := c.repo.UpdateBalance(id, amount)
+	if err != nil {
+		return nil, err
+	}
+	res := &model.CustomerBalanceRes{
+		Id:      fmt.Sprintf("%d", id),
+		Balance: fmt.Sprintf("%.2f", balance),
+	}
+	return res, nil
+}
+
+func (c *CustomerUseCaseImpl) Deactivate(id int64) (int64, error) {
+	panic("unimplemented")
 }
 
 func (c *CustomerUseCaseImpl) UpdatePassword(id int64, newPassword string) (int64, error) {
