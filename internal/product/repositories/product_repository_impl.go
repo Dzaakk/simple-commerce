@@ -151,14 +151,14 @@ func (repo *ProductRepositoryImpl) FindById(id int) (*model.TProduct, error) {
 	return product, nil
 }
 
-func (repo *ProductRepositoryImpl) GetPriceById(id int) (*float32, error) {
+func (repo *ProductRepositoryImpl) GetPriceById(id int) (float32, error) {
 	var balance float32
 	err := repo.DB.QueryRow(queryGetPriceById, id).Scan(&balance)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &balance, nil
+	return balance, nil
 }
 
 func (repo *ProductRepositoryImpl) GetStockById(id int) (int, error) {

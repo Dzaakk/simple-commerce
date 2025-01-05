@@ -13,7 +13,7 @@ type ProductRepository interface {
 	FindById(id int) (*model.TProduct, error)
 	FindByName(name string) (*model.TProduct, error)
 	SetStockById(id int, stock int) (int64, error)
-	GetPriceById(id int) (*float32, error)
+	GetPriceById(id int) (float32, error)
 	GetStockById(id int) (int, error)
 	UpdateStock(listData []*modelCart.TCartItemDetail, name string) error
 	UpdateStockWithTx(tx *sql.Tx, listData []*modelCart.TCartItemDetail) ([]*int, error)
