@@ -25,7 +25,7 @@ const (
 	queryFindCustomerById       = `SELECT * FROM public.customer WHERE id = $1`
 	queryUpdateBalance          = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
 	queryUpdateBalanceWithLock  = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
-	queryGetBalanceById         = `SELECT id, balance FROM public.customer WHERE id = $1`
+	queryGetBalanceById         = `SELECT balance FROM public.customer WHERE id = $1`
 	queryGetBalanceByIdWithLock = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
 )
 
@@ -111,13 +111,27 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(tx *sql.Tx, id int64) (*mod
 }
 
 func (repo *CustomerRepositoryImpl) GetBalance(id int64) (*model.CustomerBalance, error) {
-	var customerBalance model.CustomerBalance
-	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&customerBalance.Id, &customerBalance.Balance)
+	customerBalance := model.CustomerBalance{Id: id}
+
+	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&customerBalance.Balance)
 	if err != nil {
 		return nil, err
 	}
 
 	return &customerBalance, nil
+}
+
+func (repo *CustomerRepositoryImpl) InquiryBalance(id int64) (float64, error) {
+	var balance float64
+	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("invalid customer id")
+		}
+		return 0, fmt.Errorf("failed to retrieve balance")
+	}
+
+	return balance, nil
 }
 
 func rowsToCustomer(rows *sql.Rows) (*model.TCustomers, error) {

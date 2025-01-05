@@ -10,6 +10,7 @@ type CustomerRepository interface {
 	FindById(id int64) (*model.TCustomers, error)
 	UpdateBalance(id int64, balance float64) (float64, error)
 	GetBalance(id int64) (*model.CustomerBalance, error)
+	InquiryBalance(id int64) (float64, error)
 	FindByEmail(email string) (*model.TCustomers, error)
 	GetBalanceWithTx(tx *sql.Tx, id int64) (*model.CustomerBalance, error)
 	UpdateBalanceWithTx(tx *sql.Tx, id int64, newBalance float64) error
