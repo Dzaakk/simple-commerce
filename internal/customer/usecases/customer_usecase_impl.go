@@ -163,9 +163,18 @@ func (c *CustomerUseCaseImpl) Deactivate(id int64) (int64, error) {
 }
 
 func (c *CustomerUseCaseImpl) UpdatePassword(id int64, newPassword string) (int64, error) {
-	panic("unimplemented")
+	hashedPassword, err := template.HashPassword(newPassword)
+	if err != nil {
+		return 0, err
+	}
+	rowsAffected, err := c.repo.UpdatePassword(id, string(hashedPassword))
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }
 
-func (c *CustomerUseCaseImpl) Update(dataReq model.TCustomers) (int64, error) {
+func (c *CustomerUseCaseImpl) Update(dataReq model.UpdateReq) (int64, error) {
 	panic("unimplemented")
 }
