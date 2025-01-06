@@ -14,4 +14,5 @@ type CustomerRepository interface {
 	FindByEmail(email string) (*model.TCustomers, error)
 	GetBalanceWithTx(tx *sql.Tx, id int64) (*model.CustomerBalance, error)
 	UpdateBalanceWithTx(tx *sql.Tx, id int64, newBalance float64) error
+	UpdatePassword(id int64, newPassword string) (int64, error)
 }

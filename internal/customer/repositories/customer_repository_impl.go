@@ -24,6 +24,7 @@ const (
 	queryCreateCustomer         = `INSERT INTO public.customer (username, email, password, phone_number, balance, status, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 	queryFindCustomerById       = `SELECT * FROM public.customer WHERE id = $1`
 	queryUpdateBalance          = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
+	queryUpdatePassword         = `UPDATE public.customer SET password=$1, updated_by=$2, updated=now() WHERE id=$2`
 	queryUpdateBalanceWithLock  = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
 	queryGetBalanceById         = `SELECT balance FROM public.customer WHERE id = $1`
 	queryGetBalanceByIdWithLock = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
@@ -90,6 +91,22 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(id int64, newBalance float64) 
 	}
 
 	return updatedBalance, nil
+}
+
+func (repo *CustomerRepositoryImpl) UpdatePassword(id int64, newPassword string) (int64, error) {
+	statement, err := repo.DB.Prepare(queryUpdatePassword)
+	if err != nil {
+		return 0, err
+	}
+	defer statement.Close()
+
+	result, err := statement.Exec(newPassword, id)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	return rowsAffected, nil
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(tx *sql.Tx, id int64, newBalance float64) error {
