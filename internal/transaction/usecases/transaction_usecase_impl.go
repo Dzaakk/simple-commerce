@@ -56,7 +56,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, err
 	}
 
-	customer, err := t.repoCustomer.GetBalanceWithTx(tx, customerId) // check customer current balance with locking
+	customer, err := t.repoCustomer.GetBalanceWithTx(tx, int64(customerId)) // check customer current balance with locking
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 	}
 
 	newBalance := customer.Balance - float64(totalTransaction)
-	err = t.repoCustomer.UpdateBalanceWithTx(tx, customerId, newBalance) // update balance customer
+	err = t.repoCustomer.UpdateBalanceWithTx(tx, int64(customerId), newBalance) // update balance customer
 	if err != nil {
 		return nil, err
 	}
