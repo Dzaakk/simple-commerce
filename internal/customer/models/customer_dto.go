@@ -8,10 +8,10 @@ type CreateReq struct {
 }
 
 type UpdateReq struct {
-	Id          string `json:"id"`
-	Username    string `json:"username"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phone_number"`
+	Id          string `json:"id" validate:"required,min=1"`
+	Username    string `json:"username" validate:"required"`
+	Email       string `json:"email" validate:"required,email"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
 }
 
 type DataRes struct {
