@@ -159,7 +159,13 @@ func (c *CustomerUseCaseImpl) IncreaseBalance(id int64, amount float64) (*model.
 }
 
 func (c *CustomerUseCaseImpl) Deactivate(id int64) (int64, error) {
-	panic("unimplemented")
+
+	rowsAffected, err := c.repo.Deactive(id)
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }
 
 func (c *CustomerUseCaseImpl) UpdatePassword(id int64, newPassword string) (int64, error) {
