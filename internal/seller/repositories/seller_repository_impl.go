@@ -121,7 +121,7 @@ func (repo *SellerRepositoryImpl) UpdatePassword(sellerId int64, newPassword str
 }
 
 func (repo *SellerRepositoryImpl) Deactive(sellerId int64) (int64, error) {
-	statement, err := repo.DB.Prepare(queryUpdatePassword)
+	statement, err := repo.DB.Prepare(queryDeactive)
 	if err != nil {
 		return 0, err
 	}
