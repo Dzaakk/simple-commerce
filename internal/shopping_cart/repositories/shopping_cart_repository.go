@@ -9,7 +9,7 @@ type ShoppingCartRepository interface {
 	Create(data model.TShoppingCart) (*model.TShoppingCart, error)
 	FindByCustomerIdAndStatus(customerId int, status string) (*model.TShoppingCart, error)
 	FindById(id int) (*model.ShoppingCartRes, error)
-	CheckStatus(id, customerId int) (*string, error)
+	CheckStatus(id, customerId int) (string, error)
 	UpdateStatusById(id int, status, customerid string) (*model.TShoppingCart, error)
 	UpdateStatusByIdWithTx(tx *sql.Tx, cartId int, status, customerid string) error
 	DeleteShoppingCart(cartId int) error

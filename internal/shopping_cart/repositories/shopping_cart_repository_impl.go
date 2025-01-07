@@ -94,11 +94,11 @@ func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(id int, status, custome
 	return shoppingCart, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) CheckStatus(id int, customerId int) (*string, error) {
+func (repo *ShoppingCartRepositoryImpl) CheckStatus(id int, customerId int) (string, error) {
 	var status string
 	_ = repo.DB.QueryRow(queryCheckStatus, id, customerId).Scan(&status)
 
-	return &status, nil
+	return status, nil
 }
 
 func (repo *ShoppingCartRepositoryImpl) UpdateStatusByIdWithTx(tx *sql.Tx, cartId int, status string, customerid string) error {

@@ -207,10 +207,10 @@ func (s *ShoppingCartUseCaseImpl) CreateCartItem(data model.ShoppingCartReq) (*m
 	return cartItem, nil
 }
 
-func (s *ShoppingCartUseCaseImpl) CheckStatus(id int, customerId int) (*string, error) {
+func (s *ShoppingCartUseCaseImpl) CheckStatus(id int, customerId int) (string, error) {
 	status, err := s.repo.CheckStatus(id, customerId)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return status, nil

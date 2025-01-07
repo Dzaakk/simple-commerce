@@ -6,7 +6,7 @@ import (
 
 type ShoppingCartUseCase interface {
 	Add(data model.ShoppingCartReq) (*model.ShoppingCartItem, error)
-	CheckStatus(id, customerId int) (*string, error)
+	CheckStatus(id, customerId int) (string, error)
 	CreateCart(customerId int) (*model.TShoppingCart, error)
 	CreateCartItem(data model.ShoppingCartReq) (*model.TShoppingCartItem, error)
 	GetListItem(customerId int) ([]*model.ListCartItemRes, error)
