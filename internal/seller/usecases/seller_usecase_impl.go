@@ -136,3 +136,7 @@ func (s *SellerUseCaseImpl) ChangePassword(sellerId int64, newPassword string) (
 
 	return rowsAffected, nil
 }
+
+func (s *SellerUseCaseImpl) Login() error {
+	panic("unimplemented")
+}

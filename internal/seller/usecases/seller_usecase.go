@@ -9,4 +9,5 @@ type SellerUseCase interface {
 	FindByUsername(username string) (*model.ResData, error)
 	Deactivate(sellerId int64) (int64, error)
 	ChangePassword(sellerId int64, newPassword string) (int64, error)
+	Login() error
 }
