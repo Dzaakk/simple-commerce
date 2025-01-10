@@ -3,10 +3,12 @@ package repositories
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
 	template "Dzaakk/simple-commerce/package/templates"
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type CustomerRepositoryImpl struct {
@@ -31,23 +33,26 @@ const (
 	queryGetBalanceByIdWithLock = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
 )
 
-func (repo *CustomerRepositoryImpl) Create(data model.TCustomers) (int64, error) {
-	statement, err := repo.DB.Prepare(queryCreateCustomer)
+func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCustomers) (int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	statement, err := repo.DB.PrepareContext(ctx, queryCreateCustomer)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to prepare statement: %v", err)
 	}
 	defer statement.Close()
 
 	var id int64
-	err = statement.QueryRow(data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
+	err = statement.QueryRowContext(ctx, data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to execute query: %w", err)
 	}
 
 	return id, err
 }
 
-func (repo *CustomerRepositoryImpl) FindById(id int64) (*model.TCustomers, error) {
+func (repo *CustomerRepositoryImpl) FindById(ctx context.Context, id int64) (*model.TCustomers, error) {
 	rows, err := repo.DB.Query(queryFindCustomerById, id)
 	if err != nil {
 		return nil, err
@@ -62,7 +67,7 @@ func (repo *CustomerRepositoryImpl) FindById(id int64) (*model.TCustomers, error
 	return customer, nil
 }
 
-func (repo *CustomerRepositoryImpl) FindByEmail(email string) (*model.TCustomers, error) {
+func (repo *CustomerRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {
 	rows, err := repo.DB.Query(queryFindCustomerByEmail, email)
 	if err != nil {
 		return nil, err
@@ -77,7 +82,7 @@ func (repo *CustomerRepositoryImpl) FindByEmail(email string) (*model.TCustomers
 	return customer, nil
 }
 
-func (repo *CustomerRepositoryImpl) UpdateBalance(id int64, newBalance float64) (float64, error) {
+func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64, newBalance float64) (float64, error) {
 	statement, err := repo.DB.Prepare(queryUpdateBalance)
 	if err != nil {
 		return 0, err
@@ -94,7 +99,7 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(id int64, newBalance float64) 
 	return updatedBalance, nil
 }
 
-func (repo *CustomerRepositoryImpl) UpdatePassword(id int64, newPassword string) (int64, error) {
+func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64, newPassword string) (int64, error) {
 	statement, err := repo.DB.Prepare(queryUpdatePassword)
 	if err != nil {
 		return 0, err
@@ -110,7 +115,7 @@ func (repo *CustomerRepositoryImpl) UpdatePassword(id int64, newPassword string)
 	return rowsAffected, nil
 }
 
-func (repo *CustomerRepositoryImpl) Deactive(id int64) (int64, error) {
+func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, id int64) (int64, error) {
 	statement, err := repo.DB.Prepare(queryDeactive)
 	if err != nil {
 		return 0, err
@@ -126,12 +131,12 @@ func (repo *CustomerRepositoryImpl) Deactive(id int64) (int64, error) {
 	return rowsAffected, nil
 }
 
-func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(tx *sql.Tx, id int64, newBalance float64) error {
+func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(ctx context.Context, tx *sql.Tx, id int64, newBalance float64) error {
 	_, err := tx.Exec(queryUpdateBalanceWithLock, newBalance, id)
 	return err
 }
 
-func (repo *CustomerRepositoryImpl) GetBalanceWithTx(tx *sql.Tx, id int64) (*model.CustomerBalance, error) {
+func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sql.Tx, id int64) (*model.CustomerBalance, error) {
 	var customerBalance model.CustomerBalance
 	err := tx.QueryRow(queryGetBalanceByIdWithLock, id).
 		Scan(&customerBalance.Id, &customerBalance.Balance)
@@ -144,7 +149,7 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(tx *sql.Tx, id int64) (*mod
 	return &customerBalance, nil
 }
 
-func (repo *CustomerRepositoryImpl) GetBalance(id int64) (*model.CustomerBalance, error) {
+func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*model.CustomerBalance, error) {
 	customerBalance := model.CustomerBalance{Id: id}
 
 	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&customerBalance.Balance)
@@ -155,7 +160,7 @@ func (repo *CustomerRepositoryImpl) GetBalance(id int64) (*model.CustomerBalance
 	return &customerBalance, nil
 }
 
-func (repo *CustomerRepositoryImpl) InquiryBalance(id int64) (float64, error) {
+func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, id int64) (float64, error) {
 	var balance float64
 	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&balance)
 	if err != nil {
