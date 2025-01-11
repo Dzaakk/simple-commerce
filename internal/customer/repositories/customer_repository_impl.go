@@ -53,7 +53,7 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 }
 
 func (repo *CustomerRepositoryImpl) FindById(ctx context.Context, id int64) (*model.TCustomers, error) {
-	rows, err := repo.DB.Query(queryFindCustomerById, id)
+	rows, err := repo.DB.QueryContext(ctx, queryFindCustomerById, id)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (repo *CustomerRepositoryImpl) FindById(ctx context.Context, id int64) (*mo
 }
 
 func (repo *CustomerRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {
-	rows, err := repo.DB.Query(queryFindCustomerByEmail, email)
+	rows, err := repo.DB.QueryContext(ctx, queryFindCustomerByEmail, email)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,10 @@ func (repo *CustomerRepositoryImpl) FindByEmail(ctx context.Context, email strin
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64, newBalance float64) (float64, error) {
-	statement, err := repo.DB.Prepare(queryUpdateBalance)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	statement, err := repo.DB.PrepareContext(ctx, queryUpdateBalance)
 	if err != nil {
 		return 0, err
 	}
@@ -91,7 +94,7 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64,
 
 	var updatedBalance float64
 	idString := strconv.FormatInt(id, 8)
-	err = statement.QueryRow(newBalance, idString, id).Scan(&updatedBalance)
+	err = statement.QueryRowContext(ctx, newBalance, idString, id).Scan(&updatedBalance)
 	if err != nil {
 		return 0, err
 	}
@@ -100,13 +103,16 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64,
 }
 
 func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64, newPassword string) (int64, error) {
-	statement, err := repo.DB.Prepare(queryUpdatePassword)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	statement, err := repo.DB.PrepareContext(ctx, queryUpdatePassword)
 	if err != nil {
 		return 0, err
 	}
 	defer statement.Close()
 
-	result, err := statement.Exec(newPassword, id)
+	result, err := statement.ExecContext(ctx, newPassword, id)
 	if err != nil {
 		return 0, err
 	}
@@ -116,13 +122,16 @@ func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64
 }
 
 func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, id int64) (int64, error) {
-	statement, err := repo.DB.Prepare(queryDeactive)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	statement, err := repo.DB.PrepareContext(ctx, queryDeactive)
 	if err != nil {
 		return 0, err
 	}
 	defer statement.Close()
 
-	result, err := statement.Exec("I", id)
+	result, err := statement.ExecContext(ctx, "I", id)
 	if err != nil {
 		return 0, err
 	}
@@ -132,21 +141,33 @@ func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, id int64) (int
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(ctx context.Context, tx *sql.Tx, id int64, newBalance float64) error {
-	_, err := tx.Exec(queryUpdateBalanceWithLock, newBalance, id)
-	return err
+	if newBalance < 0 {
+		return fmt.Errorf("invalid balance: cannot be negative")
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, queryUpdateBalanceWithLock, newBalance, id)
+	if err != nil {
+		return fmt.Errorf("failed to update balance for customer ID %d: %w", id, err)
+	}
+
+	return nil
 }
 
 func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sql.Tx, id int64) (*model.CustomerBalance, error) {
-	var customerBalance model.CustomerBalance
-	err := tx.QueryRow(queryGetBalanceByIdWithLock, id).
-		Scan(&customerBalance.Id, &customerBalance.Balance)
+	row := tx.QueryRowContext(ctx, queryGetBalanceByIdWithLock, id)
+
+	customerBalance := &model.CustomerBalance{}
+	err := row.Scan(&customerBalance.Id, &customerBalance.Balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("customer with id %d not found", id)
 		}
 		return nil, fmt.Errorf("unable to retrieve customer balance : %w", err)
 	}
-	return &customerBalance, nil
+	return customerBalance, nil
 }
 
 func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*model.CustomerBalance, error) {
@@ -161,8 +182,10 @@ func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*
 }
 
 func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, id int64) (float64, error) {
+	row := repo.DB.QueryRowContext(ctx, queryGetBalanceById, id)
+
 	var balance float64
-	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&balance)
+	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, fmt.Errorf("invalid customer id")
