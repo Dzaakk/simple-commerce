@@ -2,6 +2,7 @@ package repositories
 
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
+	response "Dzaakk/simple-commerce/package/response"
 	template "Dzaakk/simple-commerce/package/templates"
 	"context"
 	"database/sql"
@@ -31,64 +32,63 @@ const (
 	queryUpdateBalanceWithLock  = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
 	queryGetBalanceById         = `SELECT balance FROM public.customer WHERE id = $1`
 	queryGetBalanceByIdWithLock = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
+	dbQueryTimeout              = 2 * time.Second
 )
 
+func (repo *CustomerRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, dbQueryTimeout)
+}
+
 func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCustomers) (int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
 	statement, err := repo.DB.PrepareContext(ctx, queryCreateCustomer)
 	if err != nil {
-		return 0, fmt.Errorf("failed to prepare statement: %v", err)
+		return 0, response.PrepareError("create customer", err)
 	}
 	defer statement.Close()
 
 	var id int64
 	err = statement.QueryRowContext(ctx, data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
 	if err != nil {
-		return 0, fmt.Errorf("failed to execute query: %w", err)
+		return 0, response.ExecError("create customer", err)
 	}
 
 	return id, err
 }
 
 func (repo *CustomerRepositoryImpl) FindById(ctx context.Context, id int64) (*model.TCustomers, error) {
-	rows, err := repo.DB.QueryContext(ctx, queryFindCustomerById, id)
-	if err != nil {
-		return nil, err
+	if id <= 0 {
+		return nil, errors.New("invalid customer ID")
 	}
 
-	customer, err := retrieveCustomer(rows)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	return customer, nil
+	return repo.findCustomer(ctx, queryFindCustomerById, id)
 }
 
 func (repo *CustomerRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {
-	rows, err := repo.DB.QueryContext(ctx, queryFindCustomerByEmail, email)
-	if err != nil {
-		return nil, err
+	if email == "" {
+		return nil, errors.New("email cannot be empty")
 	}
 
-	customer, err := retrieveCustomer(rows)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	return repo.findCustomer(ctx, queryFindCustomerByEmail, email)
+}
 
-	return customer, nil
+func (repo *CustomerRepositoryImpl) findCustomer(ctx context.Context, query string, args ...interface{}) (*model.TCustomers, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	row := repo.DB.QueryRowContext(ctx, query, args...)
+	return repo.scanCustomer(row)
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64, newBalance float64) (float64, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
 	statement, err := repo.DB.PrepareContext(ctx, queryUpdateBalance)
 	if err != nil {
-		return 0, err
+		return 0, response.PrepareError("update balance", err)
 	}
 	defer statement.Close()
 
@@ -96,25 +96,25 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64,
 	idString := strconv.FormatInt(id, 8)
 	err = statement.QueryRowContext(ctx, newBalance, idString, id).Scan(&updatedBalance)
 	if err != nil {
-		return 0, err
+		return 0, response.ExecError("update balance", err)
 	}
 
 	return updatedBalance, nil
 }
 
 func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64, newPassword string) (int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
 	statement, err := repo.DB.PrepareContext(ctx, queryUpdatePassword)
 	if err != nil {
-		return 0, err
+		return 0, response.PrepareError("update password", err)
 	}
 	defer statement.Close()
 
 	result, err := statement.ExecContext(ctx, newPassword, id)
 	if err != nil {
-		return 0, err
+		return 0, response.ExecError("update password", err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
@@ -122,22 +122,48 @@ func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64
 }
 
 func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, id int64) (int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
 	statement, err := repo.DB.PrepareContext(ctx, queryDeactive)
 	if err != nil {
-		return 0, err
+		return 0, response.PrepareError("deactivate", err)
 	}
 	defer statement.Close()
 
 	result, err := statement.ExecContext(ctx, "I", id)
 	if err != nil {
-		return 0, err
+		return 0, response.ExecError("deactivate", err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	return rowsAffected, nil
+}
+
+func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*model.CustomerBalance, error) {
+	customerBalance := model.CustomerBalance{Id: id}
+
+	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&customerBalance.Balance)
+	if err != nil {
+		return nil, err
+	}
+
+	return &customerBalance, nil
+}
+
+func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, id int64) (float64, error) {
+	row := repo.DB.QueryRowContext(ctx, queryGetBalanceById, id)
+
+	var balance float64
+	err := row.Scan(&balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("invalid customer id")
+		}
+		return 0, fmt.Errorf("failed to retrieve balance")
+	}
+
+	return balance, nil
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(ctx context.Context, tx *sql.Tx, id int64, newBalance float64) error {
@@ -170,51 +196,28 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sq
 	return customerBalance, nil
 }
 
-func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*model.CustomerBalance, error) {
-	customerBalance := model.CustomerBalance{Id: id}
-
-	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&customerBalance.Balance)
-	if err != nil {
-		return nil, err
-	}
-
-	return &customerBalance, nil
-}
-
-func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, id int64) (float64, error) {
-	row := repo.DB.QueryRowContext(ctx, queryGetBalanceById, id)
-
-	var balance float64
-	err := row.Scan(&balance)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0, fmt.Errorf("invalid customer id")
-		}
-		return 0, fmt.Errorf("failed to retrieve balance")
-	}
-
-	return balance, nil
-}
-
-func rowsToCustomer(rows *sql.Rows) (*model.TCustomers, error) {
+func (repo *CustomerRepositoryImpl) scanCustomer(row *sql.Row) (*model.TCustomers, error) {
+	customer := &model.TCustomers{}
 	base := template.Base{}
-	customer := model.TCustomers{}
+	var updated sql.NullTime
 
-	err := rows.Scan(&customer.Id, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &customer.Status, &base.Created, &base.CreatedBy, &base.Updated, &base.UpdatedBy)
-
+	err := row.Scan(
+		&customer.Id, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &customer.Status,
+		&base.Created, &base.CreatedBy, &updated, &base.UpdatedBy)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to scan customer: %w", err)
+	}
+	if updated.Valid {
+		base.Updated.Time = updated.Time
 	}
 	if !base.UpdatedBy.Valid {
 		base.UpdatedBy.String = ""
 	}
+
 	customer.Base = base
 
-	return &customer, nil
-}
-func retrieveCustomer(rows *sql.Rows) (*model.TCustomers, error) {
-	if rows.Next() {
-		return rowsToCustomer(rows)
-	}
-	return nil, errors.New("customer not found")
+	return customer, nil
 }
