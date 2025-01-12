@@ -60,7 +60,7 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 
 func (repo *CustomerRepositoryImpl) FindById(ctx context.Context, id int64) (*model.TCustomers, error) {
 	if id <= 0 {
-		return nil, errors.New("invalid customer ID")
+		return nil, errors.New("invalid customer id")
 	}
 
 	return repo.findCustomer(ctx, queryFindCustomerById, id)
@@ -83,6 +83,10 @@ func (repo *CustomerRepositoryImpl) findCustomer(ctx context.Context, query stri
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64, newBalance float64) (float64, error) {
+	if id <= 0 || newBalance <= -1 {
+		return 0, errors.New("invalid input parameter")
+	}
+
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
@@ -103,6 +107,9 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64,
 }
 
 func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64, newPassword string) (int64, error) {
+	if id <= 0 || newPassword == "" {
+		return 0, errors.New("invalid input parameter")
+	}
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
@@ -152,13 +159,16 @@ func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*
 }
 
 func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, id int64) (float64, error) {
+	if id <= 0 {
+		return 0, errors.New("invalid customer id")
+	}
 	row := repo.DB.QueryRowContext(ctx, queryGetBalanceById, id)
 
 	var balance float64
 	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, fmt.Errorf("invalid customer id")
+			return 0, nil
 		}
 		return 0, fmt.Errorf("failed to retrieve balance")
 	}
