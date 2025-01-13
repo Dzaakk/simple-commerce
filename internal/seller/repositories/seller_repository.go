@@ -1,13 +1,16 @@
 package repositories
 
-import model "Dzaakk/simple-commerce/internal/seller/models"
+import (
+	model "Dzaakk/simple-commerce/internal/seller/models"
+	"context"
+)
 
 type SellerRepository interface {
-	Create(data model.TSeller) (int64, error)
-	FindById(sellerId int64) (*model.TSeller, error)
-	Deactive(sellerId int64) (int64, error)
-	FindByUsername(username string) (*model.TSeller, error)
-	Update(data model.TSeller) (int64, error)
-	UpdatePassword(sellerId int64, newPassword string) (int64, error)
-	InsertBalance(sellerId, balance int64) error
+	Create(ctx context.Context, data model.TSeller) (int64, error)
+	FindById(ctx context.Context, sellerId int64) (*model.TSeller, error)
+	Deactive(ctx context.Context, sellerId int64) (int64, error)
+	FindByUsername(ctx context.Context, username string) (*model.TSeller, error)
+	Update(ctx context.Context, data model.TSeller) (int64, error)
+	UpdatePassword(ctx context.Context, sellerId int64, newPassword string) (int64, error)
+	InsertBalance(ctx context.Context, sellerId, balance int64) error
 }
