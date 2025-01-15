@@ -30,7 +30,7 @@ func (handler *CustomerHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	data, err := handler.Usecase.FindByEmail(reqData.Email)
+	data, err := handler.Usecase.FindByEmail(ctx, reqData.Email)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -57,7 +57,7 @@ func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
 
 	template.AuthorizedChecker(ctx, ctx.Query("id"))
 
-	data, err := handler.Usecase.FindById(id)
+	data, err := handler.Usecase.FindById(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.NotFound(err.Error()))
 		ctx.Abort()
@@ -74,7 +74,7 @@ func (handler *CustomerHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
 		return
 	}
-	_, err := handler.Usecase.Create(data)
+	_, err := handler.Usecase.Create(ctx, data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -97,13 +97,13 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	}
 
 	id, _ := strconv.ParseInt(data.Id, 10, 64)
-	oldData, err := handler.Usecase.GetBalance(id)
+	oldData, err := handler.Usecase.GetBalance(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 	template.AuthorizedChecker(ctx, data.Id)
-	newBalance, err := handler.Usecase.UpdateBalance(id, float64(balance), data.ActionType)
+	newBalance, err := handler.Usecase.UpdateBalance(ctx, id, float64(balance), data.ActionType)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, response.NotFound(err.Error()))
 		ctx.Abort()
