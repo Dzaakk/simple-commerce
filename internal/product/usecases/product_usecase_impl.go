@@ -3,6 +3,7 @@ package usecases
 import (
 	model "Dzaakk/simple-commerce/internal/product/models"
 	repo "Dzaakk/simple-commerce/internal/product/repositories"
+	"context"
 	"fmt"
 	"strconv"
 )
@@ -15,7 +16,7 @@ func NewProductUseCase(repo repo.ProductRepository) ProductUseCase {
 	return &ProductUseCaseImpl{repo}
 }
 
-func (p *ProductUseCaseImpl) Create(dataReq model.ProductReq) (*model.ProductRes, error) {
+func (p *ProductUseCaseImpl) Create(ctx context.Context, dataReq model.ProductReq) (*model.ProductRes, error) {
 	price, _ := strconv.ParseFloat(dataReq.Price, 32)
 	sellerId, _ := strconv.ParseInt(dataReq.SellerId, 0, 64)
 	categoryId, _ := strconv.ParseInt(dataReq.CategoryId, 0, 0)
@@ -27,7 +28,7 @@ func (p *ProductUseCaseImpl) Create(dataReq model.ProductReq) (*model.ProductRes
 		CategoryId:  int(categoryId),
 		SellerId:    int(sellerId),
 	}
-	data, err := p.repo.Create(newProduct)
+	data, err := p.repo.Create(ctx, newProduct)
 	if err != nil {
 		return nil, err
 	}
@@ -43,11 +44,11 @@ func (p *ProductUseCaseImpl) Create(dataReq model.ProductReq) (*model.ProductRes
 	return productRes, nil
 }
 
-func (p *ProductUseCaseImpl) FilterByPrice(price int) ([]*model.ProductRes, error) {
+func (p *ProductUseCaseImpl) FilterByPrice(ctx context.Context, price int) ([]*model.ProductRes, error) {
 	panic("unimplemented")
 }
 
-func (p *ProductUseCaseImpl) Update(dataReq model.ProductReq) error {
+func (p *ProductUseCaseImpl) Update(ctx context.Context, dataReq model.ProductReq) error {
 	price, _ := strconv.ParseFloat(dataReq.Price, 32)
 	sellerId, _ := strconv.ParseInt(dataReq.SellerId, 0, 64)
 	id, _ := strconv.ParseInt(dataReq.Id, 0, 64)
@@ -62,7 +63,7 @@ func (p *ProductUseCaseImpl) Update(dataReq model.ProductReq) error {
 		SellerId:    int(sellerId),
 	}
 
-	_, err := p.repo.Update(updatedProduct)
+	_, err := p.repo.Update(ctx, updatedProduct)
 	if err != nil {
 		return err
 	}
@@ -70,8 +71,8 @@ func (p *ProductUseCaseImpl) Update(dataReq model.ProductReq) error {
 	return nil
 }
 
-func (p *ProductUseCaseImpl) FindByCategoryId(categoryId int) ([]*model.ProductRes, error) {
-	listData, err := p.repo.FindByCategoryId(categoryId)
+func (p *ProductUseCaseImpl) FindByCategoryId(ctx context.Context, categoryId int) ([]*model.ProductRes, error) {
+	listData, err := p.repo.FindProductByFilters(ctx, nil, &categoryId)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +90,8 @@ func (p *ProductUseCaseImpl) FindByCategoryId(categoryId int) ([]*model.ProductR
 	return listProduct, nil
 }
 
-func (p *ProductUseCaseImpl) FindByName(productName string) (*model.ProductRes, error) {
-	data, err := p.repo.FindByName(productName)
+func (p *ProductUseCaseImpl) FindByName(ctx context.Context, productName string) (*model.ProductRes, error) {
+	data, err := p.repo.FindByName(ctx, productName)
 	if err != nil {
 		return nil, err
 	}
