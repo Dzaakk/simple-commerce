@@ -3,7 +3,6 @@ package repositories
 import (
 	model "Dzaakk/simple-commerce/internal/customer/models"
 	response "Dzaakk/simple-commerce/package/response"
-	template "Dzaakk/simple-commerce/package/templates"
 	"context"
 	"database/sql"
 	"errors"
@@ -43,16 +42,14 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	statement, err := repo.DB.PrepareContext(ctx, queryCreateCustomer)
-	if err != nil {
-		return 0, response.PrepareError("create customer", err)
-	}
-	defer statement.Close()
-
-	var id int64
-	err = statement.QueryRowContext(ctx, data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
+	result, err := repo.DB.ExecContext(ctx, queryCreateCustomer, data.Username, data.Email, data.Password, data.PhoneNumber, data.Balance, data.Status, data.Base.Created, data.Base.CreatedBy)
 	if err != nil {
 		return 0, response.ExecError("create customer", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, errors.New("failed to retrieve last id")
 	}
 
 	return id, err
@@ -79,10 +76,10 @@ func (repo *CustomerRepositoryImpl) findCustomer(ctx context.Context, query stri
 	defer cancel()
 
 	row := repo.DB.QueryRowContext(ctx, query, args...)
-	return repo.scanCustomer(row)
+	return scanCustomer(row)
 }
 
-func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64, newBalance float64) (float64, error) {
+func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64, newBalance float64) (int64, error) {
 	if id <= 0 || newBalance <= -1 {
 		return 0, errors.New("invalid input parameter")
 	}
@@ -90,20 +87,14 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64,
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	statement, err := repo.DB.PrepareContext(ctx, queryUpdateBalance)
-	if err != nil {
-		return 0, response.PrepareError("update balance", err)
-	}
-	defer statement.Close()
-
-	var updatedBalance float64
 	idString := strconv.FormatInt(id, 8)
-	err = statement.QueryRowContext(ctx, newBalance, idString, id).Scan(&updatedBalance)
+	result, err := repo.DB.ExecContext(ctx, queryUpdateBalance, newBalance, idString, id)
 	if err != nil {
 		return 0, response.ExecError("update balance", err)
 	}
 
-	return updatedBalance, nil
+	rowsAffected, _ := result.RowsAffected()
+	return rowsAffected, nil
 }
 
 func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64, newPassword string) (int64, error) {
@@ -113,13 +104,7 @@ func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	statement, err := repo.DB.PrepareContext(ctx, queryUpdatePassword)
-	if err != nil {
-		return 0, response.PrepareError("update password", err)
-	}
-	defer statement.Close()
-
-	result, err := statement.ExecContext(ctx, newPassword, id)
+	result, err := repo.DB.ExecContext(ctx, queryUpdatePassword, newPassword, id)
 	if err != nil {
 		return 0, response.ExecError("update password", err)
 	}
@@ -132,13 +117,7 @@ func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, id int64) (int
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	statement, err := repo.DB.PrepareContext(ctx, queryDeactive)
-	if err != nil {
-		return 0, response.PrepareError("deactivate", err)
-	}
-	defer statement.Close()
-
-	result, err := statement.ExecContext(ctx, "I", id)
+	result, err := repo.DB.ExecContext(ctx, queryDeactive, "I", id)
 	if err != nil {
 		return 0, response.ExecError("deactivate", err)
 	}
@@ -204,30 +183,4 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sq
 		return nil, fmt.Errorf("unable to retrieve customer balance : %w", err)
 	}
 	return customerBalance, nil
-}
-
-func (repo *CustomerRepositoryImpl) scanCustomer(row *sql.Row) (*model.TCustomers, error) {
-	customer := &model.TCustomers{}
-	base := template.Base{}
-	var updated sql.NullTime
-
-	err := row.Scan(
-		&customer.Id, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &customer.Status,
-		&base.Created, &base.CreatedBy, &updated, &base.UpdatedBy)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to scan customer: %w", err)
-	}
-	if updated.Valid {
-		base.Updated.Time = updated.Time
-	}
-	if !base.UpdatedBy.Valid {
-		base.UpdatedBy.String = ""
-	}
-
-	customer.Base = base
-
-	return customer, nil
 }
