@@ -3,8 +3,10 @@ package repositories
 import (
 	model "Dzaakk/simple-commerce/internal/product/models"
 	"Dzaakk/simple-commerce/internal/shopping_cart/models"
+	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -20,7 +22,7 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 }
 
 const (
-	queryCreateProduct               = `INSERT INTO public.product (product_name, price, stock, category_id, seller_id, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+	queryCreate                      = `INSERT INTO public.product (product_name, price, stock, category_id, seller_id, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 	queryUpdate                      = `UPDATE public.product SET product_name=$1, price=$2, stock=$3, updated=NOW(), updated_by=$4 WHERE id=$5`
 	queryFindByCategoryId            = `SELECT * FROM public.product WHERE category_id = $1`
 	queryFindBySellerIdAndCategoryId = `SELECT * FROM public.product WHERE seller_id = $1 AND category_id = $2`
@@ -38,44 +40,44 @@ func (repo *ProductRepositoryImpl) contextWithTimeout(ctx context.Context) (cont
 	return context.WithTimeout(ctx, dbQueryTimeout)
 }
 func (repo *ProductRepositoryImpl) Create(ctx context.Context, data model.TProduct) (*model.TProduct, error) {
-	statement, err := repo.DB.Prepare(queryCreateProduct)
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	result, err := repo.DB.ExecContext(ctx, queryCreate, data.ProductName, data.Price, data.Stock, data.CategoryId, data.SellerId, data.Base.Created, data.Base.CreatedBy)
+	if err != nil {
+		return nil, response.ExecError("create product", err)
+	}
+
+	id, err := result.LastInsertId()
 	if err != nil {
 		return nil, err
 	}
-	defer statement.Close()
 
-	var id int
-
-	err = statement.QueryRow(data.ProductName, data.Price, data.Stock, data.CategoryId, data.SellerId, data.Base.Created, data.Base.CreatedBy).Scan(id)
-	if err != nil {
-		return nil, err
-	}
-
-	data.Id = id
+	data.Id = int(id)
 	return &data, nil
 }
 
 func (repo *ProductRepositoryImpl) Update(ctx context.Context, data model.TProduct) (int64, error) {
-	statement, err := repo.DB.Prepare(queryUpdate)
-	if err != nil {
-		return 0, err
+	if data.Price < 0 {
+		return 0, errors.New("invalid input parameter")
 	}
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
 
-	defer statement.Close()
-
-	result, err := repo.DB.Exec(data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.Id)
-
+	result, err := repo.DB.ExecContext(ctx, queryUpdate, data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.Id)
 	if err != nil {
 		return 0, err
 	}
 
 	rowsAffected, _ := result.RowsAffected()
-
 	return rowsAffected, nil
 }
 
 func (repo *ProductRepositoryImpl) FindById(ctx context.Context, id int) (*model.TProduct, error) {
-	rows, err := repo.DB.Query(queryFindById, id)
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	rows, err := repo.DB.QueryContext(ctx, queryFindById, id)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +117,11 @@ func (repo *ProductRepositoryImpl) FindProductByFilters(ctx context.Context, cat
 }
 
 func (repo *ProductRepositoryImpl) GetPriceById(ctx context.Context, id int) (float32, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
 	var balance float32
-	err := repo.DB.QueryRow(queryGetPriceById, id).Scan(&balance)
+	err := repo.DB.QueryRowContext(ctx, queryGetPriceById, id).Scan(&balance)
 	if err != nil {
 		return 0, err
 	}
@@ -125,8 +130,11 @@ func (repo *ProductRepositoryImpl) GetPriceById(ctx context.Context, id int) (fl
 }
 
 func (repo *ProductRepositoryImpl) GetStockById(ctx context.Context, id int) (int, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
 	var stock int
-	err := repo.DB.QueryRow(queryGetPriceById, id).Scan(stock)
+	err := repo.DB.QueryRowContext(ctx, queryGetPriceById, id).Scan(stock)
 	if err != nil {
 		return 0, err
 	}
@@ -135,7 +143,10 @@ func (repo *ProductRepositoryImpl) GetStockById(ctx context.Context, id int) (in
 }
 
 func (repo *ProductRepositoryImpl) SetStockById(ctx context.Context, id int, stock int) (int64, error) {
-	result, err := repo.DB.Exec(querySetStockById, stock, id)
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	result, err := repo.DB.ExecContext(ctx, querySetStockById, stock, id)
 	if err != nil {
 		return 0, err
 	}
@@ -144,8 +155,10 @@ func (repo *ProductRepositoryImpl) SetStockById(ctx context.Context, id int, sto
 }
 
 func (repo *ProductRepositoryImpl) FindByName(ctx context.Context, name string) (*model.TProduct, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
 
-	rows, err := repo.DB.Query(queryFindByName, name)
+	rows, err := repo.DB.QueryContext(ctx, queryFindByName, name)
 	if err != nil {
 		return nil, err
 	}
