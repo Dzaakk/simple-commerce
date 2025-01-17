@@ -4,6 +4,7 @@ import (
 	model "Dzaakk/simple-commerce/internal/seller/models"
 	repo "Dzaakk/simple-commerce/internal/seller/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -17,7 +18,7 @@ func NewSellerUseCase(repo repo.SellerRepository) SellerUseCase {
 	return &SellerUseCaseImpl{repo}
 }
 
-func (s *SellerUseCaseImpl) Create(data model.ReqCreate) (int64, error) {
+func (s *SellerUseCaseImpl) Create(ctx context.Context, data model.ReqCreate) (int64, error) {
 	hashedPassword, err := template.HashPassword(data.Password)
 	if err != nil {
 		return 0, err
@@ -34,7 +35,7 @@ func (s *SellerUseCaseImpl) Create(data model.ReqCreate) (int64, error) {
 		},
 	}
 
-	sellerId, err := s.repo.Create(seller)
+	sellerId, err := s.repo.Create(ctx, seller)
 	if err != nil {
 		return 0, err
 	}
@@ -42,9 +43,9 @@ func (s *SellerUseCaseImpl) Create(data model.ReqCreate) (int64, error) {
 	return sellerId, nil
 }
 
-func (s *SellerUseCaseImpl) Deactivate(sellerId int64) (int64, error) {
+func (s *SellerUseCaseImpl) Deactivate(ctx context.Context, sellerId int64) (int64, error) {
 
-	rowsAffected, err := s.repo.Deactive(sellerId)
+	rowsAffected, err := s.repo.Deactive(ctx, sellerId)
 	if err != nil {
 		return 0, err
 	}
@@ -53,8 +54,8 @@ func (s *SellerUseCaseImpl) Deactivate(sellerId int64) (int64, error) {
 
 }
 
-func (s *SellerUseCaseImpl) FindById(sellerId int64) (*model.ResData, error) {
-	sellerData, err := s.repo.FindById(sellerId)
+func (s *SellerUseCaseImpl) FindById(ctx context.Context, sellerId int64) (*model.ResData, error) {
+	sellerData, err := s.repo.FindById(ctx, sellerId)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +70,8 @@ func (s *SellerUseCaseImpl) FindById(sellerId int64) (*model.ResData, error) {
 	return res, nil
 }
 
-func (s *SellerUseCaseImpl) FindByUsername(username string) (*model.ResData, error) {
-	sellerData, err := s.repo.FindByUsername(username)
+func (s *SellerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.ResData, error) {
+	sellerData, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
 		return nil, err
 	}
@@ -85,15 +86,15 @@ func (s *SellerUseCaseImpl) FindByUsername(username string) (*model.ResData, err
 	return res, nil
 }
 
-func (s *SellerUseCaseImpl) Update(data model.ReqUpdate) (int64, error) {
+func (s *SellerUseCaseImpl) Update(ctx context.Context, data model.ReqUpdate) (int64, error) {
 	sellerId, _ := strconv.ParseInt(data.Id, 0, 64)
-	existingData, err := s.repo.FindById(sellerId)
+	existingData, err := s.repo.FindById(ctx, sellerId)
 	if err != nil {
 		return 0, err
 	}
 	updatedData := generateDataUpdate(*existingData, data)
 
-	rowsAffected, err := s.repo.Update(updatedData)
+	rowsAffected, err := s.repo.Update(ctx, updatedData)
 	if err != nil {
 		return 0, err
 	}
@@ -123,13 +124,13 @@ func generateDataUpdate(existingData model.TSeller, newData model.ReqUpdate) mod
 	return updatedData
 }
 
-func (s *SellerUseCaseImpl) ChangePassword(sellerId int64, newPassword string) (int64, error) {
+func (s *SellerUseCaseImpl) ChangePassword(ctx context.Context, sellerId int64, newPassword string) (int64, error) {
 	hashedPassword, err := template.HashPassword(newPassword)
 	if err != nil {
 		return 0, err
 	}
 
-	rowsAffected, err := s.repo.UpdatePassword(sellerId, string(hashedPassword))
+	rowsAffected, err := s.repo.UpdatePassword(ctx, sellerId, string(hashedPassword))
 	if err != nil {
 		return 0, err
 	}
