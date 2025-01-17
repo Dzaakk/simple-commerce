@@ -24,7 +24,7 @@ func (handler *ProductHandler) GetProduct(ctx *gin.Context) {
 	productName := ctx.Query("productName")
 
 	if categoryId != 0 {
-		listProduct, err := handler.Usecase.FindByCategoryId(categoryId)
+		listProduct, err := handler.Usecase.FindByCategoryId(ctx, categoryId)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 			return
@@ -36,7 +36,7 @@ func (handler *ProductHandler) GetProduct(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, response.Success(listProduct))
 	}
 	if productName != "" {
-		product, err := handler.Usecase.FindByName(productName)
+		product, err := handler.Usecase.FindByName(ctx, productName)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 			return
