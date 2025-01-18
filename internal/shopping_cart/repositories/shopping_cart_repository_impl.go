@@ -2,8 +2,11 @@ package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	response "Dzaakk/simple-commerce/package/response"
+	"context"
 	"database/sql"
 	"strconv"
+	"time"
 )
 
 type ShoppingCartRepositoryImpl struct {
@@ -23,24 +26,25 @@ const (
 	queryUpdateStatusById   = `UPDATE public.shopping_cart SET status=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING status`
 	queryCheckStatus        = `SELECT status FROM public.shopping_cart WHERE id=$1 AND customer_id=$2`
 	queryDeleteShoppingCart = `DELETE FROM public.shopping_cart WHERE id=$1`
+	dbQueryTimeout          = 2 * time.Second
 )
 
-func (repo *ShoppingCartRepositoryImpl) Create(data model.TShoppingCart) (*model.TShoppingCart, error) {
-	statement, err := repo.DB.Prepare(queryCreateShoppingCart)
+func (repo *ShoppingCartRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, dbQueryTimeout)
+}
+
+func (repo *ShoppingCartRepositoryImpl) Create(ctx context.Context, data model.TShoppingCart) (*model.TShoppingCart, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	result, err := repo.DB.ExecContext(ctx, queryCreateShoppingCart, data.CustomerId, data.Status, data.Base.Created, data.Base.CreatedBy)
 	if err != nil {
-		return nil, err
-	}
-	defer statement.Close()
-
-	var id int
-
-	err = statement.QueryRow(data.CustomerId, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
-	if err != nil {
-		return nil, err
+		return nil, response.ExecError("create shopping cart", err)
 	}
 
+	id, _ := result.LastInsertId()
 	newData := &model.TShoppingCart{
-		Id:         id,
+		Id:         int(id),
 		CustomerId: data.CustomerId,
 		Status:     data.Status,
 	}
@@ -48,7 +52,7 @@ func (repo *ShoppingCartRepositoryImpl) Create(data model.TShoppingCart) (*model
 	return newData, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) FindById(id int) (*model.ShoppingCartRes, error) {
+func (repo *ShoppingCartRepositoryImpl) FindById(ctx context.Context, id int) (*model.ShoppingCartRes, error) {
 	var shoppingCart model.ShoppingCartRes
 	err := repo.DB.QueryRow(queryFindById, id).Scan(&shoppingCart.Id, &shoppingCart.CustomerId, &shoppingCart.Status)
 	if err != nil {
@@ -58,7 +62,7 @@ func (repo *ShoppingCartRepositoryImpl) FindById(id int) (*model.ShoppingCartRes
 	return &shoppingCart, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(customerId int, status string) (*model.TShoppingCart, error) {
+func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(ctx context.Context, customerId int, status string) (*model.TShoppingCart, error) {
 	var data model.TShoppingCart
 	err := repo.DB.QueryRow(queryFindByCartId, customerId, status).Scan(&data.Id, &data.CustomerId)
 	if err != nil {
@@ -71,7 +75,7 @@ func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(customerId int
 	return &data, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(id int, status, customerId string) (*model.TShoppingCart, error) {
+func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(ctx context.Context, id int, status, customerId string) (*model.TShoppingCart, error) {
 	statement, err := repo.DB.Prepare(queryUpdateStatusById)
 	if err != nil {
 		return nil, err
@@ -94,19 +98,19 @@ func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(id int, status, custome
 	return shoppingCart, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) CheckStatus(id int, customerId int) (string, error) {
+func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, id int, customerId int) (string, error) {
 	var status string
 	_ = repo.DB.QueryRow(queryCheckStatus, id, customerId).Scan(&status)
 
 	return status, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) UpdateStatusByIdWithTx(tx *sql.Tx, cartId int, status string, customerid string) error {
+func (repo *ShoppingCartRepositoryImpl) UpdateStatusByIdWithTx(ctx context.Context, tx *sql.Tx, cartId int, status string, customerid string) error {
 	_, err := tx.Exec(queryUpdateStatusById, status, customerid, cartId)
 	return err
 }
 
-func (repo *ShoppingCartRepositoryImpl) DeleteShoppingCart(cartId int) error {
+func (repo *ShoppingCartRepositoryImpl) DeleteShoppingCart(ctx context.Context, cartId int) error {
 	_, err := repo.DB.Exec(queryDeleteShoppingCart, cartId)
 	return err
 }
