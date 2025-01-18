@@ -2,6 +2,7 @@ package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -27,7 +28,7 @@ const (
 	queryDeleteCartItems        = "DELETE FROM shopping_cart_item WHERE cart_id=$1 AND product_id=$2"
 )
 
-func (repo *ShoppingCartItemRepositoryImpl) SetQuantityWithTx(tx *sql.Tx, listProductId []*int) error {
+func (repo *ShoppingCartItemRepositoryImpl) SetQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductId []*int) error {
 	if len(listProductId) == 0 {
 		return nil
 	}
@@ -54,7 +55,7 @@ func (repo *ShoppingCartItemRepositoryImpl) SetQuantityWithTx(tx *sql.Tx, listPr
 	return nil
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) DeleteAll(cartId int) error {
+func (repo *ShoppingCartItemRepositoryImpl) DeleteAll(ctx context.Context, cartId int) error {
 	result, err := repo.DB.Exec(queryDeleteAllCartItems, cartId)
 	if err != nil {
 		return err
@@ -68,12 +69,12 @@ func (repo *ShoppingCartItemRepositoryImpl) DeleteAll(cartId int) error {
 	return nil
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) DeleteAllWithTx(tx *sql.Tx, cartId int) error {
+func (repo *ShoppingCartItemRepositoryImpl) DeleteAllWithTx(ctx context.Context, tx *sql.Tx, cartId int) error {
 	_, err := tx.Exec(queryDeleteAllCartItems, cartId)
 	return err
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) CountByCartId(cartId int) (int, error) {
+func (repo *ShoppingCartItemRepositoryImpl) CountByCartId(ctx context.Context, cartId int) (int, error) {
 	var total int
 	err := repo.DB.QueryRow(queryCountItemByChartId, cartId).Scan(&total)
 	if err != nil {
@@ -84,7 +85,7 @@ func (repo *ShoppingCartItemRepositoryImpl) CountByCartId(cartId int) (int, erro
 }
 
 // change return value to Tshopping cart item
-func (repo *ShoppingCartItemRepositoryImpl) Update(data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error) {
+func (repo *ShoppingCartItemRepositoryImpl) Update(ctx context.Context, data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error) {
 	statement, err := repo.DB.Prepare(queryUpdateShoppingCartItem)
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func (repo *ShoppingCartItemRepositoryImpl) Update(data model.TShoppingCartItem,
 	return updatedCartItem, nil
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) Delete(productId int, cartId int) error {
+func (repo *ShoppingCartItemRepositoryImpl) Delete(ctx context.Context, productId int, cartId int) error {
 	result, err := repo.DB.Exec(queryDeleteCartItems, cartId, productId)
 	if err != nil {
 		return err
@@ -120,7 +121,7 @@ func (repo *ShoppingCartItemRepositoryImpl) Delete(productId int, cartId int) er
 	return nil
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error) {
+func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartId(ctx context.Context, cartId int) ([]*model.TCartItemDetail, error) {
 	rows, err := repo.DB.Query(queryRetrieveCartItems, cartId)
 	if err != nil {
 		return nil, err
@@ -143,7 +144,7 @@ func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartId(cartId int
 	return cartItems, nil
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartIdWithTx(tx *sql.Tx, cartId int) ([]*model.TCartItemDetail, error) {
+func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartIdWithTx(ctx context.Context, tx *sql.Tx, cartId int) ([]*model.TCartItemDetail, error) {
 	rows, err := tx.Query(queryRetrieveCartItems, cartId)
 	if err != nil {
 		return nil, err
@@ -170,7 +171,7 @@ func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartIdWithTx(tx *
 	return cartItems, nil
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) CountQuantityByProductAndCartId(productId int, cartId int) (int, error) {
+func (repo *ShoppingCartItemRepositoryImpl) CountQuantityByProductAndCartId(ctx context.Context, productId int, cartId int) (int, error) {
 	var totalQuantity int
 	err := repo.DB.QueryRow(queryCountProductQuantity, productId, cartId).Scan(&totalQuantity)
 	if err != nil {
@@ -183,7 +184,7 @@ func (repo *ShoppingCartItemRepositoryImpl) CountQuantityByProductAndCartId(prod
 	return totalQuantity, nil
 }
 
-func (repo *ShoppingCartItemRepositoryImpl) Create(data model.TShoppingCartItem) (*model.TShoppingCartItem, error) {
+func (repo *ShoppingCartItemRepositoryImpl) Create(ctx context.Context, data model.TShoppingCartItem) (*model.TShoppingCartItem, error) {
 	statement, err := repo.DB.Prepare(queryCreateShoppingCartItem)
 	if err != nil {
 		return nil, err
