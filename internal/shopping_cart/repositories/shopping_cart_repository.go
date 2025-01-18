@@ -2,28 +2,29 @@ package repository
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	"context"
 	"database/sql"
 )
 
 type ShoppingCartRepository interface {
-	Create(data model.TShoppingCart) (*model.TShoppingCart, error)
-	FindByCustomerIdAndStatus(customerId int, status string) (*model.TShoppingCart, error)
-	FindById(id int) (*model.ShoppingCartRes, error)
-	CheckStatus(id, customerId int) (string, error)
-	UpdateStatusById(id int, status, customerid string) (*model.TShoppingCart, error)
-	UpdateStatusByIdWithTx(tx *sql.Tx, cartId int, status, customerid string) error
-	DeleteShoppingCart(cartId int) error
+	Create(ctx context.Context, data model.TShoppingCart) (*model.TShoppingCart, error)
+	FindByCustomerIdAndStatus(ctx context.Context, customerId int, status string) (*model.TShoppingCart, error)
+	FindById(ctx context.Context, id int) (*model.ShoppingCartRes, error)
+	CheckStatus(ctx context.Context, id, customerId int) (string, error)
+	UpdateStatusById(ctx context.Context, id int, status, customerid string) (*model.TShoppingCart, error)
+	UpdateStatusByIdWithTx(ctx context.Context, tx *sql.Tx, cartId int, status, customerid string) error
+	DeleteShoppingCart(ctx context.Context, cartId int) error
 }
 
 type ShoppingCartItemRepository interface {
-	Create(data model.TShoppingCartItem) (*model.TShoppingCartItem, error)
-	Update(data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error)
-	CountQuantityByProductAndCartId(productId, cartId int) (int, error)
-	CountByCartId(cartId int) (int, error)
-	Delete(productId, cartId int) error
-	DeleteAll(cartId int) error
-	DeleteAllWithTx(tx *sql.Tx, cartId int) error
-	RetrieveCartItemsByCartId(cartId int) ([]*model.TCartItemDetail, error)
-	RetrieveCartItemsByCartIdWithTx(tx *sql.Tx, cartId int) ([]*model.TCartItemDetail, error)
-	SetQuantityWithTx(tx *sql.Tx, listProductId []*int) error
+	Create(ctx context.Context, data model.TShoppingCartItem) (*model.TShoppingCartItem, error)
+	Update(ctx context.Context, data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error)
+	CountQuantityByProductAndCartId(ctx context.Context, productId, cartId int) (int, error)
+	CountByCartId(ctx context.Context, cartId int) (int, error)
+	Delete(ctx context.Context, productId, cartId int) error
+	DeleteAll(ctx context.Context, cartId int) error
+	DeleteAllWithTx(ctx context.Context, tx *sql.Tx, cartId int) error
+	RetrieveCartItemsByCartId(ctx context.Context, cartId int) ([]*model.TCartItemDetail, error)
+	RetrieveCartItemsByCartIdWithTx(ctx context.Context, tx *sql.Tx, cartId int) ([]*model.TCartItemDetail, error)
+	SetQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductId []*int) error
 }
