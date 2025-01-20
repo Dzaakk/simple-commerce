@@ -5,7 +5,6 @@ import (
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
 	"strconv"
 	"time"
 )
@@ -55,7 +54,7 @@ func (repo *ShoppingCartRepositoryImpl) Create(ctx context.Context, data model.T
 
 func (repo *ShoppingCartRepositoryImpl) FindById(ctx context.Context, id int) (*model.TShoppingCart, error) {
 	if id <= 0 {
-		return nil, errors.New("invalid input parameter")
+		return nil, response.InvalidParameter()
 	}
 
 	return repo.findShoppingCart(ctx, queryFindById, id)
@@ -63,7 +62,7 @@ func (repo *ShoppingCartRepositoryImpl) FindById(ctx context.Context, id int) (*
 
 func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(ctx context.Context, customerId int, status string) (*model.TShoppingCart, error) {
 	if customerId <= 0 || status == "" {
-		return nil, errors.New("invalid input parameter")
+		return nil, response.InvalidParameter()
 	}
 	return repo.findShoppingCart(ctx, queryFindByCustomerIdAndStatus, customerId, status)
 }
@@ -97,7 +96,7 @@ func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(ctx context.Context, id
 
 func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, id int, customerId int) (string, error) {
 	if id <= 0 || customerId <= 0 {
-		return "", errors.New("invalid input parameter")
+		return "", response.InvalidParameter()
 	}
 
 	ctx, cancel := repo.contextWithTimeout(ctx)
@@ -119,7 +118,7 @@ func (repo *ShoppingCartRepositoryImpl) UpdateStatusByIdWithTx(ctx context.Conte
 
 func (repo *ShoppingCartRepositoryImpl) DeleteShoppingCart(ctx context.Context, cartId int) error {
 	if cartId <= 0 {
-		return errors.New("invalid input parameter")
+		return response.InvalidParameter()
 	}
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
