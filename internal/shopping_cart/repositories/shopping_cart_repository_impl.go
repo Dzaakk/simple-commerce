@@ -24,7 +24,7 @@ const (
 	queryCreateShoppingCart        = `INSERT INTO public.shopping_cart (customer_id, status, created, created_by) VALUES ($1, $2, $3, $4) RETURNING id`
 	queryFindById                  = `SELECT id, customer_id, status FROM public.shopping_cart WHERE id=$1`
 	queryFindByCustomerIdAndStatus = `SELECT id, customer_id FROM public.shopping_cart WHERE customer_id=$1 AND status=$2`
-	queryUpdateStatusById          = `UPDATE public.shopping_cart SET status=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING status`
+	queryUpdateStatusById          = `UPDATE public.shopping_cart SET status=$1, updated_by=$2, updated=now() WHERE id=$3`
 	queryCheckStatus               = `SELECT status FROM public.shopping_cart WHERE id=$1 AND customer_id=$2`
 	queryDeleteShoppingCart        = `DELETE FROM public.shopping_cart WHERE id=$1`
 	dbQueryTimeout                 = 2 * time.Second
@@ -77,41 +77,57 @@ func (repo *ShoppingCartRepositoryImpl) findShoppingCart(ctx context.Context, qu
 }
 
 func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(ctx context.Context, id int, status, customerId string) (*model.TShoppingCart, error) {
-	statement, err := repo.DB.Prepare(queryUpdateStatusById)
-	if err != nil {
-		return nil, err
-	}
-	defer statement.Close()
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
 
-	var newStatus string
-	err = statement.QueryRow(status, customerId, id).Scan(&newStatus)
+	_, err := repo.DB.ExecContext(ctx, queryUpdateStatusById, status, customerId, id)
 	if err != nil {
-		return nil, err
+		return nil, response.ExecError("update status by id", err)
 	}
 
-	strCustomerId, _ := strconv.Atoi(customerId)
+	intCustomerID, _ := strconv.Atoi(customerId)
 	shoppingCart := &model.TShoppingCart{
 		Id:         id,
-		CustomerId: strCustomerId,
-		Status:     newStatus,
+		CustomerId: intCustomerID,
+		Status:     status,
 	}
 
 	return shoppingCart, nil
 }
 
 func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, id int, customerId int) (string, error) {
+	if id <= 0 || customerId <= 0 {
+		return "", errors.New("invalid input parameter")
+	}
+
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
 	var status string
-	_ = repo.DB.QueryRow(queryCheckStatus, id, customerId).Scan(&status)
+	_ = repo.DB.QueryRowContext(ctx, queryCheckStatus, id, customerId).Scan(&status)
 
 	return status, nil
 }
 
 func (repo *ShoppingCartRepositoryImpl) UpdateStatusByIdWithTx(ctx context.Context, tx *sql.Tx, cartId int, status string, customerid string) error {
-	_, err := tx.Exec(queryUpdateStatusById, status, customerid, cartId)
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, queryUpdateStatusById, status, customerid, cartId)
 	return err
 }
 
 func (repo *ShoppingCartRepositoryImpl) DeleteShoppingCart(ctx context.Context, cartId int) error {
-	_, err := repo.DB.Exec(queryDeleteShoppingCart, cartId)
-	return err
+	if cartId <= 0 {
+		return errors.New("invalid input parameter")
+	}
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	_, err := repo.DB.ExecContext(ctx, queryDeleteShoppingCart, cartId)
+	if err != nil {
+		return response.ExecError("delete shopping cart", err)
+	}
+
+	return nil
 }
