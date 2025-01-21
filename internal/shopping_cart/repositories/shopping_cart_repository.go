@@ -18,7 +18,7 @@ type ShoppingCartRepository interface {
 
 type ShoppingCartItemRepository interface {
 	Create(ctx context.Context, data model.TShoppingCartItem) (*model.TShoppingCartItem, error)
-	Update(ctx context.Context, data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error)
+	Update(ctx context.Context, data model.TShoppingCartItem, customerId string) (*model.TShoppingCartItem, error)
 	CountQuantityByProductAndCartId(ctx context.Context, productId, cartId int) (int, error)
 	CountByCartId(ctx context.Context, cartId int) (int, error)
 	Delete(ctx context.Context, productId, cartId int) error
@@ -26,5 +26,5 @@ type ShoppingCartItemRepository interface {
 	DeleteAllWithTx(ctx context.Context, tx *sql.Tx, cartId int) error
 	RetrieveCartItemsByCartId(ctx context.Context, cartId int) ([]*model.TCartItemDetail, error)
 	RetrieveCartItemsByCartIdWithTx(ctx context.Context, tx *sql.Tx, cartId int) ([]*model.TCartItemDetail, error)
-	SetQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductId []*int) error
+	SetEmptyQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductId []*int) error
 }
