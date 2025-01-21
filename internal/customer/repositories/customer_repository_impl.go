@@ -5,8 +5,6 @@ import (
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"strconv"
 	"time"
 )
@@ -49,7 +47,7 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return 0, errors.New("failed to retrieve last id")
+		return 0, response.Error("failed to retrieve last id", err)
 	}
 
 	return id, err
@@ -57,7 +55,7 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 
 func (repo *CustomerRepositoryImpl) FindById(ctx context.Context, id int64) (*model.TCustomers, error) {
 	if id <= 0 {
-		return nil, errors.New("invalid customer id")
+		return nil, response.InvalidParameter()
 	}
 
 	return repo.findCustomer(ctx, queryFindCustomerById, id)
@@ -65,7 +63,7 @@ func (repo *CustomerRepositoryImpl) FindById(ctx context.Context, id int64) (*mo
 
 func (repo *CustomerRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {
 	if email == "" {
-		return nil, errors.New("email cannot be empty")
+		return nil, response.InvalidParameter()
 	}
 
 	return repo.findCustomer(ctx, queryFindCustomerByEmail, email)
@@ -81,7 +79,7 @@ func (repo *CustomerRepositoryImpl) findCustomer(ctx context.Context, query stri
 
 func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64, newBalance float64) (int64, error) {
 	if id <= 0 || newBalance <= -1 {
-		return 0, errors.New("invalid input parameter")
+		return 0, response.InvalidParameter()
 	}
 
 	ctx, cancel := repo.contextWithTimeout(ctx)
@@ -99,7 +97,7 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, id int64,
 
 func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64, newPassword string) (int64, error) {
 	if id <= 0 || newPassword == "" {
-		return 0, errors.New("invalid input parameter")
+		return 0, response.InvalidParameter()
 	}
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
@@ -114,6 +112,10 @@ func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, id int64
 }
 
 func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, id int64) (int64, error) {
+	if id <= 0 {
+		return 0, response.InvalidParameter()
+	}
+
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
@@ -127,6 +129,10 @@ func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, id int64) (int
 }
 
 func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*model.CustomerBalance, error) {
+	if id <= 0 {
+		return nil, response.InvalidParameter()
+	}
+
 	customerBalance := model.CustomerBalance{Id: id}
 
 	err := repo.DB.QueryRow(queryGetBalanceById, id).Scan(&customerBalance.Balance)
@@ -139,7 +145,7 @@ func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, id int64) (*
 
 func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, id int64) (float64, error) {
 	if id <= 0 {
-		return 0, errors.New("invalid customer id")
+		return 0, response.InvalidParameter()
 	}
 	row := repo.DB.QueryRowContext(ctx, queryGetBalanceById, id)
 
@@ -147,17 +153,17 @@ func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, id int64
 	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, nil
+			return 0, response.Error("balance not found", err)
 		}
-		return 0, fmt.Errorf("failed to retrieve balance")
+		return 0, response.Error("failed to retrieve balance", err)
 	}
 
 	return balance, nil
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(ctx context.Context, tx *sql.Tx, id int64, newBalance float64) error {
-	if newBalance < 0 {
-		return fmt.Errorf("invalid balance: cannot be negative")
+	if newBalance < 0 || id <= 0 {
+		return response.InvalidParameter()
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -165,7 +171,7 @@ func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(ctx context.Context, tx 
 
 	_, err := tx.ExecContext(ctx, queryUpdateBalanceWithLock, newBalance, id)
 	if err != nil {
-		return fmt.Errorf("failed to update balance for customer ID %d: %w", id, err)
+		return response.ExecError("update with tx", err)
 	}
 
 	return nil
@@ -178,9 +184,9 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sq
 	err := row.Scan(&customerBalance.Id, &customerBalance.Balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("customer with id %d not found", id)
+			return nil, response.Error("customer not found", err)
 		}
-		return nil, fmt.Errorf("unable to retrieve customer balance : %w", err)
+		return nil, response.Error("error scan customer", err)
 	}
 	return customerBalance, nil
 }
