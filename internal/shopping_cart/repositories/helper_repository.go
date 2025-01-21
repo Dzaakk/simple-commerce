@@ -2,10 +2,10 @@ package repositories
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	response "Dzaakk/simple-commerce/package/response"
 	template "Dzaakk/simple-commerce/package/templates"
 	"database/sql"
 	"errors"
-	"fmt"
 )
 
 func scanCart(row *sql.Row) (*model.TShoppingCart, error) {
@@ -19,7 +19,7 @@ func scanCart(row *sql.Row) (*model.TShoppingCart, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to scan cart: %w", err)
+		return nil, response.Error("failed to scan cart", err)
 	}
 	if updated.Valid {
 		base.Updated.Time = updated.Time

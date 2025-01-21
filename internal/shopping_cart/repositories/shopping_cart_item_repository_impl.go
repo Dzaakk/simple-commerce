@@ -2,10 +2,12 @@ package repositories
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type ShoppingCartItemRepositoryImpl struct {
@@ -26,9 +28,17 @@ const (
 	queryCountProductQuantity   = `SELECT SUM(quantity) FROM public.shopping_cart_item WHERE product_id=$1 AND cart_id=$2`
 	queryRetrieveCartItems      = "SELECT sci.product_id, p.product_name, p.price, sci.quantity FROM public.shopping_cart_item sci JOIN public.product p ON sci.product_id = p.id WHERE sci.cart_id=$1 ORDER BY p.product_name ASC"
 	queryDeleteCartItems        = "DELETE FROM shopping_cart_item WHERE cart_id=$1 AND product_id=$2"
+	dbQueryItemTimeout          = 2 * time.Second
 )
 
-func (repo *ShoppingCartItemRepositoryImpl) SetQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductId []*int) error {
+func (repo *ShoppingCartItemRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, dbQueryItemTimeout)
+}
+
+func (repo *ShoppingCartItemRepositoryImpl) SetEmptyQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductId []*int) error {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
 	if len(listProductId) == 0 {
 		return nil
 	}
@@ -48,74 +58,82 @@ func (repo *ShoppingCartItemRepositoryImpl) SetQuantityWithTx(ctx context.Contex
 	for i, id := range listProductId {
 		args[i] = *id
 	}
-	_, err := tx.Exec(query.String(), args...)
+	_, err := tx.ExecContext(ctx, query.String(), args...)
 	if err != nil {
-		return fmt.Errorf("error setting quantities to zero: %w", err)
+		return response.ExecError("set empty quantity with tx", err)
 	}
 	return nil
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) DeleteAll(ctx context.Context, cartId int) error {
-	result, err := repo.DB.Exec(queryDeleteAllCartItems, cartId)
-	if err != nil {
-		return err
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	if cartId <= 0 {
+		return response.InvalidParameter()
 	}
 
-	_, err = result.RowsAffected()
+	_, err := repo.DB.ExecContext(ctx, queryDeleteAllCartItems, cartId)
 	if err != nil {
-		return err
+		return response.ExecError("delete all", err)
 	}
 
 	return nil
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) DeleteAllWithTx(ctx context.Context, tx *sql.Tx, cartId int) error {
-	_, err := tx.Exec(queryDeleteAllCartItems, cartId)
-	return err
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	if cartId <= 0 {
+		return response.InvalidParameter()
+	}
+
+	_, err := tx.ExecContext(ctx, queryDeleteAllCartItems, cartId)
+	if err != nil {
+		return response.ExecError("delete all with tx", err)
+	}
+
+	return nil
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) CountByCartId(ctx context.Context, cartId int) (int, error) {
-	var total int
-	err := repo.DB.QueryRow(queryCountItemByChartId, cartId).Scan(&total)
-	if err != nil {
-		return 0, err
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	if cartId <= 0 {
+		return 0, response.InvalidParameter()
 	}
 
+	var total int
+	_ = repo.DB.QueryRowContext(ctx, queryCountItemByChartId, cartId).Scan(&total)
 	return total, nil
 }
 
 // change return value to Tshopping cart item
-func (repo *ShoppingCartItemRepositoryImpl) Update(ctx context.Context, data model.TShoppingCartItem, customerId string) (*model.ShoppingCartItemRes, error) {
-	statement, err := repo.DB.Prepare(queryUpdateShoppingCartItem)
-	if err != nil {
-		return nil, err
-	}
-	defer statement.Close()
+func (repo *ShoppingCartItemRepositoryImpl) Update(ctx context.Context, data model.TShoppingCartItem, customerId string) (*model.TShoppingCartItem, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
 
 	var updatedQuantity int
-	err = statement.QueryRow(data.Quantity, customerId, data.CartId, data.ProductId).Scan(&updatedQuantity)
-	if err != nil {
-		return nil, err
+	_ = repo.DB.QueryRowContext(ctx, queryUpdateShoppingCartItem, data.Quantity, customerId, data.CartId, data.ProductId).Scan(&updatedQuantity)
+
+	resData := &model.TShoppingCartItem{
+		ProductId: data.ProductId,
+		CartId:    data.CartId,
+		Quantity:  updatedQuantity,
 	}
 
-	updatedCartItem := &model.ShoppingCartItemRes{
-		CartId:    fmt.Sprintf("%d", data.CartId),
-		ProductId: fmt.Sprintf("%d", data.ProductId),
-		Quantity:  fmt.Sprintf("%d", updatedQuantity),
-	}
-
-	return updatedCartItem, nil
+	return resData, nil
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) Delete(ctx context.Context, productId int, cartId int) error {
-	result, err := repo.DB.Exec(queryDeleteCartItems, cartId, productId)
-	if err != nil {
-		return err
-	}
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
 
-	_, err = result.RowsAffected()
+	_, err := repo.DB.ExecContext(ctx, queryDeleteCartItems, cartId, productId)
 	if err != nil {
-		return err
+		return response.ExecError("delete cart item", err)
 	}
 
 	return nil
