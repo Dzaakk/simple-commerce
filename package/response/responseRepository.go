@@ -14,5 +14,9 @@ func ExecError(operation string, err error) error {
 }
 
 func InvalidParameter() error {
-	return errors.New("invalid parameter")
+	return errors.New("repository: invalid parameter")
+}
+
+func Error(message string, err error) error {
+	return fmt.Errorf("repository:  %s: %w", message, err)
 }
