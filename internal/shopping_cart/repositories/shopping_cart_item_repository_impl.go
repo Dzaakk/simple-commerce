@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -33,6 +34,18 @@ const (
 
 func (repo *ShoppingCartItemRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(ctx, dbQueryItemTimeout)
+}
+
+func (repo *ShoppingCartItemRepositoryImpl) Create(ctx context.Context, data model.TShoppingCartItem) (*model.TShoppingCartItem, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	_, err := repo.DB.ExecContext(ctx, queryCreateShoppingCartItem, data.CartId, data.ProductId, data.Quantity, data.Base.Created, data.Base.CreatedBy)
+	if err != nil {
+		return nil, response.ExecError("create cart item", err)
+	}
+
+	return &data, nil
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) SetEmptyQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductId []*int) error {
@@ -110,10 +123,14 @@ func (repo *ShoppingCartItemRepositoryImpl) CountByCartId(ctx context.Context, c
 	return total, nil
 }
 
-// change return value to Tshopping cart item
 func (repo *ShoppingCartItemRepositoryImpl) Update(ctx context.Context, data model.TShoppingCartItem, customerId string) (*model.TShoppingCartItem, error) {
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
+
+	custId, err := strconv.Atoi(customerId)
+	if custId <= 0 || err != nil {
+		return nil, response.InvalidParameter()
+	}
 
 	var updatedQuantity int
 	_ = repo.DB.QueryRowContext(ctx, queryUpdateShoppingCartItem, data.Quantity, customerId, data.CartId, data.ProductId).Scan(&updatedQuantity)
@@ -131,6 +148,10 @@ func (repo *ShoppingCartItemRepositoryImpl) Delete(ctx context.Context, productI
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
+	if cartId <= 0 || productId <= 0 {
+		return response.InvalidParameter()
+	}
+
 	_, err := repo.DB.ExecContext(ctx, queryDeleteCartItems, cartId, productId)
 	if err != nil {
 		return response.ExecError("delete cart item", err)
@@ -140,6 +161,7 @@ func (repo *ShoppingCartItemRepositoryImpl) Delete(ctx context.Context, productI
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartId(ctx context.Context, cartId int) ([]*model.TCartItemDetail, error) {
+
 	rows, err := repo.DB.Query(queryRetrieveCartItems, cartId)
 	if err != nil {
 		return nil, err
@@ -190,29 +212,15 @@ func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartIdWithTx(ctx 
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) CountQuantityByProductAndCartId(ctx context.Context, productId int, cartId int) (int, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	if productId <= 0 || cartId <= 0 {
+		return 0, response.InvalidParameter()
+	}
+
 	var totalQuantity int
-	err := repo.DB.QueryRow(queryCountProductQuantity, productId, cartId).Scan(&totalQuantity)
-	if err != nil {
-		if totalQuantity == 0 {
-			return 0, nil
-		} else {
-			return 0, err
-		}
-	}
+	_ = repo.DB.QueryRowContext(ctx, queryCountProductQuantity, productId, cartId).Scan(&totalQuantity)
+
 	return totalQuantity, nil
-}
-
-func (repo *ShoppingCartItemRepositoryImpl) Create(ctx context.Context, data model.TShoppingCartItem) (*model.TShoppingCartItem, error) {
-	statement, err := repo.DB.Prepare(queryCreateShoppingCartItem)
-	if err != nil {
-		return nil, err
-	}
-	defer statement.Close()
-
-	_, err = statement.Exec(data.CartId, data.ProductId, data.Quantity, data.Base.Created, data.Base.CreatedBy)
-	if err != nil {
-		return nil, err
-	}
-
-	return &data, nil
 }
