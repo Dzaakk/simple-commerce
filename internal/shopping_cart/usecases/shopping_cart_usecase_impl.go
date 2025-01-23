@@ -5,6 +5,7 @@ import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
 	repo "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -22,29 +23,29 @@ func NewShoppingCartUseCase(repo repo.ShoppingCartRepository, repoItem repo.Shop
 	return &ShoppingCartUseCaseImpl{repo, repoItem, repoProduct}
 }
 
-func (s *ShoppingCartUseCaseImpl) DeleteShoppingList(data model.DeleteReq) error {
+func (s *ShoppingCartUseCaseImpl) DeleteShoppingList(ctx context.Context, data model.DeleteReq) error {
 	cartId, _ := strconv.Atoi(data.CartId)
 
-	err := s.repoItem.DeleteAll(cartId)
+	err := s.repoItem.DeleteAll(ctx, cartId)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.repo.UpdateStatusById(cartId, "Inactive", data.CustomerId)
+	_, err = s.repo.UpdateStatusById(ctx, cartId, "Inactive", data.CustomerId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *ShoppingCartUseCaseImpl) GetListItem(customerId int) ([]*model.ListCartItemRes, error) {
+func (s *ShoppingCartUseCaseImpl) GetListItem(ctx context.Context, customerId int) ([]*model.ListCartItemRes, error) {
 
-	cart, _ := s.repo.FindByCustomerIdAndStatus(customerId, "Active")
+	cart, _ := s.repo.FindByCustomerIdAndStatus(ctx, customerId, "Active")
 	if cart == nil {
 		return nil, errors.New("cart is empty")
 	}
 
-	listData, err := s.repoItem.RetrieveCartItemsByCartId(cart.Id)
+	listData, err := s.repoItem.RetrieveCartItemsByCartId(ctx, cart.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +71,12 @@ func (s *ShoppingCartUseCaseImpl) GetListItem(customerId int) ([]*model.ListCart
 	return listItem, nil
 }
 
-func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.ShoppingCartItem, error) {
+func (s *ShoppingCartUseCaseImpl) Add(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error) {
 	customerId, _ := strconv.Atoi(data.CustomerId)
 	quantity, _ := strconv.Atoi(data.Quantity)
 	productId, _ := strconv.Atoi(data.ProductId)
 
-	dataProduct, err := s.repoProduct.FindById(productId) //find product and check the stock
+	dataProduct, err := s.repoProduct.FindById(ctx, productId) //find product and check the stock
 	if err != nil {
 		return nil, err
 	}
@@ -83,14 +84,14 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 		return nil, errors.New("stock product is less than quantity")
 	}
 
-	shoppingCart, _ := s.repo.FindByCustomerIdAndStatus(customerId, "Active") //check is there any chart that active
+	shoppingCart, _ := s.repo.FindByCustomerIdAndStatus(ctx, customerId, "Active") //check is there any chart that active
 	if shoppingCart == nil {
-		cart, err := s.CreateCart(customerId) // create new cart
+		cart, err := s.CreateCart(ctx, customerId) // create new cart
 		if err != nil {
 			return nil, err
 		}
 		data.Id = strconv.Itoa(cart.Id)
-		_, err = s.CreateCartItem(data) // insert product to cart item
+		_, err = s.CreateCartItem(ctx, data) // insert product to cart item
 		if err != nil {
 			return nil, err
 		}
@@ -104,19 +105,19 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 
 		return &item, nil
 	} else {
-		itemQuantity, _ := s.repoItem.CountQuantityByProductAndCartId(productId, shoppingCart.Id) //check current quantity product
+		itemQuantity, _ := s.repoItem.CountQuantityByProductAndCartId(ctx, productId, shoppingCart.Id) //check current quantity product
 		if itemQuantity+quantity == 0 {
-			err = s.repoItem.Delete(productId, shoppingCart.Id) //delete from cart item
+			err = s.repoItem.Delete(ctx, productId, shoppingCart.Id) //delete from cart item
 			if err != nil {
 				return nil, err
 			}
 
-			count, err := s.repoItem.CountByCartId(shoppingCart.Id) //count cart item base on chart_id
+			count, err := s.repoItem.CountByCartId(ctx, shoppingCart.Id) //count cart item base on chart_id
 			if err != nil {
 				return nil, err
 			}
 			if count == 0 {
-				_, err = s.repo.UpdateStatusById(shoppingCart.Id, "Inactive", data.CustomerId) //update status shopping chart to inactive
+				_, err = s.repo.UpdateStatusById(ctx, shoppingCart.Id, "Inactive", data.CustomerId) //update status shopping chart to inactive
 				if err != nil {
 					return nil, err
 				}
@@ -126,7 +127,7 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 
 		} else if itemQuantity == 0 { //create new if the product is not on the cart item
 			data.Id = fmt.Sprintf("%d", shoppingCart.Id)
-			_, err = s.CreateCartItem(data)
+			_, err = s.CreateCartItem(ctx, data)
 			if err != nil {
 				return nil, err
 			}
@@ -150,7 +151,7 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 				},
 			}
 
-			_, err = s.repoItem.Update(newItem, data.CustomerId) // update quantity product at shopping cart item
+			_, err = s.repoItem.Update(ctx, newItem, data.CustomerId) // update quantity product at shopping cart item
 			if err != nil {
 				return nil, err
 			}
@@ -166,7 +167,7 @@ func (s *ShoppingCartUseCaseImpl) Add(data model.ShoppingCartReq) (*model.Shoppi
 	}
 }
 
-func (s *ShoppingCartUseCaseImpl) CreateCart(customerId int) (*model.TShoppingCart, error) {
+func (s *ShoppingCartUseCaseImpl) CreateCart(ctx context.Context, customerId int) (*model.TShoppingCart, error) {
 	newData := model.TShoppingCart{
 		CustomerId: customerId,
 		Status:     "Active",
@@ -175,7 +176,7 @@ func (s *ShoppingCartUseCaseImpl) CreateCart(customerId int) (*model.TShoppingCa
 			Created:   time.Now(),
 		},
 	}
-	data, err := s.repo.Create(newData)
+	data, err := s.repo.Create(ctx, newData)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +184,7 @@ func (s *ShoppingCartUseCaseImpl) CreateCart(customerId int) (*model.TShoppingCa
 	return data, nil
 }
 
-func (s *ShoppingCartUseCaseImpl) CreateCartItem(data model.ShoppingCartReq) (*model.TShoppingCartItem, error) {
+func (s *ShoppingCartUseCaseImpl) CreateCartItem(ctx context.Context, data model.ShoppingCartReq) (*model.TShoppingCartItem, error) {
 	customerId, _ := strconv.Atoi(data.CustomerId)
 	quantity, _ := strconv.Atoi(data.Quantity)
 	productId, _ := strconv.Atoi(data.ProductId)
@@ -199,7 +200,7 @@ func (s *ShoppingCartUseCaseImpl) CreateCartItem(data model.ShoppingCartReq) (*m
 		},
 	}
 
-	cartItem, err := s.repoItem.Create(newItem) //insert into table shopping cart item
+	cartItem, err := s.repoItem.Create(ctx, newItem) //insert into table shopping cart item
 	if err != nil {
 		return nil, err
 	}
@@ -207,8 +208,8 @@ func (s *ShoppingCartUseCaseImpl) CreateCartItem(data model.ShoppingCartReq) (*m
 	return cartItem, nil
 }
 
-func (s *ShoppingCartUseCaseImpl) CheckStatus(id int, customerId int) (string, error) {
-	status, err := s.repo.CheckStatus(id, customerId)
+func (s *ShoppingCartUseCaseImpl) CheckStatus(ctx context.Context, id int, customerId int) (string, error) {
+	status, err := s.repo.CheckStatus(ctx, id, customerId)
 	if err != nil {
 		return "", err
 	}
