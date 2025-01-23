@@ -7,7 +7,7 @@
 package injector
 
 import (
-	repository2 "Dzaakk/simple-commerce/internal/product/repositories"
+	repositories2 "Dzaakk/simple-commerce/internal/product/repositories"
 	"Dzaakk/simple-commerce/internal/shopping_cart/handlers"
 	"Dzaakk/simple-commerce/internal/shopping_cart/repositories"
 	"Dzaakk/simple-commerce/internal/shopping_cart/routes"
@@ -18,9 +18,9 @@ import (
 // Injectors from wire.go:
 
 func InitializedService(db *sql.DB) *routes.ShoppingCartRoutes {
-	shoppingCartRepository := repository.NewShoppingCartRepository(db)
-	shoppingCartItemRepository := repository.NewShoppingCartItemRepository(db)
-	productRepository := repository2.NewProductRepository(db)
+	shoppingCartRepository := repositories.NewShoppingCartRepository(db)
+	shoppingCartItemRepository := repositories.NewShoppingCartItemRepository(db)
+	productRepository := repositories2.NewProductRepository(db)
 	shoppingCartUseCase := usecase.NewShoppingCartUseCase(shoppingCartRepository, shoppingCartItemRepository, productRepository)
 	shoppingCartHandler := handler.NewShoppingCartHandler(shoppingCartUseCase)
 	shoppingCartRoutes := routes.NewShoppingCartRoutes(shoppingCartHandler)
