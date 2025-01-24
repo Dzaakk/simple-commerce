@@ -11,6 +11,9 @@ CREATE TABLE public.customer (
     updated  TIMESTAMP,
     updated_by VARCHAR(100)
 );
+CREATE INDEX idx_customer_username ON public.customer (username);
+CREATE INDEX idx_customer_email ON public.customer (email);
+CREATE INDEX idx_customer_phone_number ON public.customer (phone_number);
 
 CREATE TABLE public.category (
     id SERIAL PRIMARY KEY,
@@ -20,6 +23,7 @@ CREATE TABLE public.category (
     updated  TIMESTAMP,
     updated_by VARCHAR(100)
 );
+CREATE INDEX idx_category_name ON public.category (name);
 
 CREATE TABLE public.product (
     id SERIAL PRIMARY KEY,
@@ -35,6 +39,11 @@ CREATE TABLE public.product (
     FOREIGN KEY (category_id) REFERENCES public.category(id)  
 );
 
+CREATE INDEX idx_product_name ON public.product (product_name);
+CREATE INDEX idx_product_price ON public.product (price);
+CREATE INDEX idx_product_category_id ON public.product (category_id);
+CREATE INDEX idx_product_seller_id ON public.product (seller_id);
+
 CREATE TABLE public.shopping_cart (
     id SERIAL PRIMARY KEY,
     customer_id INT NOT NULL,
@@ -45,6 +54,7 @@ CREATE TABLE public.shopping_cart (
     updated_by VARCHAR(100),
     FOREIGN KEY (customer_id) REFERENCES public.customer(id)
 );
+CREATE INDEX idx_shopping_cart_customer_id ON public.shopping_cart (customer_id);
 
 CREATE TABLE public.shopping_cart_item (
     cart_id INT NOT NULL,
@@ -58,6 +68,8 @@ CREATE TABLE public.shopping_cart_item (
     FOREIGN KEY (cart_id) REFERENCES shopping_cart(id),
     FOREIGN KEY (product_id) REFERENCES public.product(id)
 );
+CREATE INDEX idx_shopping_cart_item_cart_id ON public.shopping_cart_item (cart_id);
+CREATE INDEX idx_shopping_cart_item_product_id ON public.shopping_cart_item (product_id);
 
 CREATE TABLE public.transaction (
     id SERIAL PRIMARY KEY,
@@ -73,6 +85,9 @@ CREATE TABLE public.transaction (
     FOREIGN KEY (customer_id) REFERENCES public.customer(id),
     FOREIGN KEY (cart_id) REFERENCES public.shopping_cart(id)
 );
+CREATE INDEX idx_transaction_customer_id ON public.transaction (customer_id);
+CREATE INDEX idx_transaction_cart_id ON public.transaction (cart_id);
+CREATE INDEX idx_transaction_status ON public.transaction (status);
 
 CREATE TABLE public.history_transaction(
     id SERIAL PRIMARY KEY,
@@ -87,6 +102,10 @@ CREATE TABLE public.history_transaction(
     status varchar(20) NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES public.customer(id)
 );
+CREATE INDEX idx_history_transaction_customer_id ON public.history_transaction (customer_id);
+CREATE INDEX idx_history_transaction_status ON public.history_transaction (status);
+
+
 CREATE TABLE seller (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
@@ -99,6 +118,16 @@ CREATE TABLE seller (
     updated  TIMESTAMP,
     updated_by VARCHAR(100),
 );
+CREATE INDEX idx_seller_username ON public.seller (username);
+CREATE INDEX idx_seller_email ON public.seller (email);
+
+-- timestamp indexing
+-- CREATE INDEX idx_customer_created ON public.customer (created);
+-- CREATE INDEX idx_product_created ON public.product (created);
+-- CREATE INDEX idx_shopping_cart_created ON public.shopping_cart (created);
+-- CREATE INDEX idx_transaction_created ON public.transaction (created);
+-- CREATE INDEX idx_history_transaction_created ON public.history_transaction (created);
+-- CREATE INDEX idx_seller_created ON public.seller (created);
 
 INSERT INTO public.category (name, created_by, created)
 VALUES ('Electronics', 'Admin', now()),
@@ -133,3 +162,5 @@ VALUES ('Coffee Maker', 5000000, 15, 4, 'Admin', now()),
        ('Vacuum Cleaner', 2500000, 10, 4, 'Admin', now()),
        ('Knife Set', 700000, 20, 4, 'Admin', now()),
        ('Cookware Set', 600000, 12, 4, 'Admin', now());
+
+
