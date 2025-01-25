@@ -4,6 +4,7 @@ import (
 	"Dzaakk/simple-commerce/internal/shopping_cart/models"
 	model "Dzaakk/simple-commerce/internal/transaction/models"
 	template "Dzaakk/simple-commerce/package/templates"
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -20,7 +21,7 @@ func NewHistoryTransactionRepository(db *sql.DB) HistoryTransactionRepository {
 	}
 }
 
-func (repo *HistoryTransactionRepositoryImpl) Create(data []*models.TCartItemDetail, customerId int64) error {
+func (repo *HistoryTransactionRepositoryImpl) Create(ctx context.Context, data []*models.TCartItemDetail, customerId int64) error {
 	if len(data) == 0 {
 		return nil
 	}
@@ -41,7 +42,7 @@ func (repo *HistoryTransactionRepositoryImpl) Create(data []*models.TCartItemDet
 	}()
 
 	for _, query := range listQuery {
-		_, err := tx.Exec(query)
+		_, err := tx.ExecContext(ctx, query)
 		if err != nil {
 			return fmt.Errorf("failed to execute insert: %v, error: %w", query, err)
 		}
@@ -52,8 +53,8 @@ func (repo *HistoryTransactionRepositoryImpl) Create(data []*models.TCartItemDet
 
 const queryFindByCustomerId = "SELECT * FROM public.history_transaction WHERE customer_id=$1"
 
-func (repo *HistoryTransactionRepositoryImpl) FindByCustomerId(customerId int64) ([]*model.THistoryTransaction, error) {
-	rows, err := repo.DB.Query(queryFindByCustomerId, customerId)
+func (repo *HistoryTransactionRepositoryImpl) FindByCustomerId(ctx context.Context, customerId int64) ([]*model.THistoryTransaction, error) {
+	rows, err := repo.DB.QueryContext(ctx, queryFindByCustomerId, customerId)
 	if err != nil {
 		return nil, err
 	}
