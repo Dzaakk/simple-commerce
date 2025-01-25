@@ -7,9 +7,9 @@
 package injector
 
 import (
-	repository3 "Dzaakk/simple-commerce/internal/customer/repositories"
-	repository4 "Dzaakk/simple-commerce/internal/product/repositories"
-	repository2 "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
+	repositories3 "Dzaakk/simple-commerce/internal/customer/repositories"
+	repositories4 "Dzaakk/simple-commerce/internal/product/repositories"
+	repositories2 "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
 	"Dzaakk/simple-commerce/internal/transaction/handlers"
 	"Dzaakk/simple-commerce/internal/transaction/repositories"
 	"Dzaakk/simple-commerce/internal/transaction/routes"
@@ -20,12 +20,12 @@ import (
 // Injectors from wire.go:
 
 func InitializedService(db *sql.DB) *routes.TransactionRoutes {
-	transactionRepository := repository.NewTransactionRepository(db)
-	shoppingCartRepository := repository2.NewShoppingCartRepository(db)
-	shoppingCartItemRepository := repository2.NewShoppingCartItemRepository(db)
-	customerRepository := repository3.NewCustomerRepository(db)
-	productRepository := repository4.NewProductRepository(db)
-	transactionUseCase := usecase.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository, productRepository, db)
+	transactionRepository := repositories.NewTransactionRepository(db)
+	shoppingCartRepository := repositories2.NewShoppingCartRepository(db)
+	shoppingCartItemRepository := repositories2.NewShoppingCartItemRepository(db)
+	customerRepository := repositories3.NewCustomerRepository(db)
+	productRepository := repositories4.NewProductRepository(db)
+	transactionUseCase := usecases.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository, productRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
 	transactionRoutes := routes.NewTransactionRoutes(transactionHandler)
 	return transactionRoutes

@@ -32,7 +32,7 @@ func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 		return
 	}
 
-	receipt, err := handler.Usecase.CreateTransaction(data)
+	receipt, err := handler.Usecase.CreateTransaction(ctx, data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
