@@ -4,6 +4,7 @@ import (
 	"Dzaakk/simple-commerce/internal/transaction/models"
 	model "Dzaakk/simple-commerce/internal/transaction/models"
 	repo "Dzaakk/simple-commerce/internal/transaction/repositories"
+	"context"
 	"fmt"
 )
 
@@ -15,16 +16,16 @@ func NewHistoryTransactionUseCase(repo repo.HistoryTransactionRepository) Histor
 	return &HistoryTransactionUseCaseImpl{repo}
 }
 
-func (t *HistoryTransactionUseCaseImpl) CreateHistoryTransaction(transactionItem models.THistoryTransaction) {
+func (t *HistoryTransactionUseCaseImpl) CreateHistoryTransaction(ctx context.Context, transactionItem models.THistoryTransaction) {
 	panic("unimplemented")
 }
 
-func (t *HistoryTransactionUseCaseImpl) GetHistoryTransactionDetail(transactionId int64) {
+func (t *HistoryTransactionUseCaseImpl) GetHistoryTransactionDetail(ctx context.Context, transactionId int64) {
 	panic("unimplemented")
 }
 
-func (t *HistoryTransactionUseCaseImpl) GetListHistoryTransaction(customerId int64) ([]*model.HistoryTransaction, error) {
-	listData, err := t.repo.FindByCustomerId(customerId)
+func (t *HistoryTransactionUseCaseImpl) GetListHistoryTransaction(ctx context.Context, customerId int64) ([]*model.HistoryTransaction, error) {
+	listData, err := t.repo.FindByCustomerId(ctx, customerId)
 	if err != nil {
 		return nil, err
 	}

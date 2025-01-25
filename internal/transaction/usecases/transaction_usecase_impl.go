@@ -8,6 +8,7 @@ import (
 	model "Dzaakk/simple-commerce/internal/transaction/models"
 	repo "Dzaakk/simple-commerce/internal/transaction/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -29,7 +30,7 @@ func NewTransactionUseCase(repo repo.TransactionRepository, repoCart shoppingCar
 	return &TransactionUseCaseImpl{db, repo, repoCart, repoCartItem, repoCustomer, repoProduct}
 }
 
-func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*model.TransactionRes, error) {
+func (t *TransactionUseCaseImpl) CreateTransaction(ctx context.Context, data model.TransactionReq) (*model.TransactionRes, error) {
 	tx, err := t.repo.BeginTransaction()
 	if err != nil {
 		return nil, err
@@ -46,7 +47,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, fmt.Errorf("invalid data: %v", err)
 	}
 
-	listItem, err := t.repoCartItem.RetrieveCartItemsByCartIdWithTx(tx, cartId) // get all items on cart
+	listItem, err := t.repoCartItem.RetrieveCartItemsByCartIdWithTx(ctx, tx, cartId) // get all items on cart
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +57,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, err
 	}
 
-	customer, err := t.repoCustomer.GetBalanceWithTx(tx, int64(customerId)) // check customer current balance with locking
+	customer, err := t.repoCustomer.GetBalanceWithTx(ctx, tx, int64(customerId)) // check customer current balance with locking
 	if err != nil {
 		return nil, err
 	}
@@ -65,33 +66,33 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 		return nil, errors.New("insufficient balance")
 	}
 
-	err = t.repoCart.UpdateStatusByIdWithTx(tx, cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
+	err = t.repoCart.UpdateStatusByIdWithTx(ctx, tx, cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
 	if err != nil {
 		return nil, err
 	}
 
-	emptyProducts, err := t.repoProduct.UpdateStockWithTx(tx, listItem) // update stock and get list fo empty product
+	emptyProducts, err := t.repoProduct.UpdateStockWithTx(ctx, tx, listItem) // update stock and get list fo empty product
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.repoCartItem.SetQuantityWithTx(tx, emptyProducts)
+	err = t.repoCartItem.SetEmptyQuantityWithTx(ctx, tx, emptyProducts)
 	if err != nil {
 		return nil, err
 	}
 
 	newBalance := customer.Balance - float64(totalTransaction)
-	err = t.repoCustomer.UpdateBalanceWithTx(tx, int64(customerId), newBalance) // update balance customer
+	err = t.repoCustomer.UpdateBalanceWithTx(ctx, tx, int64(customerId), newBalance) // update balance customer
 	if err != nil {
 		return nil, err
 	}
 
-	transactionDate, err := insertToTableTransactionWithTx(tx, t, customerId, cartId, totalTransaction) // insert to table transaction
+	transactionDate, err := insertToTableTransactionWithTx(ctx, tx, t, customerId, cartId, totalTransaction) // insert to table transaction
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.repoCartItem.DeleteAllWithTx(tx, cartId) // delete all item on cart item
+	err = t.repoCartItem.DeleteAllWithTx(ctx, tx, cartId) // delete all item on cart item
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(data model.TransactionReq) (*
 	return res, nil
 }
 
-func insertToTableTransactionWithTx(tx *sql.Tx, t *TransactionUseCaseImpl, customerId, cartId, totalTransaction int) (*string, error) {
+func insertToTableTransactionWithTx(ctx context.Context, tx *sql.Tx, t *TransactionUseCaseImpl, customerId, cartId, totalTransaction int) (*string, error) {
 	newTransaction := model.TTransaction{
 		CustomerId:      customerId,
 		CartId:          cartId,
@@ -119,7 +120,7 @@ func insertToTableTransactionWithTx(tx *sql.Tx, t *TransactionUseCaseImpl, custo
 		},
 	}
 
-	data, err := t.repo.CreateWithTx(tx, newTransaction)
+	data, err := t.repo.CreateWithTx(ctx, tx, newTransaction)
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +148,11 @@ func generateReceipt(listItem []*modelItem.TCartItemDetail) (*model.TransactionR
 	return &res, nil
 }
 
-func (t *TransactionUseCaseImpl) GetTransaction(customerId int64) ([]*model.CustomerListTransactionRes, error) {
+func (t *TransactionUseCaseImpl) GetTransaction(ctx context.Context, customerId int64) ([]*model.CustomerListTransactionRes, error) {
 	panic("unimplemented")
 }
 
 // GetDetailTransaction implements TransactionUseCase.
-func (t *TransactionUseCaseImpl) GetDetailTransaction(transactionId int64) ([]*model.CustomerListTransactionRes, error) {
+func (t *TransactionUseCaseImpl) GetDetailTransaction(ctx context.Context, transactionId int64) ([]*model.CustomerListTransactionRes, error) {
 	panic("unimplemented")
 }
