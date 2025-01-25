@@ -1,4 +1,4 @@
-package repository
+package repositories
 
 import (
 	"Dzaakk/simple-commerce/internal/shopping_cart/models"
