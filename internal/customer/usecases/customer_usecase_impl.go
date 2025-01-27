@@ -84,7 +84,7 @@ func (c *CustomerUseCaseImpl) GetBalance(ctx context.Context, id int64) (*model.
 	return customer, nil
 }
 
-func (c *CustomerUseCaseImpl) UpdateBalance(ctx context.Context, id int64, balance float64, actionType string) (float64, error) {
+func (c *CustomerUseCaseImpl) UpdateBalance(ctx context.Context, id int64, balance float64, actionType string) (int64, error) {
 	data, err := c.repo.GetBalance(ctx, id)
 	if err != nil {
 		return 0, err
