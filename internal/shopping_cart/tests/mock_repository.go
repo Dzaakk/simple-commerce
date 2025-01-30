@@ -18,3 +18,12 @@ func (m *MockShoppingCartRepository) FindByID(id int) (*model.TShoppingCart, err
 
 	return args.Get(0).(*model.TShoppingCart), args.Error(1)
 }
+
+func (m *MockShoppingCartRepository) FindByStatusAndCustomerID(status string, id int) (*model.TShoppingCart, error) {
+	args := m.Called(status, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*model.TShoppingCart), args.Error(1)
+}

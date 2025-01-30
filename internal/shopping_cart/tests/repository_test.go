@@ -8,13 +8,14 @@ import (
 )
 
 var (
-	mockRepo           = new(MockShoppingCartRepository)
-	testShoppingCartID int
-	testShoppingCart   = &model.TShoppingCart{
+	mockRepo         = new(MockShoppingCartRepository)
+	testShoppingCart = &model.TShoppingCart{
 		Id:         1,
 		CustomerId: 1,
 		Status:     "A",
 	}
+	testShoppingCartID, testCustomerID int
+	testShoppingCartStatus             string
 )
 
 func TestFindByID(t *testing.T) {
@@ -22,6 +23,23 @@ func TestFindByID(t *testing.T) {
 
 	mockRepo.On("FindByID", testShoppingCartID).Return(testShoppingCart, nil)
 	foundShopingCart, err := mockRepo.FindByID(testShoppingCartID)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, foundShopingCart)
+
+	assert.Equal(t, testShoppingCart.Id, foundShopingCart.Id)
+	assert.Equal(t, testShoppingCart.CustomerId, foundShopingCart.CustomerId)
+	assert.Equal(t, testShoppingCart.Status, foundShopingCart.Status)
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestFindByStatusAndCustomerID(t *testing.T) {
+	testCustomerID = 1
+	testShoppingCartStatus = "A"
+
+	mockRepo.On("FindByStatusAndCustomerID", testShoppingCartStatus, testCustomerID).Return(testShoppingCart, nil)
+	foundShopingCart, err := mockRepo.FindByStatusAndCustomerID(testShoppingCartStatus, testCustomerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, foundShopingCart)
