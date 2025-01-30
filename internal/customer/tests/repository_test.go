@@ -102,17 +102,3 @@ func TestFindByEmail(t *testing.T) {
 
 	mockRepo.AssertExpectations(t)
 }
-
-// func TestFindByEmail(t *testing.T) {
-// 	repo := NewMockRepository()
-
-// 	_, _ = repo.Create(models.TCustomers{
-// 		Username: "user_test",
-// 		Email:    "test@gmail.com",
-// 	})
-// 	customer, err := repo.FindByEmail("test@gmail.com")
-
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, customer)
-// 	assert.Equal(t, "user_test", customer.Username, "Expected username to be user_test")
-// }
