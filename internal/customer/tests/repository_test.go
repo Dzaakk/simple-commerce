@@ -2,6 +2,7 @@ package tests
 
 import (
 	models "Dzaakk/simple-commerce/internal/customer/models"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,14 +25,15 @@ var (
 	testCustomerID    int
 	testCustomerEmail string
 	expectedBalance   float64
+	ctx               = context.Background()
 )
 
 func TestCreateCustomer(t *testing.T) {
 	testCustomerID = 1
 
-	mockRepo.On("Create", testCustomer).Return(&testCustomerID, nil)
+	mockRepo.On("Create", ctx, testCustomer).Return(&testCustomerID, nil)
 
-	createdID, err := mockRepo.Create(testCustomer)
+	createdID, err := mockRepo.Create(ctx, testCustomer)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, createdID)
@@ -43,9 +45,9 @@ func TestCreateCustomer(t *testing.T) {
 func TestFindById(t *testing.T) {
 	testCustomerID = 1
 
-	mockRepo.On("FindById", testCustomerID).Return(testCustomer, nil)
+	mockRepo.On("FindById", ctx, testCustomerID).Return(testCustomer, nil)
 
-	foundCustomer, err := mockRepo.FindById(testCustomerID)
+	foundCustomer, err := mockRepo.FindById(ctx, testCustomerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, foundCustomer)
@@ -61,9 +63,9 @@ func TestFindById(t *testing.T) {
 func TestUpdateBalance(t *testing.T) {
 	testCustomerID = 1
 	expectedBalance = 1500000
-	mockRepo.On("UpdateBalance", testCustomerID, expectedBalance).Return(&expectedBalance, nil)
+	mockRepo.On("UpdateBalance", ctx, testCustomerID, expectedBalance).Return(&expectedBalance, nil)
 
-	updatedBalance, err := mockRepo.UpdateBalance(testCustomerID, expectedBalance)
+	updatedBalance, err := mockRepo.UpdateBalance(ctx, testCustomerID, expectedBalance)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, updatedBalance)
@@ -73,9 +75,9 @@ func TestUpdateBalance(t *testing.T) {
 }
 func TestGetBalance(t *testing.T) {
 	testCustomerID = 1
-	mockRepo.On("GetBalance", testCustomerID).Return(expectedCustomerBalance, nil)
+	mockRepo.On("GetBalance", ctx, testCustomerID).Return(expectedCustomerBalance, nil)
 
-	actualCustomerBalance, err := mockRepo.GetBalance(testCustomerID)
+	actualCustomerBalance, err := mockRepo.GetBalance(ctx, testCustomerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, actualCustomerBalance)
@@ -88,9 +90,9 @@ func TestGetBalance(t *testing.T) {
 
 func TestFindByEmail(t *testing.T) {
 	testCustomerEmail = "test@gmail.com"
-	mockRepo.On("FindByEmail", testCustomerEmail).Return(testCustomer, nil)
+	mockRepo.On("FindByEmail", ctx, testCustomerEmail).Return(testCustomer, nil)
 
-	foundCustomer, err := mockRepo.FindByEmail(testCustomerEmail)
+	foundCustomer, err := mockRepo.FindByEmail(ctx, testCustomerEmail)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, foundCustomer)
