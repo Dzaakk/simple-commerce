@@ -61,6 +61,7 @@ func Redis() *redis.Client {
 
 	_, err = client.Ping(context.Background()).Result()
 	if err != nil {
+		log.Fatalf("Failed to connect to Redis : %v", err)
 		panic("Failed to connect to Redis")
 	}
 
