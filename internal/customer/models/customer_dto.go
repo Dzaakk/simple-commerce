@@ -1,12 +1,5 @@
 package models
 
-type CreateReq struct {
-	Username    string `json:"username" validate:"required"`
-	Email       string `json:"email" validate:"required,email"`
-	PhoneNumber string `json:"phone_number" validate:"required"`
-	Password    string `json:"password" validate:"required"`
-}
-
 type UpdateReq struct {
 	Id          string `json:"id" validate:"required,min=1"`
 	Username    string `json:"username" validate:"required"`
@@ -32,10 +25,6 @@ type BalanceUpdateRes struct {
 	BalanceNew CustomerBalanceRes `json:"newData"`
 }
 
-type LoginReq struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-}
 type CustomerBalanceRes struct {
 	Id      string `json:"id"`
 	Balance string `json:"balance"`
