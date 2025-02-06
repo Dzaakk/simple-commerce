@@ -6,7 +6,6 @@ import (
 	template "Dzaakk/simple-commerce/package/templates"
 	"context"
 	"fmt"
-	"time"
 )
 
 type CustomerUseCaseImpl struct {
@@ -15,32 +14,6 @@ type CustomerUseCaseImpl struct {
 
 func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
 	return &CustomerUseCaseImpl{repo}
-}
-
-func (c *CustomerUseCaseImpl) Create(ctx context.Context, data model.CreateReq) (int64, error) {
-	hashedPassword, err := template.HashPassword(data.Password)
-	if err != nil {
-		return 0, err
-	}
-
-	customer := model.TCustomers{
-		Username:    data.Username,
-		Email:       data.Email,
-		PhoneNumber: data.PhoneNumber,
-		Password:    string(hashedPassword),
-		Balance:     float64(10000000),
-		Status:      "A",
-		Base: template.Base{
-			Created:   time.Now(),
-			CreatedBy: "system",
-		},
-	}
-
-	customerId, err := c.repo.Create(ctx, customer)
-	if err != nil {
-		return 0, err
-	}
-	return customerId, nil
 }
 
 func (c *CustomerUseCaseImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {

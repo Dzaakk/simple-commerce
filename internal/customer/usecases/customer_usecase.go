@@ -6,7 +6,6 @@ import (
 )
 
 type CustomerUseCase interface {
-	Create(ctx context.Context, data model.CreateReq) (int64, error)
 	FindById(ctx context.Context, id int64) (*model.DataRes, error)
 	UpdateBalance(ctx context.Context, id int64, balance float64, actionType string) (int64, error)
 	GetBalance(ctx context.Context, id int64) (*model.CustomerBalanceRes, error)
