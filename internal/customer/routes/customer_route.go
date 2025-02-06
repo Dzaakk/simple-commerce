@@ -23,8 +23,6 @@ func (cr *CustomerRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
 
 	customerHandler.Use()
 	{
-		customerHandler.POST("/login", cr.Handler.Login)
-		customerHandler.POST("/register", cr.Handler.Create)
 		customerHandler.GET("/customers", auth.JWTMiddleware(redis), cr.Handler.FindCustomerById)
 		customerHandler.POST("/balance", auth.JWTMiddleware(redis), cr.Handler.UpdateBalance)
 	}
