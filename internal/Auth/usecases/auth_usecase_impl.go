@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	model "Dzaakk/simple-commerce/internal/Auth/models"
+	model "Dzaakk/simple-commerce/internal/auth/models"
 	customerModel "Dzaakk/simple-commerce/internal/customer/models"
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
