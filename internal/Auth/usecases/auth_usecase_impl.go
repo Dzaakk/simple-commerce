@@ -46,16 +46,6 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 	return &customerId, nil
 }
 
-// CustomerLogin implements AuthUseCase.
-func (a *AuthUseCaseImpl) CustomerLogin(ctx context.Context, data model.LoginReq) error {
-	panic("unimplemented")
-}
-
 func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.SellerRegistration) (*int64, error) {
-	panic("unimplemented")
-}
-
-// SellerLogin implements AuthUseCase.
-func (a *AuthUseCaseImpl) SellerLogin(ctx context.Context, data model.LoginReq) error {
 	panic("unimplemented")
 }
