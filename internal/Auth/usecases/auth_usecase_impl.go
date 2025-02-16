@@ -4,6 +4,7 @@ import (
 	model "Dzaakk/simple-commerce/internal/auth/models"
 	customerModel "Dzaakk/simple-commerce/internal/customer/models"
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repositories"
+	sellerModel "Dzaakk/simple-commerce/internal/seller/models"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
 	"context"
@@ -47,5 +48,26 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 }
 
 func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.SellerRegistration) (*int64, error) {
-	panic("unimplemented")
+	hashedPassword, err := template.HashPassword(data.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	seller := sellerModel.TSeller{
+		Username: data.Username,
+		Email:    data.Email,
+		Password: string(hashedPassword),
+		Balance:  float64(0),
+		Status:   "A",
+		Base: template.Base{
+			Created:   time.Now(),
+			CreatedBy: "system",
+		},
+	}
+
+	sellerId, err := a.SellerRepo.Create(ctx, seller)
+	if err != nil {
+		return nil, err
+	}
+	return &sellerId, nil
 }
