@@ -65,8 +65,7 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
 
-func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {}
-func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
+func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {
 	var data model.SellerRegistration
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
@@ -79,4 +78,6 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, response.Success("Success Create Seller"))
+}
+func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 }
