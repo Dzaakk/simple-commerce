@@ -66,4 +66,17 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 }
 
 func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {}
-func (h *AuthHandler) LoginSeller(ctx *gin.Context)        {}
+func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
+	var data model.SellerRegistration
+
+	if err := ctx.ShouldBindJSON(&data); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
+		return
+	}
+	_, err := h.Usecase.SellerRegistration(ctx, data)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, response.Success("Success Create Seller"))
+}
