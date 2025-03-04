@@ -24,9 +24,14 @@ type SellerRegistration struct {
 }
 
 type TCodeActivation struct {
-	UserID         int          `json:"user_id"`
+	UserID         int64        `json:"user_id"`
 	CodeActivation string       `json:"code_activation"`
 	IsUsed         string       `json:"is_used"`
 	CreatedAt      time.Time    `json:"created_at"`
 	UsedAt         sql.NullTime `json:"used_at"`
+}
+type CodeActivation struct {
+	UserID         string `json:"user_id"`
+	CodeActivation string `json:"code_activation"`
+	IsUsed         string `json:"is_used"`
 }
