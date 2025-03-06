@@ -6,6 +6,6 @@ import (
 )
 
 type AuthRepository interface {
-	CreateCode(ctx context.Context, data model.TCodeActivation) error
-	FindCodeByCustomerId(ctx context.Context, id int64) (*model.TCodeActivation, error)
+	CreateCode(ctx context.Context, data model.TActivationCode) error
+	FindCodeByCustomerId(ctx context.Context, id int64) (*model.TActivationCode, error)
 }

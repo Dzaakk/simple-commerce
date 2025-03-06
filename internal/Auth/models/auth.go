@@ -23,15 +23,15 @@ type SellerRegistration struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type TCodeActivation struct {
-	UserID         int64        `json:"user_id"`
+type TActivationCode struct {
+	CustomerID     string       `json:"customer_id"`
 	CodeActivation string       `json:"code_activation"`
 	IsUsed         string       `json:"is_used"`
 	CreatedAt      time.Time    `json:"created_at"`
 	UsedAt         sql.NullTime `json:"used_at"`
 }
-type CodeActivation struct {
-	UserID         string `json:"user_id"`
+type ActivationCode struct {
+	CustomerID     string `json:"customer_id"`
 	CodeActivation string `json:"code_activation"`
 	IsUsed         string `json:"is_used"`
 }
