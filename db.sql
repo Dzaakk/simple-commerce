@@ -129,6 +129,14 @@ CREATE INDEX idx_seller_email ON public.seller (email);
 -- CREATE INDEX idx_history_transaction_created ON public.history_transaction (created);
 -- CREATE INDEX idx_seller_created ON public.seller (created);
 
+CREATE TABLE activation_code (
+    customer_id BIGINT,
+    code_activation VARCHAR(6),
+    is_used BOOLEAN,
+    created TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+
+)
 INSERT INTO public.category (name, created_by, created)
 VALUES ('Electronics', 'Admin', now()),
        ('Clothing', 'Admin', now()),
