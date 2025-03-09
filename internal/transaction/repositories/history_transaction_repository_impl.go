@@ -53,7 +53,7 @@ func (repo *HistoryTransactionRepositoryImpl) Create(ctx context.Context, data [
 
 const queryFindByCustomerId = "SELECT * FROM public.history_transaction WHERE customer_id=$1"
 
-func (repo *HistoryTransactionRepositoryImpl) FindByCustomerId(ctx context.Context, customerId int64) ([]*model.THistoryTransaction, error) {
+func (repo *HistoryTransactionRepositoryImpl) FindByCustomerID(ctx context.Context, customerId int64) ([]*model.THistoryTransaction, error) {
 	rows, err := repo.DB.QueryContext(ctx, queryFindByCustomerId, customerId)
 	if err != nil {
 		return nil, err
