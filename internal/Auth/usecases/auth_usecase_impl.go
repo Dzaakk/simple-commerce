@@ -6,18 +6,21 @@ import (
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repositories"
 	sellerModel "Dzaakk/simple-commerce/internal/seller/models"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repositories"
+	shoppingCartModel "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
 	template "Dzaakk/simple-commerce/package/templates"
 	"context"
 	"time"
 )
 
 type AuthUseCaseImpl struct {
-	CustomerRepo customerRepo.CustomerRepository
-	SellerRepo   sellerRepo.SellerRepository
+	CustomerRepo     customerRepo.CustomerRepository
+	SellerRepo       sellerRepo.SellerRepository
+	ShoppingCartRepo shoppingCartRepo.ShoppingCartRepository
 }
 
-func NewAuthUseCase(customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository) AuthUseCase {
-	return &AuthUseCaseImpl{customerRepo, sellerRepo}
+func NewAuthUseCase(customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
+	return &AuthUseCaseImpl{customerRepo, sellerRepo, shoppingCartRepo}
 }
 
 func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.CustomerRegistration) (*int64, error) {
@@ -44,6 +47,21 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 	if err != nil {
 		return nil, err
 	}
+
+	NewShoppingCart := shoppingCartModel.TShoppingCart{
+		CustomerId: int(customerId),
+		Status:     "A",
+		Base: template.Base{
+			Created:   customer.Created,
+			CreatedBy: "System",
+		},
+	}
+
+	_, err = a.ShoppingCartRepo.Create(ctx, NewShoppingCart)
+	if err != nil {
+		return nil, err
+	}
+
 	return &customerId, nil
 }
 
