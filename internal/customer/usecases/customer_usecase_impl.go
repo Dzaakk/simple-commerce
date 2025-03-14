@@ -105,7 +105,7 @@ func (c *CustomerUseCaseImpl) DecreaseBalance(ctx context.Context, id int64, amo
 	}
 	res := &model.CustomerBalanceRes{
 		Id:      fmt.Sprintf("%d", id),
-		Balance: fmt.Sprintf("%.2f", balance),
+		Balance: fmt.Sprintf("%d", balance),
 	}
 	return res, nil
 }
@@ -127,7 +127,7 @@ func (c *CustomerUseCaseImpl) IncreaseBalance(ctx context.Context, id int64, amo
 	}
 	res := &model.CustomerBalanceRes{
 		Id:      fmt.Sprintf("%d", id),
-		Balance: fmt.Sprintf("%.2f", balance),
+		Balance: fmt.Sprintf("%d", balance),
 	}
 	return res, nil
 }
