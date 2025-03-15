@@ -21,7 +21,7 @@ func InitializedService(db *sql.DB) *routes.ShoppingCartRoutes {
 	shoppingCartRepository := repositories.NewShoppingCartRepository(db)
 	shoppingCartItemRepository := repositories.NewShoppingCartItemRepository(db)
 	productRepository := repositories2.NewProductRepository(db)
-	shoppingCartUseCase := usecase.NewShoppingCartUseCase(shoppingCartRepository, shoppingCartItemRepository, productRepository)
+	shoppingCartUseCase := usecases.NewShoppingCartUseCase(shoppingCartRepository, shoppingCartItemRepository, productRepository)
 	shoppingCartHandler := handler.NewShoppingCartHandler(shoppingCartUseCase)
 	shoppingCartRoutes := routes.NewShoppingCartRoutes(shoppingCartHandler)
 	return shoppingCartRoutes
