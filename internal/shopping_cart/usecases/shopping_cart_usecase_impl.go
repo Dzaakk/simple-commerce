@@ -1,4 +1,4 @@
-package usecase
+package usecases
 
 import (
 	repoProduct "Dzaakk/simple-commerce/internal/product/repositories"
@@ -69,6 +69,20 @@ func (s *ShoppingCartUseCaseImpl) GetListItem(ctx context.Context, customerId in
 	}
 
 	return listItem, nil
+}
+
+func (s *ShoppingCartUseCaseImpl) AddV2(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error) {
+	customerId, quantity, product, err := s.parseAndValidateQuantityProduct(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+
+	shoppingCart, err := s.repo.FindByCustomerId(ctx, customerId) //find customer cart id
+	if err != nil {
+		return nil, errors.New("failed retrieve customer cart")
+	}
+
+	return s.processCartItem(ctx, shoppingCart.Id, quantity, *product, data)
 }
 
 func (s *ShoppingCartUseCaseImpl) Add(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error) {

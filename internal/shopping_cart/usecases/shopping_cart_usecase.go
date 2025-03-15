@@ -1,4 +1,4 @@
-package usecase
+package usecases
 
 import (
 	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
@@ -7,6 +7,7 @@ import (
 
 type ShoppingCartUseCase interface {
 	Add(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error)
+	AddV2(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error)
 	CheckStatus(ctx context.Context, id, customerId int) (string, error)
 	CreateCart(ctx context.Context, customerId int) (*model.TShoppingCart, error)
 	CreateCartItem(ctx context.Context, data model.ShoppingCartReq) (*model.TShoppingCartItem, error)
