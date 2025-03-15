@@ -9,6 +9,7 @@ import (
 type ShoppingCartRepository interface {
 	Create(ctx context.Context, data model.TShoppingCart) (*model.TShoppingCart, error)
 	FindByCustomerIdAndStatus(ctx context.Context, customerId int, status string) (*model.TShoppingCart, error)
+	FindByCustomerId(ctx context.Context, customerId int) (*model.TShoppingCart, error)
 	FindById(ctx context.Context, id int) (*model.TShoppingCart, error)
 	CheckStatus(ctx context.Context, id, customerId int) (string, error)
 	UpdateStatusById(ctx context.Context, id int, status, customerid string) (*model.TShoppingCart, error)

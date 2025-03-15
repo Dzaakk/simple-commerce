@@ -22,6 +22,7 @@ func NewShoppingCartRepository(db *sql.DB) ShoppingCartRepository {
 const (
 	queryCreateShoppingCart        = `INSERT INTO public.shopping_cart (customer_id, status, created, created_by) VALUES ($1, $2, $3, $4) RETURNING id`
 	queryFindById                  = `SELECT id, customer_id, status FROM public.shopping_cart WHERE id=$1`
+	queryFindByCustomerId          = `SELECT id, customer_id, status FROM public.shopping_cart WHERE customer_id=$1`
 	queryFindByCustomerIdAndStatus = `SELECT id, customer_id FROM public.shopping_cart WHERE customer_id=$1 AND status=$2`
 	queryUpdateStatusById          = `UPDATE public.shopping_cart SET status=$1, updated_by=$2, updated=now() WHERE id=$3`
 	queryCheckStatus               = `SELECT status FROM public.shopping_cart WHERE id=$1 AND customer_id=$2`
@@ -50,6 +51,13 @@ func (repo *ShoppingCartRepositoryImpl) Create(ctx context.Context, data model.T
 	}
 
 	return newData, nil
+}
+func (repo *ShoppingCartRepositoryImpl) FindByCustomerId(ctx context.Context, id int) (*model.TShoppingCart, error) {
+	if id <= 0 {
+		return nil, response.InvalidParameter()
+	}
+
+	return repo.findShoppingCart(ctx, queryFindByCustomerId, id)
 }
 
 func (repo *ShoppingCartRepositoryImpl) FindById(ctx context.Context, id int) (*model.TShoppingCart, error) {
