@@ -27,6 +27,7 @@ const (
 	queryDeactive       = "UPDATE public.seller set status=$1 WHERE id=$2"
 	queryFindById       = "SELECT * FROM public.seller WHERE id = $1"
 	queryFindByUsername = "SELECT * FROM public.seller WHERE username = $1"
+	queryFindByEmail    = "SELECT * FROM public.seller WHERE email = $1"
 	queryUpdateBalance  = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
 	dbQueryTimeout      = 1 * time.Second
 )
@@ -71,6 +72,12 @@ func (repo *SellerRepositoryImpl) FindByUsername(ctx context.Context, username s
 		return nil, errors.New("invalid input parameter")
 	}
 	return repo.findSeller(ctx, queryFindByUsername, username)
+}
+func (repo *SellerRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.TSeller, error) {
+	if email == "" {
+		return nil, errors.New("invalid input parameter")
+	}
+	return repo.findSeller(ctx, queryFindByEmail, email)
 }
 
 func (repo *SellerRepositoryImpl) findSeller(ctx context.Context, query string, args ...interface{}) (*model.TSeller, error) {
