@@ -138,6 +138,11 @@ func (s *SellerUseCaseImpl) ChangePassword(ctx context.Context, sellerId int64, 
 	return rowsAffected, nil
 }
 
-func (s *SellerUseCaseImpl) Login() error {
-	panic("unimplemented")
+func (s *SellerUseCaseImpl) FindByEmail(ctx context.Context, email string) (*model.TSeller, error) {
+	sellerData, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return sellerData, nil
 }
