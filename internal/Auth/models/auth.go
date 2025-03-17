@@ -23,15 +23,27 @@ type SellerRegistration struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type TActivationCode struct {
-	CustomerID     string       `json:"customer_id"`
+type TCustomerActivationCode struct {
+	CustomerID     int64        `json:"customer_id"`
 	CodeActivation string       `json:"code_activation"`
-	IsUsed         string       `json:"is_used"`
+	IsUsed         bool         `json:"is_used"`
 	CreatedAt      time.Time    `json:"created_at"`
 	UsedAt         sql.NullTime `json:"used_at"`
 }
-type ActivationCode struct {
+type CustomerActivationCode struct {
 	CustomerID     string `json:"customer_id"`
+	CodeActivation string `json:"code_activation"`
+	IsUsed         string `json:"is_used"`
+}
+type TSellerActivationCode struct {
+	SellerID       int64        `json:"customer_id"`
+	CodeActivation string       `json:"code_activation"`
+	IsUsed         bool         `json:"is_used"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UsedAt         sql.NullTime `json:"used_at"`
+}
+type SellerActivationCode struct {
+	SellerID       string `json:"customer_id"`
 	CodeActivation string `json:"code_activation"`
 	IsUsed         string `json:"is_used"`
 }
