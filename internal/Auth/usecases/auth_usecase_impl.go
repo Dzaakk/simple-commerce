@@ -2,6 +2,7 @@ package usecases
 
 import (
 	model "Dzaakk/simple-commerce/internal/auth/models"
+	repo "Dzaakk/simple-commerce/internal/auth/repositories"
 	customerModel "Dzaakk/simple-commerce/internal/customer/models"
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repositories"
 	sellerModel "Dzaakk/simple-commerce/internal/seller/models"
@@ -14,13 +15,14 @@ import (
 )
 
 type AuthUseCaseImpl struct {
+	Repo             repo.AuthRepository
 	CustomerRepo     customerRepo.CustomerRepository
 	SellerRepo       sellerRepo.SellerRepository
 	ShoppingCartRepo shoppingCartRepo.ShoppingCartRepository
 }
 
-func NewAuthUseCase(customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
-	return &AuthUseCaseImpl{customerRepo, sellerRepo, shoppingCartRepo}
+func NewAuthUseCase(repo repo.AuthRepository, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
+	return &AuthUseCaseImpl{repo, customerRepo, sellerRepo, shoppingCartRepo}
 }
 
 func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.CustomerRegistration) (*int64, error) {
@@ -62,6 +64,20 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 		return nil, err
 	}
 
+	newActivationCode := model.TCustomerActivationCode{
+		CustomerID:     customerId,
+		CodeActivation: GenerateActivationCode(),
+		IsUsed:         false,
+		CreatedAt:      time.Now(),
+	}
+
+	err = a.Repo.InsertCustomerCodeActivation(ctx, newActivationCode)
+	if err != nil {
+		return nil, err
+	}
+
+	//send email
+
 	return &customerId, nil
 }
 
@@ -87,5 +103,20 @@ func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.Sel
 	if err != nil {
 		return nil, err
 	}
+
+	newActivationCode := model.TSellerActivationCode{
+		SellerID:       sellerId,
+		CodeActivation: GenerateActivationCode(),
+		IsUsed:         false,
+		CreatedAt:      time.Now(),
+	}
+
+	err = a.Repo.InsertSellerCodeActivation(ctx, newActivationCode)
+	if err != nil {
+		return nil, err
+	}
+
+	//send email
+
 	return &sellerId, nil
 }
