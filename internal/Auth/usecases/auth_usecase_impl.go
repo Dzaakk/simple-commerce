@@ -64,9 +64,10 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 		return nil, err
 	}
 
+	codeActivation := GenerateActivationCode()
 	newActivationCode := model.TCustomerActivationCode{
 		CustomerID:     customerId,
-		CodeActivation: GenerateActivationCode(),
+		CodeActivation: codeActivation,
 		IsUsed:         false,
 		CreatedAt:      time.Now(),
 	}
@@ -104,9 +105,10 @@ func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.Sel
 		return nil, err
 	}
 
+	codeActivation := GenerateActivationCode()
 	newActivationCode := model.TSellerActivationCode{
 		SellerID:       sellerId,
-		CodeActivation: GenerateActivationCode(),
+		CodeActivation: codeActivation,
 		IsUsed:         false,
 		CreatedAt:      time.Now(),
 	}
