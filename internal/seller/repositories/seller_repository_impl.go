@@ -2,6 +2,7 @@ package repositories
 
 import (
 	model "Dzaakk/simple-commerce/internal/seller/models"
+	response "Dzaakk/simple-commerce/package/response"
 	"context"
 
 	// template "Dzaakk/simple-commerce/package/templates"
@@ -26,6 +27,7 @@ const (
 	queryUpdatePassword = "UPDATE public.seller set password=$1 WHERE id=$2"
 	queryDeactive       = "UPDATE public.seller set status=$1 WHERE id=$2"
 	queryFindById       = "SELECT * FROM public.seller WHERE id = $1"
+	queryFindAll        = "SELECT * FROM public.seller"
 	queryFindByUsername = "SELECT * FROM public.seller WHERE username = $1"
 	queryFindByEmail    = "SELECT * FROM public.seller WHERE email = $1"
 	queryUpdateBalance  = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
@@ -58,6 +60,19 @@ func (repo *SellerRepositoryImpl) Update(ctx context.Context, data model.TSeller
 	}
 	rowsAffected, _ := result.RowsAffected()
 	return rowsAffected, nil
+}
+
+func (repo *SellerRepositoryImpl) FindAll(ctx context.Context) ([]*model.TSeller, error) {
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	rows, err := repo.DB.QueryContext(ctx, queryFindAll)
+	if err != nil {
+		return nil, response.Error("error scan seller", err)
+	}
+	defer rows.Close()
+
+	return scanListSeller(rows)
 }
 
 func (repo *SellerRepositoryImpl) FindById(ctx context.Context, sellerId int64) (*model.TSeller, error) {
