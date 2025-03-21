@@ -31,7 +31,12 @@ func (handler *SellerHandler) FindByUsername(ctx *gin.Context) {
 	}
 }
 func (handler *SellerHandler) FindAll(ctx *gin.Context) {
-
+	seller, err := handler.Usecase.FindAll(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+	ctx.JSON(http.StatusOK, response.Success(seller))
 }
 func (handler *SellerHandler) Deactivate(ctx *gin.Context) {
 
