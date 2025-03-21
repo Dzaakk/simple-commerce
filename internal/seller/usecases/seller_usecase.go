@@ -8,6 +8,7 @@ import (
 type SellerUseCase interface {
 	Create(ctx context.Context, data model.ReqCreate) (int64, error)
 	Update(ctx context.Context, data model.ReqUpdate) (int64, error)
+	FindAll(ctx context.Context) ([]*model.ResData, error)
 	FindById(ctx context.Context, sellerId int64) (*model.ResData, error)
 	FindByUsername(ctx context.Context, username string) (*model.ResData, error)
 	FindByEmail(ctx context.Context, email string) (*model.TSeller, error)

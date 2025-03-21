@@ -53,6 +53,14 @@ func (s *SellerUseCaseImpl) Deactivate(ctx context.Context, sellerId int64) (int
 	return rowsAffected, nil
 
 }
+func (s *SellerUseCaseImpl) FindAll(ctx context.Context) ([]*model.ResData, error) {
+	sellers, err := s.repo.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	listSeller := ConvertSellersToResData(sellers)
+	return listSeller, nil
+}
 
 func (s *SellerUseCaseImpl) FindById(ctx context.Context, sellerId int64) (*model.ResData, error) {
 	sellerData, err := s.repo.FindById(ctx, sellerId)
