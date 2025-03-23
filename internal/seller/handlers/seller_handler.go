@@ -49,9 +49,3 @@ func (handler *SellerHandler) FindAll(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, response.Success(seller))
 }
-func (handler *SellerHandler) Deactivate(ctx *gin.Context) {
-
-}
-func (handler *SellerHandler) ChangePassword(ctx *gin.Context) {
-
-}
