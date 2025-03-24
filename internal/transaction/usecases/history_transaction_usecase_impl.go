@@ -25,7 +25,7 @@ func (t *HistoryTransactionUseCaseImpl) GetHistoryTransactionDetail(ctx context.
 }
 
 func (t *HistoryTransactionUseCaseImpl) GetListHistoryTransaction(ctx context.Context, customerId int64) ([]*model.HistoryTransaction, error) {
-	listData, err := t.repo.FindByCustomerId(ctx, customerId)
+	listData, err := t.repo.FindByCustomerID(ctx, customerId)
 	if err != nil {
 		return nil, err
 	}
