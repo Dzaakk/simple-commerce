@@ -24,7 +24,7 @@ func NewShoppingCartHandler(usecase usecase.ShoppingCartUseCase) *ShoppingCartHa
 func (handler *ShoppingCartHandler) AddProductToShoppingCart(ctx *gin.Context) {
 	var reqData model.ShoppingCartReq
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 
@@ -63,7 +63,7 @@ func (handler *ShoppingCartHandler) GetListShoppingCart(ctx *gin.Context) {
 func (handler *ShoppingCartHandler) DeleteShoppingList(ctx *gin.Context) {
 	var data model.DeleteReq
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 	template.AuthorizedChecker(ctx, data.CustomerId)

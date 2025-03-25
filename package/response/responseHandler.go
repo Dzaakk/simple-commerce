@@ -54,3 +54,7 @@ func Unauthorized(message any) ApiResponse {
 	}
 	return Response(http.StatusUnauthorized, "Unauthorized", nil)
 }
+
+func InvalidRequestData() ApiResponse {
+	return Response(http.StatusBadRequest, "Invalid Request Data", nil)
+}

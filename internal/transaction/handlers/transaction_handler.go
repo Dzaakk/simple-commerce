@@ -23,7 +23,7 @@ func NewTransactionHandler(usecase usecase.TransactionUseCase) *TransactionHandl
 func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 	var data model.TransactionReq
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 

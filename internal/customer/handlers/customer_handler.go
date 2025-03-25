@@ -45,7 +45,7 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	var data model.BalanceUpdateReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid input data"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 
