@@ -45,18 +45,18 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
 
 	data, err := h.CustomerUsecase.FindByEmail(ctx, reqData.Email)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
 
 	if !template.CheckPasswordHash(reqData.Password, data.Password) {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
 	// cache token
@@ -87,18 +87,18 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
 
 	data, err := h.SellerUsecase.FindByEmail(ctx, reqData.Email)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
 
 	if !template.CheckPasswordHash(reqData.Password, data.Password) {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest("Invalid email or password"))
+		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
 
