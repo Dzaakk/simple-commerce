@@ -5,8 +5,10 @@ import (
 	usecase "Dzaakk/simple-commerce/internal/auth/usecases"
 	custUsecase "Dzaakk/simple-commerce/internal/customer/usecases"
 	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecases"
+	"Dzaakk/simple-commerce/package/auth"
 	"Dzaakk/simple-commerce/package/response"
-	template "Dzaakk/simple-commerce/package/templates"
+	auth "dzaakk/simple-commerce/package/auth"
+	template "dzaakk/simple-commerce/package/templates"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -59,12 +61,11 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
-	// cache token
-	// _, err = auth.NewTokenGenerator(db.Redis(), *data)
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-	// 	return
-	// }
+	_ = auth.NewTokenGenerator(db.Redis(), *data)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
 
