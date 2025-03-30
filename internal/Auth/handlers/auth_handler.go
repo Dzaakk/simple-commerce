@@ -102,6 +102,11 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
+	_ = auth.NewTokenGenerator(db.Redis(), *data)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
 
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
