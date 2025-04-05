@@ -7,11 +7,12 @@ import (
 	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecases"
 	"Dzaakk/simple-commerce/package/auth"
 	"Dzaakk/simple-commerce/package/response"
-	auth "dzaakk/simple-commerce/package/auth"
-	template "dzaakk/simple-commerce/package/templates"
+	template "Dzaakk/simple-commerce/package/templates"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type AuthHandler struct {
@@ -43,7 +44,7 @@ func (h *AuthHandler) RegistrationCustomer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success("Success Create User"))
 }
 
-func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
+func (h *AuthHandler) LoginCustomer(ctx *gin.Context, r *redis.Client) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
@@ -61,11 +62,14 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
-	_ = auth.NewTokenGenerator(db.Redis(), *data)
+
+	byteData, err := json.Marshal(data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
+	_ = auth.NewTokenGenerator(r, byteData)
+
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
 
@@ -84,7 +88,7 @@ func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success("Success Create Seller"))
 }
 
-func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
+func (h *AuthHandler) LoginSeller(ctx *gin.Context, r *redis.Client) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
@@ -102,11 +106,12 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
-	_ = auth.NewTokenGenerator(db.Redis(), *data)
+	byteData, err := json.Marshal(data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
+	_ = auth.NewTokenGenerator(r, byteData)
 
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
