@@ -31,7 +31,7 @@ func JWTMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 
 		customerId, err := validateSession(ctx, redisClient, tokenString)
 		if err != nil {
-			handleSessionError(ctx, err)
+			handleSessionError(err)
 			return
 		}
 
@@ -76,7 +76,7 @@ func validateSession(ctx context.Context, redisClient *redis.Client, tokenString
 	return customerId, nil
 }
 
-func handleSessionError(ctx *gin.Context, err error) {
+func handleSessionError(err error) {
 	if err == redis.Nil {
 		response.Unauthorized("Session Expired")
 		return
