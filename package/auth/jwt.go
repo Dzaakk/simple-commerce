@@ -3,13 +3,14 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	model "Dzaakk/simple-commerce/internal/customer/models"
+	"Dzaakk/simple-commerce/package/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -18,79 +19,115 @@ import (
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
+const TokenExpiration = time.Minute * 30
+
 func JWTMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authHeader := ctx.GetHeader("Authorization")
-		if authHeader == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "No authorization header"})
-			ctx.Abort()
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-		tokenPrefix := os.Getenv("TOKEN_PREFIX")
-		tokenKey := tokenPrefix + tokenString
-
-		ctxRedis := context.Background()
-		customerId, err := redisClient.Get(ctxRedis, tokenKey).Result()
+		tokenString, err := extractToken(ctx)
 		if err != nil {
-			if err == redis.Nil {
-				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Session Expired"})
-				ctx.Abort()
-				return
-			}
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-			ctx.Abort()
+			response.Unauthorized(err.Error())
 			return
 		}
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			if err != nil {
-				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-				ctx.Abort()
-			}
-			return jwtSecret, nil
-		})
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			if exp, ok := claims["exp"].(float64); ok {
-				if time.Now().Unix() > int64(exp) {
-					redisClient.Del(ctxRedis, tokenKey)
-					ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Token expired"})
-					ctx.Abort()
-					return
-				}
-			}
-
-			// Get customer ID from claims
-			if claimCustomerId, ok := claims["customerId"].(string); ok {
-				// Verify that Redis customerId matches JWT customerId
-				if claimCustomerId != customerId {
-					ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Token mismatch"})
-					ctx.Abort()
-					return
-				}
-				ctx.Set("customerId", claimCustomerId)
-			} else {
-				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
-				ctx.Abort()
-				return
-			}
-		} else {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			ctx.Abort()
+		customerId, err := validateSession(ctx, redisClient, tokenString)
+		if err != nil {
+			handleSessionError(ctx, err)
 			return
 		}
 
+		claims, err := validateToken(tokenString)
+		if err != nil {
+			response.Unauthorized("Invalid token")
+			return
+		}
+		if isTokenExpired(claims) {
+			removeSession(ctx, redisClient, tokenString)
+			response.Unauthorized("Token expired")
+			return
+		}
+
+		if err := validateCustomerId(claims, customerId); err != nil {
+			response.Unauthorized(err.Error())
+			return
+		}
+
+		ctx.Set("customerId", customerId)
 		ctx.Next()
 	}
 }
 
-const TokenExpiration = time.Minute * 30
+func extractToken(ctx *gin.Context) (string, error) {
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		return "", errors.New("no authorization header")
+	}
+	return strings.TrimPrefix(authHeader, "Bearer "), nil
+}
+
+func validateSession(ctx context.Context, redisClient *redis.Client, tokenString string) (string, error) {
+	tokenPrefix := os.Getenv("TOKEN_PREFIX")
+	tokenKey := tokenPrefix + tokenString
+
+	customerId, err := redisClient.Get(ctx, tokenKey).Result()
+	if err != nil {
+		return "", err
+	}
+
+	return customerId, nil
+}
+
+func handleSessionError(ctx *gin.Context, err error) {
+	if err == redis.Nil {
+		response.Unauthorized("Session Expired")
+		return
+	}
+
+	response.InternalServerError("")
+}
+
+func validateToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("invalid token")
+}
+
+func isTokenExpired(claims jwt.MapClaims) bool {
+	if exp, ok := claims["exp"].(float64); ok {
+		return time.Now().Unix() > int64(exp)
+	}
+
+	return true
+}
+
+func removeSession(ctx context.Context, redisClient *redis.Client, tokenString string) {
+	tokenPrefix := os.Getenv("TOKEN_PREFIX")
+	tokenKey := tokenPrefix + tokenString
+	redisClient.Del(ctx, tokenKey)
+}
+
+func validateCustomerId(claims jwt.MapClaims, redisCustomerId string) error {
+	if claimCustomerId, ok := claims["customerId"].(string); ok {
+		if claimCustomerId != redisCustomerId {
+			return errors.New("token mismatch")
+		}
+		return nil
+	}
+
+	return errors.New("invalid token claims")
+}
 
 type TokenGenerator struct {
 	redisClient *redis.Client
