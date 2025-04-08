@@ -18,13 +18,18 @@ func NewAuthRoutes(handler *handler.AuthHandler) *AuthRoutes {
 }
 
 func (ar *AuthRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
-	authHandler := r.Group("/api/v1")
+	apiGroup := r.Group("/api/v1")
 
-	authHandler.Use()
+	apiGroup.Use()
 	{
-		authHandler.POST("/login-customer", ar.Handler.LoginCustomer)
-		authHandler.POST("/register-customer", ar.Handler.RegistrationCustomer)
-		authHandler.POST("/login-seller", ar.Handler.LoginSeller)
-		authHandler.POST("/register-seller", ar.Handler.RegistrationSeller)
+		apiGroup.POST("/register-customer", ar.Handler.RegistrationCustomer)
+		apiGroup.POST("/login-customer", func(ctx *gin.Context) {
+			ar.Handler.LoginCustomer(ctx, redis)
+		})
+
+		apiGroup.POST("/register-seller", ar.Handler.RegistrationSeller)
+		apiGroup.POST("/login-seller", func(ctx *gin.Context) {
+			ar.Handler.LoginSeller(ctx, redis)
+		})
 	}
 }
