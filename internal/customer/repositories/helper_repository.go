@@ -14,7 +14,7 @@ func scanCustomer(row *sql.Row) (*model.TCustomers, error) {
 	var updated sql.NullTime
 
 	err := row.Scan(
-		&customer.Id, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &customer.Status,
+		&customer.ID, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &customer.Status,
 		&base.Created, &base.CreatedBy, &updated, &base.UpdatedBy)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
