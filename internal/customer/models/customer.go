@@ -3,7 +3,7 @@ package models
 import template "Dzaakk/simple-commerce/package/templates"
 
 type TCustomers struct {
-	ID          int     `json:"customer_id"`
+	ID          int     `json:"id"`
 	Username    string  `json:"username"`
 	Email       string  `json:"email"`
 	PhoneNumber string  `json:"phone_number"`
@@ -13,6 +13,6 @@ type TCustomers struct {
 	template.Base
 }
 type CustomerBalance struct {
-	ID      int64   `json:"customer_id"`
-	Balance float64 `json:"balance"`
+	CustomerID int64   `json:"customer_id"`
+	Balance    float64 `json:"balance"`
 }
