@@ -40,11 +40,11 @@ func (repo *AuthRepositoryImpl) InsertCustomerCodeActivation(c context.Context, 
 	return nil
 }
 
-func (repo *AuthRepositoryImpl) FindCodeByCustomerId(c context.Context, id int64) (*model.TCustomerActivationCode, error) {
+func (repo *AuthRepositoryImpl) FindCodeByCustomerID(c context.Context, customerID int64) (*model.TCustomerActivationCode, error) {
 	ctx, cancel := repo.contextWithTimeout(c)
 	defer cancel()
 
-	rows, err := repo.DB.QueryContext(ctx, queryFindByCustomerID, id)
+	rows, err := repo.DB.QueryContext(ctx, queryFindByCustomerID, customerID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,11 +58,11 @@ func (repo *AuthRepositoryImpl) FindCodeByCustomerId(c context.Context, id int64
 	return activationCode, nil
 }
 
-func (repo *AuthRepositoryImpl) FindCodeBySellerId(c context.Context, id int64) (*model.TSellerActivationCode, error) {
+func (repo *AuthRepositoryImpl) FindCodeBySellerID(c context.Context, sellerID int64) (*model.TSellerActivationCode, error) {
 	ctx, cancel := repo.contextWithTimeout(c)
 	defer cancel()
 
-	rows, err := repo.DB.QueryContext(ctx, queryFindBySellerID, id)
+	rows, err := repo.DB.QueryContext(ctx, queryFindBySellerID, sellerID)
 	if err != nil {
 		return nil, err
 	}
