@@ -23,7 +23,7 @@ func NewCustomerHandler(usecase usecase.CustomerUseCase) *CustomerHandler {
 }
 
 func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
-	id, err := strconv.ParseInt(ctx.Query("id"), 10, 64)
+	customerID, err := strconv.ParseInt(ctx.Query("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BadRequest(err.Error()))
 		return
@@ -31,7 +31,7 @@ func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
 
 	template.AuthorizedChecker(ctx, ctx.Query("id"))
 
-	data, err := handler.Usecase.FindById(ctx, id)
+	data, err := handler.Usecase.FindByID(ctx, customerID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.NotFound(err.Error()))
 		ctx.Abort()
@@ -55,13 +55,13 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 		return
 	}
 
-	id, _ := strconv.ParseInt(data.Id, 10, 64)
+	id, _ := strconv.ParseInt(data.CustomerID, 10, 64)
 	oldData, err := handler.Usecase.GetBalance(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
-	template.AuthorizedChecker(ctx, data.Id)
+	template.AuthorizedChecker(ctx, data.CustomerID)
 	newBalance, err := handler.Usecase.UpdateBalance(ctx, id, float64(balance), data.ActionType)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, response.NotFound(err.Error()))
@@ -72,8 +72,8 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	res := model.BalanceUpdateRes{
 		BalanceOld: *oldData,
 		BalanceNew: model.CustomerBalanceRes{
-			Id:      data.Id,
-			Balance: fmt.Sprintf("%.2f", newBalance),
+			CustomerID: data.CustomerID,
+			Balance:    fmt.Sprintf("%.2f", newBalance),
 		},
 	}
 	ctx.JSON(http.StatusOK, response.Success(res))
