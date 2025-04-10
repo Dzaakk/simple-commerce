@@ -42,12 +42,12 @@ func TestCreateCustomer(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestFindById(t *testing.T) {
+func TestFindByCustomerID(t *testing.T) {
 	testCustomerID = 1
 
-	mockRepo.On("FindById", ctx, testCustomerID).Return(testCustomer, nil)
+	mockRepo.On("FindByCustomerID", ctx, testCustomerID).Return(testCustomer, nil)
 
-	foundCustomer, err := mockRepo.FindById(ctx, testCustomerID)
+	foundCustomer, err := mockRepo.FindByCustomerID(ctx, testCustomerID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, foundCustomer)
