@@ -20,11 +20,11 @@ func NewProductHandler(usecase usecase.ProductUseCase) *ProductHandler {
 }
 
 func (handler *ProductHandler) GetProduct(ctx *gin.Context) {
-	categoryId, _ := strconv.Atoi(ctx.Query("categoryId"))
+	categoryID, _ := strconv.Atoi(ctx.Query("categoryId"))
 	productName := ctx.Query("productName")
 
-	if categoryId != 0 {
-		listProduct, err := handler.Usecase.FindByCategoryId(ctx, categoryId)
+	if categoryID != 0 {
+		listProduct, err := handler.Usecase.FindByCategoryID(ctx, categoryID)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 			return
@@ -36,7 +36,7 @@ func (handler *ProductHandler) GetProduct(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, response.Success(listProduct))
 	}
 	if productName != "" {
-		product, err := handler.Usecase.FindByName(ctx, productName)
+		product, err := handler.Usecase.FindByProductName(ctx, productName)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 			return
