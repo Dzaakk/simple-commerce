@@ -146,7 +146,7 @@ func (g *TokenGenerator) GenerateToken(customer model.TCustomers) (string, error
 	now := time.Now()
 	expiresAt := now.Add(TokenExpiration)
 	claims := jwt.MapClaims{
-		"customerId": fmt.Sprintf("%d", customer.Id),
+		"customerId": fmt.Sprintf("%d", customer.ID),
 		"exp":        expiresAt.Unix(),
 	}
 
@@ -161,7 +161,7 @@ func (g *TokenGenerator) GenerateToken(customer model.TCustomers) (string, error
 	tokenKey := tokenPrefix + tokenString
 
 	tokenData := map[string]interface{}{
-		"userId":    customer.Id,
+		"userId":    customer.ID,
 		"createdAt": now.Unix(),
 		"expiresAt": expiresAt.Unix(),
 	}
