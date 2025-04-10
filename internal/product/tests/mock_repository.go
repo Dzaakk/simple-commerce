@@ -24,13 +24,13 @@ func (m *MockProductRepository) Update(product model.TProduct) (int64, error) {
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockProductRepository) SetStockById(id, stock int) (int64, error) {
-	args := m.Called(id, stock)
+func (m *MockProductRepository) SetStockByProductID(productID, stock int) (int64, error) {
+	args := m.Called(productID, stock)
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockProductRepository) FindById(id int) (*model.TProduct, error) {
-	args := m.Called(id)
+func (m *MockProductRepository) FindByProductID(productID int) (*model.TProduct, error) {
+	args := m.Called(productID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -38,13 +38,13 @@ func (m *MockProductRepository) FindById(id int) (*model.TProduct, error) {
 	return args.Get(0).(*model.TProduct), args.Error(1)
 }
 
-func (m *MockProductRepository) FindByCategoryId(categoryId int) ([]*model.TProduct, error) {
-	args := m.Called(categoryId)
+func (m *MockProductRepository) FindByCategoryID(categoryID int) ([]*model.TProduct, error) {
+	args := m.Called(categoryID)
 	return args.Get(0).([]*model.TProduct), args.Error(1)
 }
 
-func (m *MockProductRepository) FindByName(name string) (*model.TProduct, error) {
-	args := m.Called(name)
+func (m *MockProductRepository) FindByProductName(productName string) (*model.TProduct, error) {
+	args := m.Called(productName)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -52,12 +52,12 @@ func (m *MockProductRepository) FindByName(name string) (*model.TProduct, error)
 	return args.Get(0).(*model.TProduct), args.Error(1)
 }
 
-func (m *MockProductRepository) FindBySellerId(sellerId int) ([]*model.TProduct, error) {
-	args := m.Called(sellerId)
+func (m *MockProductRepository) FindBySellerID(sellerID int) ([]*model.TProduct, error) {
+	args := m.Called(sellerID)
 	return args.Get(0).([]*model.TProduct), args.Error(1)
 }
 
-func (m *MockProductRepository) FindBySellerIdAndCategoryId(sellerId, categoryId int) ([]*model.TProduct, error) {
-	args := m.Called(sellerId, categoryId)
+func (m *MockProductRepository) FindBySellerIDAndCategoryID(sellerID, categoryID int) ([]*model.TProduct, error) {
+	args := m.Called(sellerID, categoryID)
 	return args.Get(0).([]*model.TProduct), args.Error(1)
 }

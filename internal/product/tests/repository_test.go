@@ -11,20 +11,20 @@ import (
 var (
 	mockRepo    = new(MockProductRepository)
 	testProduct = model.TProduct{
-		Id:          1,
+		ProductID:   1,
 		ProductName: "Monitor",
 		Price:       1700000,
 		Stock:       10,
-		CategoryId:  3,
-		SellerId:    1,
+		CategoryID:  3,
+		SellerID:    1,
 	}
 	testProduct2 = model.TProduct{
-		Id:          2,
+		ProductID:   2,
 		ProductName: "Cooling Fan Ultra",
 		Price:       650000,
 		Stock:       20,
-		CategoryId:  3,
-		SellerId:    1,
+		CategoryID:  3,
+		SellerID:    1,
 	}
 	testListProduct = []*model.TProduct{
 		&testProduct, &testProduct2,
@@ -39,12 +39,12 @@ var (
 )
 
 func assertProductEquality(t *testing.T, expected, actual *model.TProduct) {
-	assert.Equal(t, expected.Id, actual.Id)
+	assert.Equal(t, expected.ProductID, actual.ProductID)
 	assert.Equal(t, expected.ProductName, actual.ProductName)
 	assert.Equal(t, expected.Price, actual.Price)
 	assert.Equal(t, expected.Stock, actual.Stock)
-	assert.Equal(t, expected.CategoryId, actual.CategoryId)
-	assert.Equal(t, expected.SellerId, actual.SellerId)
+	assert.Equal(t, expected.CategoryID, actual.CategoryID)
+	assert.Equal(t, expected.SellerID, actual.SellerID)
 }
 
 func TestCreateProduct(t *testing.T) {
@@ -71,7 +71,7 @@ func TestUpdateProduct(t *testing.T) {
 	})
 
 	t.Run("Failed", func(t *testing.T) {
-		testProduct.Id = 2
+		testProduct.ProductID = 2
 		expectedError = errors.New("failed to update product")
 		mockRepo.On("Update", testProduct).Return(int64(0), expectedError)
 
@@ -84,12 +84,12 @@ func TestUpdateProduct(t *testing.T) {
 	})
 }
 
-func TestFindByCategoryId(t *testing.T) {
+func TestFindByCategoryID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		testProductCategoryID = 3
-		mockRepo.On("FindByCategoryId", testProductCategoryID).Return(testListProduct, nil)
+		mockRepo.On("FindByCategoryID", testProductCategoryID).Return(testListProduct, nil)
 
-		foundListProduct, err := mockRepo.FindByCategoryId(testProductCategoryID)
+		foundListProduct, err := mockRepo.FindByCategoryID(testProductCategoryID)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, foundListProduct)
@@ -104,9 +104,9 @@ func TestFindByCategoryId(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		testProductCategoryID = 99
-		mockRepo.On("FindByCategoryId", testProductCategoryID).Return(emptyListProduct, nil)
+		mockRepo.On("FindByCategoryID", testProductCategoryID).Return(emptyListProduct, nil)
 
-		foundListProduct, err := mockRepo.FindByCategoryId(testProductCategoryID)
+		foundListProduct, err := mockRepo.FindByCategoryID(testProductCategoryID)
 
 		assert.NoError(t, err)
 		assert.Empty(t, foundListProduct)
@@ -115,11 +115,11 @@ func TestFindByCategoryId(t *testing.T) {
 
 }
 
-func TestFindByName(t *testing.T) {
+func TestFindByProductName(t *testing.T) {
 	testProductName = "Monitor"
-	mockRepo.On("FindByName", testProductName).Return(&testProduct, nil)
+	mockRepo.On("FindByProductName", testProductName).Return(&testProduct, nil)
 
-	foundProduct, err := mockRepo.FindByName(testProductName)
+	foundProduct, err := mockRepo.FindByProductName(testProductName)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, foundProduct)
@@ -129,12 +129,12 @@ func TestFindByName(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestFindBySellerId(t *testing.T) {
+func TestFindBySellerID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		testProductSellerID = 1
-		mockRepo.On("FindBySellerId", testProductSellerID).Return(testListProduct, nil)
+		mockRepo.On("FindBySellerID", testProductSellerID).Return(testListProduct, nil)
 
-		foundListProduct, err := mockRepo.FindBySellerId(testProductSellerID)
+		foundListProduct, err := mockRepo.FindBySellerID(testProductSellerID)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, foundListProduct)
@@ -149,9 +149,9 @@ func TestFindBySellerId(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		testProductSellerID = 2
-		mockRepo.On("FindBySellerId", testProductSellerID).Return(emptyListProduct, nil)
+		mockRepo.On("FindBySellerID", testProductSellerID).Return(emptyListProduct, nil)
 
-		foundListProduct, err := mockRepo.FindBySellerId(testProductSellerID)
+		foundListProduct, err := mockRepo.FindBySellerID(testProductSellerID)
 
 		assert.NoError(t, err)
 		assert.Empty(t, foundListProduct)
@@ -159,13 +159,13 @@ func TestFindBySellerId(t *testing.T) {
 	})
 
 }
-func TestFindBySellerIdAndCategoryId(t *testing.T) {
+func TestFindBySellerIDAndCategoryID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		testProductSellerID = 1
 		testProductCategoryID = 3
-		mockRepo.On("FindBySellerIdAndCategoryId", testProductSellerID, testProductCategoryID).Return(testListProduct, nil)
+		mockRepo.On("FindBySellerIDAndCategoryID", testProductSellerID, testProductCategoryID).Return(testListProduct, nil)
 
-		foundListProduct, err := mockRepo.FindBySellerIdAndCategoryId(testProductSellerID, testProductCategoryID)
+		foundListProduct, err := mockRepo.FindBySellerIDAndCategoryID(testProductSellerID, testProductCategoryID)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, foundListProduct)
@@ -181,9 +181,9 @@ func TestFindBySellerIdAndCategoryId(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		testProductSellerID = 2
 		testProductCategoryID = 4
-		mockRepo.On("FindBySellerIdAndCategoryId", testProductSellerID, testProductCategoryID).Return(emptyListProduct, nil)
+		mockRepo.On("FindBySellerIDAndCategoryID", testProductSellerID, testProductCategoryID).Return(emptyListProduct, nil)
 
-		foundListProduct, err := mockRepo.FindBySellerIdAndCategoryId(testProductSellerID, testProductCategoryID)
+		foundListProduct, err := mockRepo.FindBySellerIDAndCategoryID(testProductSellerID, testProductCategoryID)
 
 		assert.NoError(t, err)
 		assert.Empty(t, foundListProduct)
@@ -192,14 +192,14 @@ func TestFindBySellerIdAndCategoryId(t *testing.T) {
 
 }
 
-func TestSetStockById(t *testing.T) {
+func TestSetStockByProductID(t *testing.T) {
 	testProductStock = 10
 	t.Run("Success", func(t *testing.T) {
 		testProductID = 1
 
-		mockRepo.On("SetStockById", testProductID, testProductStock).Return(int64(1), nil)
+		mockRepo.On("SetStockByProductID", testProductID, testProductStock).Return(int64(1), nil)
 
-		rowsAffected, err := mockRepo.SetStockById(testProductID, testProductStock)
+		rowsAffected, err := mockRepo.SetStockByProductID(testProductID, testProductStock)
 
 		assert.NoError(t, err)
 		assert.Equal(t, int64(1), rowsAffected)
@@ -208,9 +208,9 @@ func TestSetStockById(t *testing.T) {
 	t.Run("Failed", func(t *testing.T) {
 		testProductID = 2
 		expectedError = errors.New("failed to update stock product")
-		mockRepo.On("SetStockById", testProductID, testProductStock).Return(int64(0), expectedError)
+		mockRepo.On("SetStockByProductID", testProductID, testProductStock).Return(int64(0), expectedError)
 
-		rowsAffected, err := mockRepo.SetStockById(testProductID, testProductStock)
+		rowsAffected, err := mockRepo.SetStockByProductID(testProductID, testProductStock)
 
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)
