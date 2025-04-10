@@ -133,7 +133,7 @@ func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, customerID i
 		return nil, response.InvalidParameter()
 	}
 
-	customerBalance := model.CustomerBalance{ID: customerID}
+	customerBalance := model.CustomerBalance{CustomerID: customerID}
 
 	err := repo.DB.QueryRow(queryGetBalanceByID, customerID).Scan(&customerBalance.Balance)
 	if err != nil {
@@ -181,7 +181,7 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sq
 	row := tx.QueryRowContext(ctx, queryGetBalanceByIDWithLock, customerID)
 
 	customerBalance := &model.CustomerBalance{}
-	err := row.Scan(&customerBalance.ID, &customerBalance.Balance)
+	err := row.Scan(&customerBalance.CustomerID, &customerBalance.Balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, response.Error("customer not found", err)

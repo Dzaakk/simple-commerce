@@ -11,7 +11,7 @@ import (
 var (
 	mockRepo     = new(MockCustomerRepository)
 	testCustomer = &models.TCustomers{
-		Id:          1,
+		ID:          1,
 		Username:    "user_test",
 		Email:       "test@gmail.com",
 		PhoneNumber: "1234567890",
@@ -19,8 +19,8 @@ var (
 		Balance:     1000000.00,
 	}
 	expectedCustomerBalance = &models.CustomerBalance{
-		Id:      1,
-		Balance: 100000,
+		CustomerID: 1,
+		Balance:    100000,
 	}
 	testCustomerID    int
 	testCustomerEmail string
@@ -82,7 +82,7 @@ func TestGetBalance(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, actualCustomerBalance)
 
-	assert.Equal(t, expectedCustomerBalance.Id, actualCustomerBalance.Id)
+	assert.Equal(t, expectedCustomerBalance.CustomerID, actualCustomerBalance.CustomerID)
 	assert.Equal(t, expectedCustomerBalance.Balance, actualCustomerBalance.Balance)
 
 	mockRepo.AssertExpectations(t)
