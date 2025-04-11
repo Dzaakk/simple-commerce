@@ -38,41 +38,41 @@ func (repo *ShoppingCartRepositoryImpl) Create(ctx context.Context, data model.T
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	result, err := repo.DB.ExecContext(ctx, queryCreateShoppingCart, data.CustomerId, data.Status, data.Base.Created, data.Base.CreatedBy)
+	result, err := repo.DB.ExecContext(ctx, queryCreateShoppingCart, data.CustomerID, data.Status, data.Base.Created, data.Base.CreatedBy)
 	if err != nil {
 		return nil, response.ExecError("create shopping cart", err)
 	}
 
-	id, _ := result.LastInsertId()
+	cartID, _ := result.LastInsertId()
 	newData := &model.TShoppingCart{
-		Id:         int(id),
-		CustomerId: data.CustomerId,
-		Status:     data.Status,
+		ShoppingCartID: int(cartID),
+		CustomerID:     data.CustomerID,
+		Status:         data.Status,
 	}
 
 	return newData, nil
 }
-func (repo *ShoppingCartRepositoryImpl) FindByCustomerId(ctx context.Context, id int) (*model.TShoppingCart, error) {
-	if id <= 0 {
+func (repo *ShoppingCartRepositoryImpl) FindByCustomerID(ctx context.Context, customerID int) (*model.TShoppingCart, error) {
+	if customerID <= 0 {
 		return nil, response.InvalidParameter()
 	}
 
-	return repo.findShoppingCart(ctx, queryFindByCustomerId, id)
+	return repo.findShoppingCart(ctx, queryFindByCustomerId, customerID)
 }
 
-func (repo *ShoppingCartRepositoryImpl) FindById(ctx context.Context, id int) (*model.TShoppingCart, error) {
-	if id <= 0 {
+func (repo *ShoppingCartRepositoryImpl) FindByCartID(ctx context.Context, cartID int) (*model.TShoppingCart, error) {
+	if cartID <= 0 {
 		return nil, response.InvalidParameter()
 	}
 
-	return repo.findShoppingCart(ctx, queryFindById, id)
+	return repo.findShoppingCart(ctx, queryFindById, cartID)
 }
 
-func (repo *ShoppingCartRepositoryImpl) FindByCustomerIdAndStatus(ctx context.Context, customerId int, status string) (*model.TShoppingCart, error) {
-	if customerId <= 0 || status == "" {
+func (repo *ShoppingCartRepositoryImpl) FindByStatusAndCustomerID(ctx context.Context, customerID int, status string) (*model.TShoppingCart, error) {
+	if customerID <= 0 || status == "" {
 		return nil, response.InvalidParameter()
 	}
-	return repo.findShoppingCart(ctx, queryFindByCustomerIdAndStatus, customerId, status)
+	return repo.findShoppingCart(ctx, queryFindByCustomerIdAndStatus, customerID, status)
 }
 
 func (repo *ShoppingCartRepositoryImpl) findShoppingCart(ctx context.Context, query string, args ...interface{}) (*model.TShoppingCart, error) {
@@ -83,27 +83,27 @@ func (repo *ShoppingCartRepositoryImpl) findShoppingCart(ctx context.Context, qu
 	return scanCart(row)
 }
 
-func (repo *ShoppingCartRepositoryImpl) UpdateStatusById(ctx context.Context, id int, status, customerId string) (*model.TShoppingCart, error) {
+func (repo *ShoppingCartRepositoryImpl) UpdateStatusByCartID(ctx context.Context, cartID int, status, customerID string) (*model.TShoppingCart, error) {
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	_, err := repo.DB.ExecContext(ctx, queryUpdateStatusById, status, customerId, id)
+	_, err := repo.DB.ExecContext(ctx, queryUpdateStatusById, status, customerID, cartID)
 	if err != nil {
 		return nil, response.ExecError("update status by id", err)
 	}
 
-	intCustomerID, _ := strconv.Atoi(customerId)
+	intCustomerID, _ := strconv.Atoi(customerID)
 	shoppingCart := &model.TShoppingCart{
-		Id:         id,
-		CustomerId: intCustomerID,
-		Status:     status,
+		ShoppingCartID: cartID,
+		CustomerID:     intCustomerID,
+		Status:         status,
 	}
 
 	return shoppingCart, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, id int, customerId int) (string, error) {
-	if id <= 0 || customerId <= 0 {
+func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, cartID int, customerID int) (string, error) {
+	if cartID <= 0 || customerID <= 0 {
 		return "", response.InvalidParameter()
 	}
 
@@ -111,27 +111,27 @@ func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, id int,
 	defer cancel()
 
 	var status string
-	_ = repo.DB.QueryRowContext(ctx, queryCheckStatus, id, customerId).Scan(&status)
+	_ = repo.DB.QueryRowContext(ctx, queryCheckStatus, cartID, customerID).Scan(&status)
 
 	return status, nil
 }
 
-func (repo *ShoppingCartRepositoryImpl) UpdateStatusByIdWithTx(ctx context.Context, tx *sql.Tx, cartId int, status string, customerid string) error {
+func (repo *ShoppingCartRepositoryImpl) UpdateStatusByCartIDWithTx(ctx context.Context, tx *sql.Tx, cartID int, status string, customerID string) error {
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	_, err := tx.ExecContext(ctx, queryUpdateStatusById, status, customerid, cartId)
+	_, err := tx.ExecContext(ctx, queryUpdateStatusById, status, customerID, cartID)
 	return err
 }
 
-func (repo *ShoppingCartRepositoryImpl) DeleteShoppingCart(ctx context.Context, cartId int) error {
-	if cartId <= 0 {
+func (repo *ShoppingCartRepositoryImpl) DeleteShoppingCart(ctx context.Context, cartID int) error {
+	if cartID <= 0 {
 		return response.InvalidParameter()
 	}
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	_, err := repo.DB.ExecContext(ctx, queryDeleteShoppingCart, cartId)
+	_, err := repo.DB.ExecContext(ctx, queryDeleteShoppingCart, cartID)
 	if err != nil {
 		return response.ExecError("delete shopping cart", err)
 	}
