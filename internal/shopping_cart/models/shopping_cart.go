@@ -3,9 +3,9 @@ package models
 import template "Dzaakk/simple-commerce/package/templates"
 
 type TShoppingCart struct {
-	ShoppingCartID int    `json:"id"`
-	CustomerID     int    `json:"customer_id"`
-	Status         string `json:"status"`
+	ID         int    `json:"id"`
+	CustomerID int    `json:"customer_id"`
+	Status     string `json:"status"`
 	template.Base
 }
 type TShoppingCartItem struct {

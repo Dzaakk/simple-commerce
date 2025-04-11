@@ -14,7 +14,7 @@ func scanCart(row *sql.Row) (*model.TShoppingCart, error) {
 	var updated sql.NullTime
 
 	err := row.Scan(
-		&cart.ShoppingCartID, &cart.Status, &cart.CustomerID, &cart.Created, &cart.CreatedBy, &cart.Updated, &cart.UpdatedBy)
+		&cart.ID, &cart.Status, &cart.CustomerID, &cart.Created, &cart.CreatedBy, &cart.Updated, &cart.UpdatedBy)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

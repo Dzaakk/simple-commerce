@@ -45,9 +45,9 @@ func (repo *ShoppingCartRepositoryImpl) Create(ctx context.Context, data model.T
 
 	cartID, _ := result.LastInsertId()
 	newData := &model.TShoppingCart{
-		ShoppingCartID: int(cartID),
-		CustomerID:     data.CustomerID,
-		Status:         data.Status,
+		ID:         int(cartID),
+		CustomerID: data.CustomerID,
+		Status:     data.Status,
 	}
 
 	return newData, nil
@@ -94,9 +94,9 @@ func (repo *ShoppingCartRepositoryImpl) UpdateStatusByCartID(ctx context.Context
 
 	intCustomerID, _ := strconv.Atoi(customerID)
 	shoppingCart := &model.TShoppingCart{
-		ShoppingCartID: cartID,
-		CustomerID:     intCustomerID,
-		Status:         status,
+		ID:         cartID,
+		CustomerID: intCustomerID,
+		Status:     status,
 	}
 
 	return shoppingCart, nil
