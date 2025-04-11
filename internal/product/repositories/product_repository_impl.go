@@ -53,7 +53,7 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, data model.TProdu
 		return nil, err
 	}
 
-	data.ProductID = int(id)
+	data.ID = int(id)
 	return &data, nil
 }
 
@@ -64,7 +64,7 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, data model.TProdu
 	ctx, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	result, err := repo.DB.ExecContext(ctx, queryUpdate, data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.ProductID)
+	result, err := repo.DB.ExecContext(ctx, queryUpdate, data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.ID)
 	if err != nil {
 		return 0, err
 	}

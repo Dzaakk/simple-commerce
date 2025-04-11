@@ -85,7 +85,7 @@ func rowsToProduct(rows *sql.Rows) (*model.TProduct, error) {
 	base := template.Base{}
 	product := model.TProduct{}
 
-	err := rows.Scan(&product.ProductID, &product.ProductName, &product.Price, &product.Stock, &product.CategoryID, &base.Created, &base.CreatedBy, &base.Updated, &base.UpdatedBy)
+	err := rows.Scan(&product.ID, &product.ProductName, &product.Price, &product.Stock, &product.CategoryID, &base.Created, &base.CreatedBy, &base.Updated, &base.UpdatedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func scanProducts(rows *sql.Rows) ([]*model.TProduct, error) {
 		var updated sql.NullTime
 
 		err := rows.Scan(
-			&product.ProductID, &product.ProductName, &product.Price, &product.Stock, &product.CategoryID,
+			&product.ID, &product.ProductName, &product.Price, &product.Stock, &product.CategoryID,
 			&base.Created, &base.CreatedBy, &updated, &base.UpdatedBy)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan product: %w", err)

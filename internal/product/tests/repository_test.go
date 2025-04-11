@@ -11,7 +11,7 @@ import (
 var (
 	mockRepo    = new(MockProductRepository)
 	testProduct = model.TProduct{
-		ProductID:   1,
+		ID:          1,
 		ProductName: "Monitor",
 		Price:       1700000,
 		Stock:       10,
@@ -19,7 +19,7 @@ var (
 		SellerID:    1,
 	}
 	testProduct2 = model.TProduct{
-		ProductID:   2,
+		ID:          2,
 		ProductName: "Cooling Fan Ultra",
 		Price:       650000,
 		Stock:       20,
@@ -39,7 +39,7 @@ var (
 )
 
 func assertProductEquality(t *testing.T, expected, actual *model.TProduct) {
-	assert.Equal(t, expected.ProductID, actual.ProductID)
+	assert.Equal(t, expected.ID, actual.ID)
 	assert.Equal(t, expected.ProductName, actual.ProductName)
 	assert.Equal(t, expected.Price, actual.Price)
 	assert.Equal(t, expected.Stock, actual.Stock)
@@ -71,7 +71,7 @@ func TestUpdateProduct(t *testing.T) {
 	})
 
 	t.Run("Failed", func(t *testing.T) {
-		testProduct.ProductID = 2
+		testProduct.ID = 2
 		expectedError = errors.New("failed to update product")
 		mockRepo.On("Update", testProduct).Return(int64(0), expectedError)
 

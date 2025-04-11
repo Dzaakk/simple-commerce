@@ -34,7 +34,7 @@ func (p *ProductUseCaseImpl) Create(ctx context.Context, dataReq model.ProductRe
 	}
 
 	productRes := &model.ProductRes{
-		ProductID:   fmt.Sprintf("%d", data.ProductID),
+		ProductID:   fmt.Sprintf("%d", data.ID),
 		ProductName: data.ProductName,
 		Price:       fmt.Sprintf("%0.f", data.Price),
 		Stock:       fmt.Sprintf("%d", data.Stock),
@@ -55,7 +55,7 @@ func (p *ProductUseCaseImpl) Update(ctx context.Context, dataReq model.ProductRe
 	categoryID, _ := strconv.ParseInt(dataReq.CategoryID, 0, 0)
 	stock, _ := strconv.ParseInt(dataReq.Stock, 0, 0)
 	updatedProduct := model.TProduct{
-		ProductID:   int(productID),
+		ID:          int(productID),
 		ProductName: dataReq.ProductName,
 		Price:       float32(price),
 		Stock:       int(stock),
@@ -96,7 +96,7 @@ func (p *ProductUseCaseImpl) FindByProductName(ctx context.Context, productName 
 		return nil, err
 	}
 	return &model.ProductRes{
-		ProductID:   fmt.Sprintf("%d", data.ProductID),
+		ProductID:   fmt.Sprintf("%d", data.ID),
 		ProductName: productName,
 		Price:       fmt.Sprintf("%.0f", data.Price),
 		Stock:       fmt.Sprintf("%d", data.Stock),
