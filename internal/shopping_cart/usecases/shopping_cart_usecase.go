@@ -8,9 +8,9 @@ import (
 type ShoppingCartUseCase interface {
 	Add(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error)
 	AddV2(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error)
-	CheckStatus(ctx context.Context, id, customerId int) (string, error)
-	CreateCart(ctx context.Context, customerId int) (*model.TShoppingCart, error)
+	CheckStatus(ctx context.Context, cartID, customerID int) (string, error)
+	CreateCart(ctx context.Context, customerID int) (*model.TShoppingCart, error)
 	CreateCartItem(ctx context.Context, data model.ShoppingCartReq) (*model.TShoppingCartItem, error)
-	GetListItem(ctx context.Context, customerId int) ([]*model.ListCartItemRes, error)
+	GetListItem(ctx context.Context, customerID int) ([]*model.ListCartItemRes, error)
 	DeleteShoppingList(ctx context.Context, data model.DeleteReq) error
 }

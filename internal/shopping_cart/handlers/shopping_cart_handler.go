@@ -28,7 +28,7 @@ func (handler *ShoppingCartHandler) AddProductToShoppingCart(ctx *gin.Context) {
 		return
 	}
 
-	template.AuthorizedChecker(ctx, reqData.CustomerId)
+	template.AuthorizedChecker(ctx, reqData.CustomerID)
 	newShopingCart, err := handler.Usecase.Add(ctx, reqData)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
@@ -39,14 +39,14 @@ func (handler *ShoppingCartHandler) AddProductToShoppingCart(ctx *gin.Context) {
 }
 
 func (handler *ShoppingCartHandler) GetListShoppingCart(ctx *gin.Context) {
-	customerId, _ := strconv.Atoi(ctx.Query("customerId"))
+	customerID, _ := strconv.Atoi(ctx.Query("customerId"))
 
 	template.AuthorizedChecker(ctx, ctx.Query("customerId"))
 	if ctx.IsAborted() {
 		return
 	}
 
-	listShoppingCart, err := handler.Usecase.GetListItem(ctx, customerId)
+	listShoppingCart, err := handler.Usecase.GetListItem(ctx, customerID)
 	if err != nil {
 		if err.Error() == "cart is empty" {
 			ctx.JSON(http.StatusOK, response.Success("your shopping cart is empty"))
@@ -66,7 +66,7 @@ func (handler *ShoppingCartHandler) DeleteShoppingList(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
-	template.AuthorizedChecker(ctx, data.CustomerId)
+	template.AuthorizedChecker(ctx, data.CustomerID)
 	if ctx.IsAborted() {
 		return
 	}
