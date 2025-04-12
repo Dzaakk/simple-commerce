@@ -15,7 +15,7 @@ type SellerRepositoryImpl struct {
 	DB *sql.DB
 }
 
-func NewProductRepository(db *sql.DB) SellerRepository {
+func NewSellerRepository(db *sql.DB) SellerRepository {
 	return &SellerRepositoryImpl{
 		DB: db,
 	}
