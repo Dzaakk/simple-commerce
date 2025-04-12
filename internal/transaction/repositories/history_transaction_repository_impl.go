@@ -21,12 +21,12 @@ func NewHistoryTransactionRepository(db *sql.DB) HistoryTransactionRepository {
 	}
 }
 
-func (repo *HistoryTransactionRepositoryImpl) Create(ctx context.Context, data []*models.TCartItemDetail, customerId int64) error {
+func (repo *HistoryTransactionRepositoryImpl) Create(ctx context.Context, data []*models.TCartItemDetail, customerID int64) error {
 	if len(data) == 0 {
 		return nil
 	}
 
-	listQuery := generateInsertStatements(data, customerId)
+	listQuery := generateInsertStatements(data, customerID)
 
 	tx, err := repo.DB.Begin()
 	if err != nil {
@@ -51,10 +51,10 @@ func (repo *HistoryTransactionRepositoryImpl) Create(ctx context.Context, data [
 	return nil
 }
 
-const queryFindByCustomerId = "SELECT * FROM public.history_transaction WHERE customer_id=$1"
+const queryFindByCustomerID = "SELECT * FROM public.history_transaction WHERE customer_id=$1"
 
-func (repo *HistoryTransactionRepositoryImpl) FindByCustomerID(ctx context.Context, customerId int64) ([]*model.THistoryTransaction, error) {
-	rows, err := repo.DB.QueryContext(ctx, queryFindByCustomerId, customerId)
+func (repo *HistoryTransactionRepositoryImpl) FindByCustomerID(ctx context.Context, customerID int64) ([]*model.THistoryTransaction, error) {
+	rows, err := repo.DB.QueryContext(ctx, queryFindByCustomerID, customerID)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +74,12 @@ func (repo *HistoryTransactionRepositoryImpl) FindByCustomerID(ctx context.Conte
 	return listHistoryTransaction, nil
 }
 
-func generateInsertStatements(listData []*models.TCartItemDetail, customerId int64) []string {
+func generateInsertStatements(listData []*models.TCartItemDetail, customerID int64) []string {
 	var sqlInserts []string
 	columns := "customer_id, productName, price, quantity, status"
 	for _, data := range listData {
 		values := []interface{}{
-			customerId, data.ProductName, data.Price, data.Quantity, "PAID",
+			customerID, data.ProductName, data.Price, data.Quantity, "PAID",
 		}
 		sqlInsert := fmt.Sprintf("INSERT INTO transaction_items (%s) VALUES (%s);",
 			columns, formatValues(values))
@@ -114,7 +114,7 @@ func rowsToProduct(rows *sql.Rows) (*model.THistoryTransaction, error) {
 	base := template.Base{}
 	ht := model.THistoryTransaction{}
 
-	err := rows.Scan(ht.TransactionId, ht.CustomerId, ht.Price, ht.ProductName, ht.Status, ht.Quantity, base.Created, base.CreatedBy, base.Updated, base.UpdatedBy)
+	err := rows.Scan(ht.TransactionID, ht.CustomerID, ht.Price, ht.ProductName, ht.Status, ht.Quantity, base.Created, base.CreatedBy, base.Updated, base.UpdatedBy)
 	if err != nil {
 		return nil, err
 	}

@@ -15,5 +15,5 @@ type TransactionRepository interface {
 
 type HistoryTransactionRepository interface {
 	Create(ctx context.Context, data []*modelItem.TCartItemDetail, customerId int64) error
-	FindByCustomerID(ctx context.Context, customerId int64) ([]*model.THistoryTransaction, error)
+	FindByCustomerID(ctx context.Context, customerID int64) ([]*model.THistoryTransaction, error)
 }

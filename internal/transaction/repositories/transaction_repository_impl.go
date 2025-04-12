@@ -31,13 +31,13 @@ func (repo *TransactionRepositoryImpl) Create(ctx context.Context, data model.TT
 	c, cancel := repo.contextWithTimeout(ctx)
 	defer cancel()
 
-	result, err := repo.DB.ExecContext(c, queryCreateTransaction, data.CustomerId, data.CartId, data.TotalAmount, data.TransactionDate, data.Status, data.Base.Created, data.Base.CreatedBy)
+	result, err := repo.DB.ExecContext(c, queryCreateTransaction, data.CustomerID, data.CartID, data.TotalAmount, data.TransactionDate, data.Status, data.Base.Created, data.Base.CreatedBy)
 	if err != nil {
 		return nil, response.ExecError("create transaction", err)
 	}
 
 	id, _ := result.LastInsertId()
-	data.Id = int(id)
+	data.ID = int(id)
 
 	return &data, nil
 }
@@ -53,7 +53,7 @@ func (repo *TransactionRepositoryImpl) CreateWithTx(ctx context.Context, tx *sql
 
 	var id int
 
-	err = statement.QueryRowContext(c, data.CustomerId, data.CartId, data.TotalAmount, data.TransactionDate, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
+	err = statement.QueryRowContext(c, data.CustomerID, data.CartID, data.TotalAmount, data.TransactionDate, data.Status, data.Base.Created, data.Base.CreatedBy).Scan(&id)
 	if err != nil {
 		return nil, err
 	}
