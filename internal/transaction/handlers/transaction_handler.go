@@ -27,7 +27,7 @@ func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 		return
 	}
 
-	template.AuthorizedChecker(ctx, data.CustomerId)
+	template.AuthorizedChecker(ctx, data.CustomerID)
 	if ctx.IsAborted() {
 		return
 	}
