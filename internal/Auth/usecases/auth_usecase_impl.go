@@ -45,13 +45,13 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 		},
 	}
 
-	customerId, err := a.CustomerRepo.Create(ctx, customer)
+	customerID, err := a.CustomerRepo.Create(ctx, customer)
 	if err != nil {
 		return nil, err
 	}
 
 	NewShoppingCart := shoppingCartModel.TShoppingCart{
-		CustomerId: int(customerId),
+		CustomerID: int(customerID),
 		Status:     "A",
 		Base: template.Base{
 			Created:   customer.Created,
@@ -66,7 +66,7 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 
 	codeActivation := GenerateActivationCode()
 	newActivationCode := model.TCustomerActivationCode{
-		CustomerID:     customerId,
+		CustomerID:     customerID,
 		CodeActivation: codeActivation,
 		IsUsed:         false,
 		CreatedAt:      time.Now(),
@@ -79,7 +79,7 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 
 	//send email
 
-	return &customerId, nil
+	return &customerID, nil
 }
 
 func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.SellerRegistration) (*int64, error) {
@@ -100,14 +100,14 @@ func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.Sel
 		},
 	}
 
-	sellerId, err := a.SellerRepo.Create(ctx, seller)
+	sellerID, err := a.SellerRepo.Create(ctx, seller)
 	if err != nil {
 		return nil, err
 	}
 
 	codeActivation := GenerateActivationCode()
 	newActivationCode := model.TSellerActivationCode{
-		SellerID:       sellerId,
+		SellerID:       sellerID,
 		CodeActivation: codeActivation,
 		IsUsed:         false,
 		CreatedAt:      time.Now(),
@@ -120,5 +120,5 @@ func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.Sel
 
 	//send email
 
-	return &sellerId, nil
+	return &sellerID, nil
 }
