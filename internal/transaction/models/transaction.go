@@ -6,9 +6,9 @@ import (
 )
 
 type TTransaction struct {
-	Id              int       `json:"id"`
-	CustomerId      int       `json:"customer_id"`
-	CartId          int       `json:"cart_id"`
+	ID              int       `json:"id"`
+	CustomerID      int       `json:"customer_id"`
+	CartID          int       `json:"cart_id"`
 	TotalAmount     float32   `json:"total_amount"`
 	TransactionDate time.Time `json:"transaction_date"`
 	Status          string    `json:"status"`
@@ -22,7 +22,7 @@ type TCartItemDetail struct {
 }
 
 type ListProduct struct {
-	ProductName string `json:"productName"`
+	ProductName string `json:"product_name"`
 	Price       string `json:"price"`
 	Quantity    string `json:"quantity"`
 }
