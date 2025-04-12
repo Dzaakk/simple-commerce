@@ -35,16 +35,16 @@ func (t *TransactionUseCaseImpl) CreateTransaction(ctx context.Context, data mod
 
 	defer tx.Rollback()
 
-	cartId, err := strconv.Atoi(data.CartId)
+	cartID, err := strconv.Atoi(data.CartID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid data: %v", err)
 	}
-	customerId, err := strconv.Atoi(data.CustomerId)
+	customerID, err := strconv.Atoi(data.CustomerID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid data: %v", err)
 	}
 
-	listItem, err := t.repoCartItem.RetrieveCartItemsByCartIdWithTx(ctx, tx, cartId) // get all items on cart
+	listItem, err := t.repoCartItem.RetrieveCartItemsByCartIDWithTx(ctx, tx, cartID) // get all items on cart
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(ctx context.Context, data mod
 		return nil, err
 	}
 
-	customer, err := t.repoCustomer.GetBalanceWithTx(ctx, tx, int64(customerId)) // check customer current balance with locking
+	customer, err := t.repoCustomer.GetBalanceWithTx(ctx, tx, int64(customerID)) // check customer current balance with locking
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (t *TransactionUseCaseImpl) CreateTransaction(ctx context.Context, data mod
 		return nil, errors.New("insufficient balance")
 	}
 
-	err = t.repoCart.UpdateStatusByIdWithTx(ctx, tx, cartId, "Paid", data.CustomerId) // update cart status to 'Paid'
+	err = t.repoCart.UpdateStatusByCartIDWithTx(ctx, tx, cartID, "Paid", data.CustomerID) // update cart status to 'Paid'
 	if err != nil {
 		return nil, err
 	}
@@ -79,17 +79,17 @@ func (t *TransactionUseCaseImpl) CreateTransaction(ctx context.Context, data mod
 	}
 
 	newBalance := customer.Balance - float64(totalTransaction)
-	err = t.repoCustomer.UpdateBalanceWithTx(ctx, tx, int64(customerId), newBalance) // update balance customer
+	err = t.repoCustomer.UpdateBalanceWithTx(ctx, tx, int64(customerID), newBalance) // update balance customer
 	if err != nil {
 		return nil, err
 	}
 
-	transactionDate, err := insertToTableTransactionWithTx(ctx, tx, t, customerId, cartId, totalTransaction) // insert to table transaction
+	transactionDate, err := insertToTableTransactionWithTx(ctx, tx, t, customerID, cartID, totalTransaction) // insert to table transaction
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.repoCartItem.DeleteAllWithTx(ctx, tx, cartId) // delete all item on cart item
+	err = t.repoCartItem.DeleteAllWithTx(ctx, tx, cartID) // delete all item on cart item
 	if err != nil {
 		return nil, err
 	}
@@ -99,16 +99,16 @@ func (t *TransactionUseCaseImpl) CreateTransaction(ctx context.Context, data mod
 		return nil, err
 	}
 
-	res.CustomerId = data.CustomerId
+	res.CustomerID = data.CustomerID
 	res.TransactionDate = *transactionDate
 	return res, nil
 }
 
-func (t *TransactionUseCaseImpl) GetTransaction(ctx context.Context, customerId int64) ([]*model.CustomerListTransactionRes, error) {
+func (t *TransactionUseCaseImpl) GetTransaction(ctx context.Context, customerID int64) ([]*model.CustomerListTransactionRes, error) {
 	panic("unimplemented")
 }
 
 // GetDetailTransaction implements TransactionUseCase.
-func (t *TransactionUseCaseImpl) GetDetailTransaction(ctx context.Context, transactionId int64) ([]*model.CustomerListTransactionRes, error) {
+func (t *TransactionUseCaseImpl) GetDetailTransaction(ctx context.Context, transactionID int64) ([]*model.CustomerListTransactionRes, error) {
 	panic("unimplemented")
 }

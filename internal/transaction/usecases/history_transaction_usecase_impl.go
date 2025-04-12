@@ -20,12 +20,12 @@ func (t *HistoryTransactionUseCaseImpl) CreateHistoryTransaction(ctx context.Con
 	panic("unimplemented")
 }
 
-func (t *HistoryTransactionUseCaseImpl) GetHistoryTransactionDetail(ctx context.Context, transactionId int64) {
+func (t *HistoryTransactionUseCaseImpl) GetHistoryTransactionDetail(ctx context.Context, transactionID int64) {
 	panic("unimplemented")
 }
 
-func (t *HistoryTransactionUseCaseImpl) GetListHistoryTransaction(ctx context.Context, customerId int64) ([]*model.HistoryTransaction, error) {
-	listData, err := t.repo.FindByCustomerID(ctx, customerId)
+func (t *HistoryTransactionUseCaseImpl) GetListHistoryTransaction(ctx context.Context, customerID int64) ([]*model.HistoryTransaction, error) {
+	listData, err := t.repo.FindByCustomerID(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
@@ -34,8 +34,8 @@ func (t *HistoryTransactionUseCaseImpl) GetListHistoryTransaction(ctx context.Co
 
 	for _, d := range listData {
 		data := &model.HistoryTransaction{
-			TransactionId: fmt.Sprintf("%d", d.TransactionId),
-			CustomerId:    fmt.Sprintf("%d", d.CustomerId),
+			TransactionID: fmt.Sprintf("%d", d.TransactionID),
+			CustomerID:    fmt.Sprintf("%d", d.CustomerID),
 			ProductName:   d.ProductName,
 			Price:         fmt.Sprintf("%.2f", d.Price),
 			Quantity:      fmt.Sprintf("%d", d.Quantity),

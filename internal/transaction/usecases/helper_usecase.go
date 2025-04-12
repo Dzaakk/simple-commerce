@@ -10,16 +10,16 @@ import (
 	"time"
 )
 
-func insertToTableTransactionWithTx(ctx context.Context, tx *sql.Tx, t *TransactionUseCaseImpl, customerId, cartId, totalTransaction int) (*string, error) {
+func insertToTableTransactionWithTx(ctx context.Context, tx *sql.Tx, t *TransactionUseCaseImpl, customerID, cartID, totalTransaction int) (*string, error) {
 	newTransaction := model.TTransaction{
-		CustomerId:      customerId,
-		CartId:          cartId,
+		CustomerID:      customerID,
+		CartID:          cartID,
 		TotalAmount:     float32(totalTransaction),
 		TransactionDate: time.Now(),
 		Status:          "Success",
 		Base: template.Base{
 			Created:   time.Now(),
-			CreatedBy: fmt.Sprintf("%d", customerId),
+			CreatedBy: fmt.Sprintf("%d", customerID),
 		},
 	}
 
