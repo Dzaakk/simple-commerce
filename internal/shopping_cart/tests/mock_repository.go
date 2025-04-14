@@ -19,7 +19,7 @@ func (m *MockShoppingCartRepository) Create(ctx context.Context, shoppingCart *m
 	return args.Get(0).(*model.TShoppingCart), args.Error(1)
 }
 
-func (m *MockShoppingCartRepository) FindByID(ctx context.Context, id int) (*model.TShoppingCart, error) {
+func (m *MockShoppingCartRepository) FindByCartID(ctx context.Context, id int) (*model.TShoppingCart, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

@@ -39,8 +39,8 @@ func TestCreateShoppingCart(t *testing.T) {
 func TestFindByID(t *testing.T) {
 	testShoppingCartID = 1
 
-	mockRepo.On("FindByID", ctx, testShoppingCartID).Return(testShoppingCart, nil)
-	foundShopingCart, err := mockRepo.FindByID(ctx, testShoppingCartID)
+	mockRepo.On("FindByCartID", ctx, testShoppingCartID).Return(testShoppingCart, nil)
+	foundShopingCart, err := mockRepo.FindByCartID(ctx, testShoppingCartID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, foundShopingCart)
