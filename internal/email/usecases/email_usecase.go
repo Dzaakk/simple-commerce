@@ -1,5 +1,5 @@
 package usecases
 
 type EmailUseCase interface {
-	SendEmailVerification()
+	SendEmailVerification(recipientName, recipientEmail, activationCode string) error
 }
