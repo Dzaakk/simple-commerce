@@ -53,7 +53,7 @@ func NewCustomerRepository(db *sql.DB) CustomerRepository {
 		stmt, err := db.Prepare(query)
 		if err != nil {
 			repo.Close()
-			log.Printf("failed to prepare %s statement: %w", key, err)
+			log.Printf("failed to prepare %s statement: %v", key, err)
 			return nil
 		}
 		repo.stmts[key] = stmt
