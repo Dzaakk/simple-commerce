@@ -1,4 +1,4 @@
-package models
+package model
 
 type UpdateReq struct {
 	CustomerID  string `json:"customer_id" validate:"required,min=1"`

@@ -1,10 +1,10 @@
-package handlers
+package handler
 
 import (
-	model "Dzaakk/simple-commerce/internal/customer/models"
-	usecase "Dzaakk/simple-commerce/internal/customer/usecases"
+	"Dzaakk/simple-commerce/internal/customer/model"
+	"Dzaakk/simple-commerce/internal/customer/usecase"
 	"Dzaakk/simple-commerce/package/response"
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/package/template"
 	"fmt"
 	"net/http"
 	"strconv"

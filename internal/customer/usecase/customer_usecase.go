@@ -1,7 +1,7 @@
-package usecases
+package usecase
 
 import (
-	model "Dzaakk/simple-commerce/internal/customer/models"
+	"Dzaakk/simple-commerce/internal/customer/model"
 	"context"
 )
 
