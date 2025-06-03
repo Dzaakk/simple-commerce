@@ -1,9 +1,9 @@
-package usecases
+package usecase
 
 import (
-	modelProduct "Dzaakk/simple-commerce/internal/product/models"
-	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	template "Dzaakk/simple-commerce/package/templates"
+	modelProduct "Dzaakk/simple-commerce/internal/product/model"
+	"Dzaakk/simple-commerce/internal/shopping_cart/model"
+	"Dzaakk/simple-commerce/package/template"
 	"context"
 	"database/sql"
 	"errors"

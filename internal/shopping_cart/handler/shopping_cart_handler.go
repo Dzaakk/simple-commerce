@@ -1,10 +1,10 @@
 package handler
 
 import (
-	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	usecase "Dzaakk/simple-commerce/internal/shopping_cart/usecases"
+	"Dzaakk/simple-commerce/internal/shopping_cart/model"
+	usecase "Dzaakk/simple-commerce/internal/shopping_cart/usecase"
 	"Dzaakk/simple-commerce/package/response"
-	template "Dzaakk/simple-commerce/package/templates"
+	template "Dzaakk/simple-commerce/package/template"
 	"net/http"
 	"strconv"
 

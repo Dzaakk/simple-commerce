@@ -1,10 +1,10 @@
-package usecases
+package usecase
 
 import (
-	repoProduct "Dzaakk/simple-commerce/internal/product/repositories"
-	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	repo "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
-	template "Dzaakk/simple-commerce/package/templates"
+	repoProduct "Dzaakk/simple-commerce/internal/product/repository"
+	"Dzaakk/simple-commerce/internal/shopping_cart/model"
+	repo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	"Dzaakk/simple-commerce/package/template"
 	"context"
 	"database/sql"
 	"errors"

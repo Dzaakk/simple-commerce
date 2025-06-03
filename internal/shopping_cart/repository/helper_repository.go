@@ -1,9 +1,9 @@
-package repositories
+package repository
 
 import (
-	model "Dzaakk/simple-commerce/internal/shopping_cart/models"
+	"Dzaakk/simple-commerce/internal/shopping_cart/model"
 	response "Dzaakk/simple-commerce/package/response"
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
 )

@@ -1,4 +1,4 @@
-package models
+package model
 
 // request
 type ShoppingCartReq struct {
