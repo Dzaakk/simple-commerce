@@ -1,7 +1,7 @@
-package repositories
+package repository
 
 import (
-	model "Dzaakk/simple-commerce/internal/transaction/models"
+	"Dzaakk/simple-commerce/internal/transaction/model"
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"

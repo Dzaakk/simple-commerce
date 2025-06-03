@@ -1,8 +1,8 @@
-package repositories
+package repository
 
 import (
-	modelItem "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	model "Dzaakk/simple-commerce/internal/transaction/models"
+	modelItem "Dzaakk/simple-commerce/internal/shopping_cart/model"
+	"Dzaakk/simple-commerce/internal/transaction/model"
 	"context"
 	"database/sql"
 )

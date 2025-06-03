@@ -1,9 +1,8 @@
-package usecases
+package usecase
 
 import (
-	"Dzaakk/simple-commerce/internal/transaction/models"
-	model "Dzaakk/simple-commerce/internal/transaction/models"
-	repo "Dzaakk/simple-commerce/internal/transaction/repositories"
+	"Dzaakk/simple-commerce/internal/transaction/model"
+	repo "Dzaakk/simple-commerce/internal/transaction/repository"
 	"context"
 	"fmt"
 )
@@ -16,7 +15,7 @@ func NewHistoryTransactionUseCase(repo repo.HistoryTransactionRepository) Histor
 	return &HistoryTransactionUseCaseImpl{repo}
 }
 
-func (t *HistoryTransactionUseCaseImpl) CreateHistoryTransaction(ctx context.Context, transactionItem models.THistoryTransaction) {
+func (t *HistoryTransactionUseCaseImpl) CreateHistoryTransaction(ctx context.Context, transactionItem model.THistoryTransaction) {
 	panic("unimplemented")
 }
 

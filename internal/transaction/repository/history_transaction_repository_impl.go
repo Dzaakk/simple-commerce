@@ -1,9 +1,9 @@
-package repositories
+package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/shopping_cart/models"
-	model "Dzaakk/simple-commerce/internal/transaction/models"
-	template "Dzaakk/simple-commerce/package/templates"
+	cartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
+	"Dzaakk/simple-commerce/internal/transaction/model"
+	"Dzaakk/simple-commerce/package/template"
 	"context"
 	"database/sql"
 	"errors"
@@ -21,7 +21,7 @@ func NewHistoryTransactionRepository(db *sql.DB) HistoryTransactionRepository {
 	}
 }
 
-func (repo *HistoryTransactionRepositoryImpl) Create(ctx context.Context, data []*models.TCartItemDetail, customerID int64) error {
+func (repo *HistoryTransactionRepositoryImpl) Create(ctx context.Context, data []*cartModel.TCartItemDetail, customerID int64) error {
 	if len(data) == 0 {
 		return nil
 	}
@@ -74,7 +74,7 @@ func (repo *HistoryTransactionRepositoryImpl) FindByCustomerID(ctx context.Conte
 	return listHistoryTransaction, nil
 }
 
-func generateInsertStatements(listData []*models.TCartItemDetail, customerID int64) []string {
+func generateInsertStatements(listData []*cartModel.TCartItemDetail, customerID int64) []string {
 	var sqlInserts []string
 	columns := "customer_id, productName, price, quantity, status"
 	for _, data := range listData {

@@ -1,6 +1,6 @@
-package models
+package model
 
-import template "Dzaakk/simple-commerce/package/templates"
+import "Dzaakk/simple-commerce/package/template"
 
 type THistoryTransaction struct {
 	TransactionID int64   `json:"transaction_id"`

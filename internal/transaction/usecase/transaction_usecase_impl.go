@@ -1,11 +1,11 @@
-package usecases
+package usecase
 
 import (
-	customer "Dzaakk/simple-commerce/internal/customer/repositories"
-	product "Dzaakk/simple-commerce/internal/product/repositories"
-	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
-	model "Dzaakk/simple-commerce/internal/transaction/models"
-	repo "Dzaakk/simple-commerce/internal/transaction/repositories"
+	customer "Dzaakk/simple-commerce/internal/customer/repository"
+	product "Dzaakk/simple-commerce/internal/product/repository"
+	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	"Dzaakk/simple-commerce/internal/transaction/model"
+	repo "Dzaakk/simple-commerce/internal/transaction/repository"
 	"context"
 	"database/sql"
 	"errors"

@@ -1,10 +1,10 @@
 package handler
 
 import (
-	model "Dzaakk/simple-commerce/internal/transaction/models"
-	usecase "Dzaakk/simple-commerce/internal/transaction/usecases"
+	"Dzaakk/simple-commerce/internal/transaction/model"
+	"Dzaakk/simple-commerce/internal/transaction/usecase"
 	"Dzaakk/simple-commerce/package/response"
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/package/template"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

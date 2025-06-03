@@ -1,4 +1,4 @@
-package models
+package model
 
 type TransactionReq struct {
 	CustomerID string `json:"customerId" validate:"required,min=1,numeric"`

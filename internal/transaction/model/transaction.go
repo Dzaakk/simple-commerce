@@ -1,7 +1,7 @@
-package models
+package model
 
 import (
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/package/template"
 	"time"
 )
 
