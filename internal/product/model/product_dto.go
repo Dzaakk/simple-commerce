@@ -1,4 +1,4 @@
-package models
+package model
 
 type ProductRes struct {
 	ProductID   string `json:"product_id,omitempty"`

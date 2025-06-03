@@ -1,7 +1,7 @@
-package handlers
+package handler
 
 import (
-	usecase "Dzaakk/simple-commerce/internal/product/usecases"
+	"Dzaakk/simple-commerce/internal/product/usecase"
 	"Dzaakk/simple-commerce/package/response"
 	"net/http"
 	"strconv"

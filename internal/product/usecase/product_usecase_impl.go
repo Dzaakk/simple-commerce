@@ -1,8 +1,8 @@
-package usecases
+package usecase
 
 import (
-	model "Dzaakk/simple-commerce/internal/product/models"
-	repo "Dzaakk/simple-commerce/internal/product/repositories"
+	"Dzaakk/simple-commerce/internal/product/model"
+	repo "Dzaakk/simple-commerce/internal/product/repository"
 	"context"
 	"fmt"
 	"strconv"
