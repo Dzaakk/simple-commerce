@@ -1,9 +1,9 @@
-package usecases
+package usecase
 
 import (
-	model "Dzaakk/simple-commerce/internal/seller/models"
-	repo "Dzaakk/simple-commerce/internal/seller/repositories"
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/internal/seller/model"
+	repo "Dzaakk/simple-commerce/internal/seller/repository"
+	"Dzaakk/simple-commerce/package/template"
 	"context"
 	"fmt"
 	"strconv"

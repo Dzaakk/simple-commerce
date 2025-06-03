@@ -1,4 +1,4 @@
-package models
+package model
 
 type ReqCreate struct {
 	Username string `json:"username"`

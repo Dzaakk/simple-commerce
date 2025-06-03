@@ -1,6 +1,6 @@
-package models
+package model
 
-import "Dzaakk/simple-commerce/package/templates"
+import "Dzaakk/simple-commerce/package/template"
 
 type TSeller struct {
 	Id       int64   `json:"id"`
@@ -9,5 +9,5 @@ type TSeller struct {
 	Password string  `json:"password"`
 	Balance  float64 `json:"balance"`
 	Status   string  `json:"status"`
-	templates.Base
+	template.Base
 }

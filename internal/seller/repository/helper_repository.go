@@ -1,8 +1,8 @@
-package repositories
+package repository
 
 import (
-	model "Dzaakk/simple-commerce/internal/seller/models"
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/internal/seller/model"
+	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
 	"fmt"

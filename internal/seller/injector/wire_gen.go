@@ -7,19 +7,19 @@
 package injector
 
 import (
-	"Dzaakk/simple-commerce/internal/seller/handlers"
-	"Dzaakk/simple-commerce/internal/seller/repositories"
-	"Dzaakk/simple-commerce/internal/seller/routes"
-	"Dzaakk/simple-commerce/internal/seller/usecases"
+	"Dzaakk/simple-commerce/internal/seller/handler"
+	"Dzaakk/simple-commerce/internal/seller/repository"
+	"Dzaakk/simple-commerce/internal/seller/route"
+	"Dzaakk/simple-commerce/internal/seller/usecase"
 	"database/sql"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *routes.SellerRoutes {
-	sellerRepository := repositories.NewSellerRepository(db)
-	sellerUseCase := usecases.NewSellerUseCase(sellerRepository)
-	sellerHandler := handlers.NewSellerHandler(sellerUseCase)
-	sellerRoutes := routes.NewSellerRoutes(sellerHandler)
+func InitializedService(db *sql.DB) *route.SellerRoutes {
+	sellerRepository := repository.NewSellerRepository(db)
+	sellerUseCase := usecase.NewSellerUseCase(sellerRepository)
+	sellerHandler := handler.NewSellerHandler(sellerUseCase)
+	sellerRoutes := route.NewSellerRoutes(sellerHandler)
 	return sellerRoutes
 }

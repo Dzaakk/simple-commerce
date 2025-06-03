@@ -1,11 +1,10 @@
-package repositories
+package repository
 
 import (
-	model "Dzaakk/simple-commerce/internal/seller/models"
-	response "Dzaakk/simple-commerce/package/response"
+	"Dzaakk/simple-commerce/internal/seller/model"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
 
-	// template "Dzaakk/simple-commerce/package/templates"
 	"database/sql"
 	"errors"
 	"time"
