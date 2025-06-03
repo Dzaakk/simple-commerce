@@ -2,7 +2,7 @@ package repository
 
 import (
 	"Dzaakk/simple-commerce/internal/product/model"
-	"Dzaakk/simple-commerce/internal/shopping_cart/models"
+	cartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -171,7 +171,7 @@ func (repo *ProductRepositoryImpl) FindByProductName(ctx context.Context, produc
 	return product, nil
 }
 
-func (repo *ProductRepositoryImpl) UpdateStock(ctx context.Context, listData []*models.TCartItemDetail, name string) error {
+func (repo *ProductRepositoryImpl) UpdateStock(ctx context.Context, listData []*cartModel.TCartItemDetail, name string) error {
 	query, args := generateMultipleStockUpdateQuery(listData)
 	_, err := repo.DB.Exec(query, args...)
 	if err != nil {
@@ -180,7 +180,7 @@ func (repo *ProductRepositoryImpl) UpdateStock(ctx context.Context, listData []*
 	return nil
 }
 
-func (repo *ProductRepositoryImpl) UpdateStockWithTx(ctx context.Context, tx *sql.Tx, listItem []*models.TCartItemDetail) ([]*int, error) {
+func (repo *ProductRepositoryImpl) UpdateStockWithTx(ctx context.Context, tx *sql.Tx, listItem []*cartModel.TCartItemDetail) ([]*int, error) {
 	listEmptyProductID, err := verifyStockAvailability(tx, listItem)
 	if err != nil {
 		return nil, err

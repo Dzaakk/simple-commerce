@@ -2,7 +2,7 @@ package repository
 
 import (
 	"Dzaakk/simple-commerce/internal/product/model"
-	"Dzaakk/simple-commerce/internal/shopping_cart/models"
+	cartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
 	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func verifyStockAvailability(tx *sql.Tx, listItem []*models.TCartItemDetail) ([]*int, error) {
+func verifyStockAvailability(tx *sql.Tx, listItem []*cartModel.TCartItemDetail) ([]*int, error) {
 	var query strings.Builder
 	var args []interface{}
 	listEmptyProductId := []*int{}
@@ -57,7 +57,7 @@ func verifyStockAvailability(tx *sql.Tx, listItem []*models.TCartItemDetail) ([]
 	return listEmptyProductId, nil
 }
 
-func generateMultipleStockUpdateQuery(listData []*models.TCartItemDetail) (string, []interface{}) {
+func generateMultipleStockUpdateQuery(listData []*cartModel.TCartItemDetail) (string, []interface{}) {
 	var query strings.Builder
 	var args []interface{}
 	query.WriteString("UPDATE public.product SET stock = CASE id ")
