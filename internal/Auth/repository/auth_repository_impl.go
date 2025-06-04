@@ -1,8 +1,8 @@
-package repositories
+package repository
 
 import (
-	model "Dzaakk/simple-commerce/internal/auth/models"
-	response "Dzaakk/simple-commerce/package/response"
+	"Dzaakk/simple-commerce/internal/auth/model"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
 	"time"

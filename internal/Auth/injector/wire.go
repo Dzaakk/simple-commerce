@@ -4,32 +4,32 @@
 package injector
 
 import (
-	"Dzaakk/simple-commerce/internal/auth/handlers"
-	"Dzaakk/simple-commerce/internal/auth/repositories"
-	"Dzaakk/simple-commerce/internal/auth/routes"
-	"Dzaakk/simple-commerce/internal/auth/usecases"
-	customerRepo "Dzaakk/simple-commerce/internal/customer/repositories"
-	customerUsecase "Dzaakk/simple-commerce/internal/customer/usecases"
-	sellerRepo "Dzaakk/simple-commerce/internal/seller/repositories"
-	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecases"
-	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
+	"Dzaakk/simple-commerce/internal/auth/handler"
+	"Dzaakk/simple-commerce/internal/auth/repository"
+	"Dzaakk/simple-commerce/internal/auth/route"
+	"Dzaakk/simple-commerce/internal/auth/usecase"
+	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
+	customerUsecase "Dzaakk/simple-commerce/internal/customer/usecase"
+	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
+	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
+	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"database/sql"
 
 	"github.com/google/wire"
 )
 
-func InitializedService(db *sql.DB) *routes.AuthRoutes {
+func InitializedService(db *sql.DB) *route.AuthRoutes {
 	wire.Build(
-		repositories.NewAuthRepository,
+		repository.NewAuthRepository,
 		sellerRepo.NewSellerRepository,
 		customerRepo.NewCustomerRepository,
 		shoppingCartRepo.NewShoppingCartRepository,
-		usecases.NewAuthUseCase,
+		usecase.NewAuthUseCase,
 		customerUsecase.NewCustomerUseCase,
 		sellerUsecase.NewSellerUseCase,
-		handlers.NewAtuhHandler,
-		routes.NewAuthRoutes,
+		handler.NewAtuhHandler,
+		route.NewAuthRoutes,
 	)
 
-	return &routes.AuthRoutes{}
+	return &route.AuthRoutes{}
 }

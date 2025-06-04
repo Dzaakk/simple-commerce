@@ -1,15 +1,15 @@
-package usecases
+package usecase
 
 import (
-	model "Dzaakk/simple-commerce/internal/auth/models"
-	repo "Dzaakk/simple-commerce/internal/auth/repositories"
-	customerModel "Dzaakk/simple-commerce/internal/customer/models"
-	customerRepo "Dzaakk/simple-commerce/internal/customer/repositories"
-	sellerModel "Dzaakk/simple-commerce/internal/seller/models"
-	sellerRepo "Dzaakk/simple-commerce/internal/seller/repositories"
-	shoppingCartModel "Dzaakk/simple-commerce/internal/shopping_cart/models"
-	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/internal/auth/model"
+	repo "Dzaakk/simple-commerce/internal/auth/repository"
+	customerModel "Dzaakk/simple-commerce/internal/customer/model"
+	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
+	sellerModel "Dzaakk/simple-commerce/internal/seller/model"
+	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
+	shoppingCartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
+	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	"Dzaakk/simple-commerce/package/template"
 	"context"
 	"time"
 )

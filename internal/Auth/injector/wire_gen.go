@@ -7,29 +7,29 @@
 package injector
 
 import (
-	"Dzaakk/simple-commerce/internal/auth/handlers"
-	"Dzaakk/simple-commerce/internal/auth/repositories"
-	"Dzaakk/simple-commerce/internal/auth/routes"
-	"Dzaakk/simple-commerce/internal/auth/usecases"
-	repositories2 "Dzaakk/simple-commerce/internal/customer/repositories"
-	usecases2 "Dzaakk/simple-commerce/internal/customer/usecases"
-	repositories3 "Dzaakk/simple-commerce/internal/seller/repositories"
-	usecases3 "Dzaakk/simple-commerce/internal/seller/usecases"
-	repositories4 "Dzaakk/simple-commerce/internal/shopping_cart/repositories"
+	"Dzaakk/simple-commerce/internal/auth/handler"
+	"Dzaakk/simple-commerce/internal/auth/repository"
+	"Dzaakk/simple-commerce/internal/auth/route"
+	"Dzaakk/simple-commerce/internal/auth/usecase"
+	repository2 "Dzaakk/simple-commerce/internal/customer/repository"
+	usecase2 "Dzaakk/simple-commerce/internal/customer/usecase"
+	repository3 "Dzaakk/simple-commerce/internal/seller/repository"
+	usecase3 "Dzaakk/simple-commerce/internal/seller/usecase"
+	repository4 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"database/sql"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *routes.AuthRoutes {
-	authRepository := repositories.NewAuthRepository(db)
-	customerRepository := repositories2.NewCustomerRepository(db)
-	sellerRepository := repositories3.NewSellerRepository(db)
-	shoppingCartRepository := repositories4.NewShoppingCartRepository(db)
-	authUseCase := usecases.NewAuthUseCase(authRepository, customerRepository, sellerRepository, shoppingCartRepository)
-	customerUseCase := usecases2.NewCustomerUseCase(customerRepository)
-	sellerUseCase := usecases3.NewSellerUseCase(sellerRepository)
-	authHandler := handlers.NewAtuhHandler(authUseCase, customerUseCase, sellerUseCase)
-	authRoutes := routes.NewAuthRoutes(authHandler)
+func InitializedService(db *sql.DB) *route.AuthRoutes {
+	authRepository := repository.NewAuthRepository(db)
+	customerRepository := repository2.NewCustomerRepository(db)
+	sellerRepository := repository3.NewSellerRepository(db)
+	shoppingCartRepository := repository4.NewShoppingCartRepository(db)
+	authUseCase := usecase.NewAuthUseCase(authRepository, customerRepository, sellerRepository, shoppingCartRepository)
+	customerUseCase := usecase2.NewCustomerUseCase(customerRepository)
+	sellerUseCase := usecase3.NewSellerUseCase(sellerRepository)
+	authHandler := handler.NewAtuhHandler(authUseCase, customerUseCase, sellerUseCase)
+	authRoutes := route.NewAuthRoutes(authHandler)
 	return authRoutes
 }

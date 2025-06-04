@@ -1,7 +1,7 @@
-package usecases
+package usecase
 
 import (
-	model "Dzaakk/simple-commerce/internal/auth/models"
+	"Dzaakk/simple-commerce/internal/auth/model"
 	"context"
 )
 

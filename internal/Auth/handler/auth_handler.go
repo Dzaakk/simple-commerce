@@ -1,13 +1,13 @@
-package handlers
+package handler
 
 import (
-	model "Dzaakk/simple-commerce/internal/auth/models"
-	usecase "Dzaakk/simple-commerce/internal/auth/usecases"
-	custUsecase "Dzaakk/simple-commerce/internal/customer/usecases"
-	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecases"
+	"Dzaakk/simple-commerce/internal/auth/model"
+	"Dzaakk/simple-commerce/internal/auth/usecase"
+	custUsecase "Dzaakk/simple-commerce/internal/customer/usecase"
+	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
 	"Dzaakk/simple-commerce/package/auth"
 	"Dzaakk/simple-commerce/package/response"
-	template "Dzaakk/simple-commerce/package/templates"
+	"Dzaakk/simple-commerce/package/template"
 	"encoding/json"
 	"net/http"
 

@@ -1,7 +1,7 @@
-package repositories
+package repository
 
 import (
-	model "Dzaakk/simple-commerce/internal/auth/models"
+	"Dzaakk/simple-commerce/internal/auth/model"
 	"context"
 )
 
