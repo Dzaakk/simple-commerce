@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	model "Dzaakk/simple-commerce/internal/customer/models"
+	"Dzaakk/simple-commerce/internal/customer/model"
 	"Dzaakk/simple-commerce/package/response"
 
 	"github.com/gin-gonic/gin"
