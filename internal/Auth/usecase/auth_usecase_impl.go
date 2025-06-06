@@ -10,6 +10,7 @@ import (
 	shoppingCartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
 	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/package/template"
+	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"time"
 )
@@ -27,7 +28,7 @@ func NewAuthUseCase(repo repo.AuthRepository, customerRepo customerRepo.Customer
 
 func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.CustomerRegistration) (*int64, error) {
 
-	hashedPassword, err := template.HashPassword(data.Password)
+	hashedPassword, err := util.HashPassword(data.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 }
 
 func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.SellerRegistration) (*int64, error) {
-	hashedPassword, err := template.HashPassword(data.Password)
+	hashedPassword, err := util.HashPassword(data.Password)
 	if err != nil {
 		return nil, err
 	}

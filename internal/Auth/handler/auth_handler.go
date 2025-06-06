@@ -7,7 +7,7 @@ import (
 	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
 	"Dzaakk/simple-commerce/package/auth"
 	"Dzaakk/simple-commerce/package/response"
-	"Dzaakk/simple-commerce/package/template"
+	"Dzaakk/simple-commerce/package/util"
 	"encoding/json"
 	"net/http"
 
@@ -58,7 +58,7 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context, r *redis.Client) {
 		return
 	}
 
-	if !template.CheckPasswordHash(reqData.Password, data.Password) {
+	if !util.CheckPasswordHash(reqData.Password, data.Password) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
@@ -102,7 +102,7 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context, r *redis.Client) {
 		return
 	}
 
-	if !template.CheckPasswordHash(reqData.Password, data.Password) {
+	if !util.CheckPasswordHash(reqData.Password, data.Password) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
