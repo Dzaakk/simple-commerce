@@ -39,7 +39,7 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 		PhoneNumber: data.PhoneNumber,
 		Password:    string(hashedPassword),
 		Balance:     float64(10000000),
-		Status:      "A",
+		Status:      template.StatusActive,
 		Base: template.Base{
 			Created:   time.Now(),
 			CreatedBy: "system",
@@ -53,7 +53,7 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 
 	NewShoppingCart := shoppingCartModel.TShoppingCart{
 		CustomerID: int(customerID),
-		Status:     "A",
+		Status:     template.StatusActive,
 		Base: template.Base{
 			Created:   customer.Created,
 			CreatedBy: "System",
@@ -94,7 +94,7 @@ func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.Sel
 		Email:    data.Email,
 		Password: string(hashedPassword),
 		Balance:  float64(0),
-		Status:   "A",
+		Status:   template.StatusActive,
 		Base: template.Base{
 			Created:   time.Now(),
 			CreatedBy: "system",
