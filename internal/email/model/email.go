@@ -1,4 +1,4 @@
-package models
+package model
 
 type EmailRequest struct {
 	Sender      Sender      `json:"sender"`
