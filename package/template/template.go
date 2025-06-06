@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+const (
+	StatusActive   = "A"
+	StatusInactive = "I"
+	StatusBlock    = "B"
+)
+
 type Base struct {
 	Created   time.Time      `json:"created,omitempty"`
 	CreatedBy string         `json:"createdBy,omitempty"`
