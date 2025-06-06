@@ -3,7 +3,7 @@ package usecase
 import (
 	"Dzaakk/simple-commerce/internal/customer/model"
 	repo "Dzaakk/simple-commerce/internal/customer/repository"
-	"Dzaakk/simple-commerce/package/template"
+	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"fmt"
 )
@@ -143,7 +143,7 @@ func (c *CustomerUseCaseImpl) Deactivate(ctx context.Context, customerID int64) 
 }
 
 func (c *CustomerUseCaseImpl) UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error) {
-	hashedPassword, err := template.HashPassword(newPassword)
+	hashedPassword, err := util.HashPassword(newPassword)
 	if err != nil {
 		return 0, err
 	}

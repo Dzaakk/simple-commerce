@@ -4,6 +4,7 @@ import (
 	"Dzaakk/simple-commerce/internal/seller/model"
 	repo "Dzaakk/simple-commerce/internal/seller/repository"
 	"Dzaakk/simple-commerce/package/template"
+	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"fmt"
 	"strconv"
@@ -19,7 +20,7 @@ func NewSellerUseCase(repo repo.SellerRepository) SellerUseCase {
 }
 
 func (s *SellerUseCaseImpl) Create(ctx context.Context, data model.ReqCreate) (int64, error) {
-	hashedPassword, err := template.HashPassword(data.Password)
+	hashedPassword, err := util.HashPassword(data.Password)
 	if err != nil {
 		return 0, err
 	}
@@ -133,7 +134,7 @@ func generateDataUpdate(existingData model.TSeller, newData model.ReqUpdate) mod
 }
 
 func (s *SellerUseCaseImpl) ChangePassword(ctx context.Context, sellerId int64, newPassword string) (int64, error) {
-	hashedPassword, err := template.HashPassword(newPassword)
+	hashedPassword, err := util.HashPassword(newPassword)
 	if err != nil {
 		return 0, err
 	}
