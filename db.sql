@@ -1,16 +1,24 @@
 CREATE TABLE public.customer (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    gender SMALLINT,
     password VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(100) NOT NULL,
-    balance NUMERIC(10,2),
-    status VARCHAR(1) NOT NULL, 
-    created TIMESTAMP NOT NULL,
-    created_by VARCHAR(100),
-    updated  TIMESTAMP,
-    updated_by VARCHAR(100)
+    phone_number VARCHAR(20) NOT NULL,
+    profile_picture TEXT,
+    date_of_birth DATE,
+    balance NUMERIC(10,2) DEFAULT 0,
+    last_login TIMESTAMP,        
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by INT NOT NULL DEFAULT 0, 
+    updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by INT               
+    -- email_verified BOOLEAN DEFAULT FALSE,
+    -- phone_verified BOOLEAN DEFAULT FALSE,
+    -- Optional future fields:
+    -- referral_code VARCHAR(50),
 );
+
 CREATE INDEX idx_customer_username ON public.customer (username);
 CREATE INDEX idx_customer_email ON public.customer (email);
 CREATE INDEX idx_customer_phone_number ON public.customer (phone_number);
