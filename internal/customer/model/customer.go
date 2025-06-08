@@ -6,14 +6,14 @@ import (
 )
 
 type TCustomers struct {
-	ID             int     `json:"id"`
-	Username       string  `json:"username"`
-	Email          string  `json:"email"`
-	PhoneNumber    string  `json:"phone_number"`
-	Password       string  `json:"password"`
-	Balance        float64 `json:"balance"`
-	Status         int     `json:"status"`
-	ProfilePicture string
+	ID             int          `json:"id"`
+	Username       string       `json:"username"`
+	Email          string       `json:"email"`
+	PhoneNumber    string       `json:"phone_number"`
+	Password       string       `json:"password"`
+	Balance        float64      `json:"balance"`
+	Status         int          `json:"status"`
+	ProfilePicture string       `json:"profile_picture"`
 	Gender         int          `json:"gender" validate:"number"`
 	DateOfBirth    sql.NullTime `json:"date_of_birth"`
 	LastLogin      sql.NullTime `json:"last_login"`
