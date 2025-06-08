@@ -11,10 +11,12 @@ type LoginReq struct {
 }
 
 type CustomerRegistration struct {
-	Username    string `json:"username" validate:"required"`
-	Email       string `json:"email" validate:"required,email"`
-	PhoneNumber string `json:"phone_number" validate:"required"`
-	Password    string `json:"password" validate:"required"`
+	Username    string       `json:"username" validate:"required"`
+	Email       string       `json:"email" validate:"required,email"`
+	PhoneNumber string       `json:"phone_number" validate:"required"`
+	Password    string       `json:"password" validate:"required"`
+	Gender      int          `json:"gender" validate:"number"`
+	DateOfBirth sql.NullTime `json:"date_of_birth"`
 }
 
 type SellerRegistration struct {
