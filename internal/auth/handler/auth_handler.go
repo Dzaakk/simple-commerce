@@ -43,7 +43,9 @@ func (h *AuthHandler) RegistrationCustomer(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, response.Success("Success Create User"))
 }
+func (h *AuthHandler) ActivationCustomer(ctx *gin.Context, r *redis.Client) {
 
+}
 func (h *AuthHandler) LoginCustomer(ctx *gin.Context, r *redis.Client) {
 	var reqData model.LoginReq
 
@@ -86,6 +88,9 @@ func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, response.Success("Success Create Seller"))
+}
+func (h *AuthHandler) ActivationSeller(ctx *gin.Context, r *redis.Client) {
+
 }
 
 func (h *AuthHandler) LoginSeller(ctx *gin.Context, r *redis.Client) {
