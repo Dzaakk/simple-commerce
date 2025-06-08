@@ -39,7 +39,7 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 		PhoneNumber: data.PhoneNumber,
 		Password:    string(hashedPassword),
 		Balance:     float64(10000000),
-		Status:      template.StatusActive,
+		Status:      1,
 		Base: template.Base{
 			Created:   time.Now(),
 			CreatedBy: "system",
