@@ -9,6 +9,7 @@ CREATE TABLE public.customer (
     date_of_birth DATE,
     balance NUMERIC(10,2) DEFAULT 0,
     last_login TIMESTAMP,        
+    status SMALLINT,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INT NOT NULL DEFAULT 0, 
     updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
