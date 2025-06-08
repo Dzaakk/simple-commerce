@@ -17,7 +17,7 @@ const (
 
 const (
 	queryFindByEmail              = `SELECT * FROM public.customer WHERE email = $1`
-	queryCreate                   = `INSERT INTO public.customer (username, email, password, phone_number, balance, status, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	queryCreate                   = `INSERT INTO public.customer (username, email, password, gender, phone_number, balance, status, date_of_birth, profile_picture, last_login, created, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`
 	queryFindByID                 = `SELECT * FROM public.customer WHERE id = $1`
 	queryUpdateBalance            = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
 	queryUpdatePassword           = `UPDATE public.customer SET password=$1, updated_by=$2, updated=now() WHERE id=$2`
@@ -87,16 +87,12 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 	defer cancel()
 
 	result, err := repo.DB.ExecContext(
-		ctx,
-		queryCreate,
-		data.Username,
-		data.Email,
-		data.Password,
-		data.PhoneNumber,
-		data.Balance,
-		data.Status,
-		data.Base.Created,
-		data.Base.CreatedBy)
+		ctx, queryCreate,
+		data.Username, data.Email, data.Password,
+		data.Gender, data.PhoneNumber, data.Balance,
+		data.Status, data.DateOfBirth, data.ProfilePicture,
+		data.LastLogin, data.Base.Created, data.Base.CreatedBy,
+	)
 	if err != nil {
 		return 0, response.ExecError("create customer", err)
 	}
