@@ -12,6 +12,7 @@ import (
 	"Dzaakk/simple-commerce/package/template"
 	"Dzaakk/simple-commerce/package/util"
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -34,12 +35,16 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 	}
 
 	customer := customerModel.TCustomers{
-		Username:    data.Username,
-		Email:       data.Email,
-		PhoneNumber: data.PhoneNumber,
-		Password:    string(hashedPassword),
-		Balance:     float64(10000000),
-		Status:      1,
+		Username:       data.Username,
+		Email:          data.Email,
+		PhoneNumber:    data.PhoneNumber,
+		Password:       string(hashedPassword),
+		Balance:        float64(10000000),
+		Status:         1,
+		Gender:         data.Gender,
+		DateOfBirth:    data.DateOfBirth,
+		LastLogin:      sql.NullTime{Time: time.Now(), Valid: true},
+		ProfilePicture: "",
 		Base: template.Base{
 			Created:   time.Now(),
 			CreatedBy: "system",
