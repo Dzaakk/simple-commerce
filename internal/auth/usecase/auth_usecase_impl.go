@@ -7,7 +7,6 @@ import (
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
 	sellerModel "Dzaakk/simple-commerce/internal/seller/model"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
-	shoppingCartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
 	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/package/template"
 	"Dzaakk/simple-commerce/package/util"
@@ -18,13 +17,14 @@ import (
 
 type AuthUseCaseImpl struct {
 	Repo             repo.AuthRepository
+	Cache            repo.AuthCache
 	CustomerRepo     customerRepo.CustomerRepository
 	SellerRepo       sellerRepo.SellerRepository
 	ShoppingCartRepo shoppingCartRepo.ShoppingCartRepository
 }
 
-func NewAuthUseCase(repo repo.AuthRepository, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
-	return &AuthUseCaseImpl{repo, customerRepo, sellerRepo, shoppingCartRepo}
+func NewAuthUseCase(repo repo.AuthRepository, cache repo.AuthCache, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
+	return &AuthUseCaseImpl{repo, cache, customerRepo, sellerRepo, shoppingCartRepo}
 }
 
 func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.CustomerRegistration) (*int64, error) {
@@ -56,33 +56,25 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 		return nil, err
 	}
 
-	NewShoppingCart := shoppingCartModel.TShoppingCart{
-		CustomerID: int(customerID),
-		Status:     template.StatusActive,
-		Base: template.Base{
-			Created:   customer.Created,
-			CreatedBy: "System",
-		},
-	}
+	// NewShoppingCart := shoppingCartModel.TShoppingCart{
+	// 	CustomerID: int(customerID),
+	// 	Status:     template.StatusActive,
+	// 	Base: template.Base{
+	// 		Created:   customer.Created,
+	// 		CreatedBy: "System",
+	// 	},
+	// }
 
-	_, err = a.ShoppingCartRepo.Create(ctx, NewShoppingCart)
-	if err != nil {
-		return nil, err
-	}
+	// _, err = a.ShoppingCartRepo.Create(ctx, NewShoppingCart)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	codeActivation := GenerateActivationCode()
-	newActivationCode := model.TCustomerActivationCode{
-		CustomerID:     customerID,
-		CodeActivation: codeActivation,
-		IsUsed:         false,
-		CreatedAt:      time.Now(),
-	}
-
-	err = a.Repo.InsertCustomerCodeActivation(ctx, newActivationCode)
+	err = a.Cache.SetActivationCustomer(ctx, data.Email, codeActivation)
 	if err != nil {
 		return nil, err
 	}
-
 	//send email
 
 	return &customerID, nil
