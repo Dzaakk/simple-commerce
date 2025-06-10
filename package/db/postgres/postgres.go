@@ -1,4 +1,4 @@
-package db
+package postgres
 
 import (
 	"database/sql"
@@ -19,7 +19,7 @@ var (
 	err          error
 )
 
-func Postgres() (*sql.DB, error) {
+func Init() (*sql.DB, error) {
 	postgresOnce.Do(func() {
 		err = godotenv.Load()
 		if err != nil {
@@ -35,12 +35,17 @@ func Postgres() (*sql.DB, error) {
 		connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
 		for range 5 {
-			db, err := sql.Open("postgres", connectionString)
-			if err == nil && db.Ping() == nil {
+			postgres, err = sql.Open("postgres", connectionString)
+			if err == nil && postgres.Ping() == nil {
 				log.Print("Success connect to Postgres")
-				postgres = db
 				return
 			}
+
+			if postgres != nil {
+				postgres.Close()
+				postgres = nil
+			}
+
 			log.Print("Postgres is not ready, retrying...")
 			time.Sleep(5 * time.Second)
 		}

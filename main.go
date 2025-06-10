@@ -1,7 +1,8 @@
 package main
 
 import (
-	db "Dzaakk/simple-commerce/package/db"
+	postgres "Dzaakk/simple-commerce/package/db/postgres"
+	redis "Dzaakk/simple-commerce/package/db/redis"
 	"log"
 
 	auth "Dzaakk/simple-commerce/internal/auth/injector"
@@ -15,11 +16,15 @@ import (
 )
 
 func main() {
-	postgres, err := db.Postgres()
+	postgres, err := postgres.Init()
 	if err != nil {
 		log.Fatalf("error connect to database : %v", err)
 	}
-	redis := db.Redis()
+	redis, err := redis.Init()
+	if err != nil {
+		log.Fatalf("error connect to redis : %v", err)
+	}
+
 	r := gin.Default()
 
 	auth.InitializedService(postgres).Route(&r.RouterGroup, redis)
