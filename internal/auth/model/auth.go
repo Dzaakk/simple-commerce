@@ -9,6 +9,9 @@ type LoginReq struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
+type CustomerToken struct {
+	Email string `json:"email"`
+}
 
 type CustomerRegistration struct {
 	Username    string       `json:"username" validate:"required"`
