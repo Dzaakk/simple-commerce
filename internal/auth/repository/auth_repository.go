@@ -11,3 +11,8 @@ type AuthRepository interface {
 	InsertSellerCodeActivation(c context.Context, data model.TSellerActivationCode) error
 	FindCodeBySellerID(c context.Context, sellerID int64) (*model.TSellerActivationCode, error)
 }
+
+type AuthCacheRepository interface {
+	SetActivationCustomer(c context.Context, email string, activationCode string) error
+	GetActivationCustomer(c context.Context, email string) (string, error)
+}
