@@ -30,13 +30,13 @@ func NewAtuhHandler(usecase usecase.AuthUseCase, custUsecase custUsecase.Custome
 }
 
 func (h *AuthHandler) RegistrationCustomer(ctx *gin.Context) {
-	var data model.CustomerRegistration
+	var data model.CustomerRegistrationReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
-	_, err := h.Usecase.CustomerRegistration(ctx, data)
+	err := h.Usecase.CustomerRegistration(ctx, data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -76,7 +76,7 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context, r *redis.Client) {
 }
 
 func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {
-	var data model.SellerRegistration
+	var data model.SellerRegistrationReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
