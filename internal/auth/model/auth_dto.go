@@ -24,5 +24,5 @@ type SellerRegistrationReq struct {
 
 type CustomerActivationReq struct {
 	Email          string `json:"email" validate:"required,email"`
-	ActivationCode int    `json:"activation_code"`
+	ActivationCode string `json:"activation_code"`
 }
