@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"Dzaakk/simple-commerce/internal/auth/model"
 	"context"
 	"encoding/json"
 	"os"
@@ -19,10 +20,12 @@ func NewAuthCacheRepository(client *redis.Client) AuthCacheRepository {
 
 const (
 	CodeActivationExpired = time.Minute * 15
+	TokenExpired          = time.Minute * 30
 )
 
 var (
 	PrefixCodeActivation = os.Getenv("REDIS_PREFIX_CODE")
+	PrefixCustomerToken  = os.Getenv("REDIS_PREFIX_CUSTOMER")
 )
 
 func (cache *AuthCache) SetActivationCustomer(c context.Context, email string, activationCode string) error {
@@ -54,4 +57,35 @@ func (cache *AuthCache) GetActivationCustomer(c context.Context, email string) (
 	}
 
 	return activationCode, nil
+}
+
+func (cache *AuthCache) SetTokenCustomer(c context.Context, data model.CustomerToken) error {
+	key := data.Email + PrefixCustomerToken
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return cache.Client.Set(c, key, jsonData, TokenExpired).Err()
+}
+
+func (cache *AuthCache) GetTokenCustomer(c context.Context, email string) (*model.CustomerToken, error) {
+	key := email + PrefixCustomerToken
+
+	val, err := cache.Client.Get(c, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var token model.CustomerToken
+	err = json.Unmarshal([]byte(val), &token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &token, nil
 }
