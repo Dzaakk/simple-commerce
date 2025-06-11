@@ -10,4 +10,6 @@ type AuthCacheRepository interface {
 	GetActivationCustomer(c context.Context, email string) (string, error)
 	SetTokenCustomer(c context.Context, data model.CustomerToken) error
 	GetTokenCustomer(c context.Context, email string) (*model.CustomerToken, error)
+	SetCustomerRegistration(c context.Context, data model.CustomerRegistrationReq) error
+	GetCustomerRegistration(c context.Context, email string) (*model.CustomerRegistrationReq, error)
 }

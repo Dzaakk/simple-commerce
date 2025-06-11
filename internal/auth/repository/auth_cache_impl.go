@@ -19,13 +19,14 @@ func NewAuthCacheRepository(client *redis.Client) AuthCacheRepository {
 }
 
 const (
-	CodeActivationExpired = time.Minute * 15
-	TokenExpired          = time.Minute * 30
+	ActivationExpired = time.Minute * 15
+	TokenExpired      = time.Minute * 30
 )
 
 var (
-	PrefixCodeActivation = os.Getenv("REDIS_PREFIX_CODE")
-	PrefixCustomerToken  = os.Getenv("REDIS_PREFIX_CUSTOMER")
+	PrefixCodeActivation       = os.Getenv("REDIS_PREFIX_CODE")
+	PrefixCustomerToken        = os.Getenv("REDIS_PREFIX_CUSTOMER")
+	PrefixCustomerRegistration = os.Getenv("REDIS_PREFIX_REGISTRATION_CUSTOMER")
 )
 
 func (cache *AuthCache) SetActivationCustomer(c context.Context, email string, activationCode string) error {
@@ -36,7 +37,7 @@ func (cache *AuthCache) SetActivationCustomer(c context.Context, email string, a
 		return err
 	}
 
-	return cache.Client.Set(c, key, jsonData, CodeActivationExpired).Err()
+	return cache.Client.Set(c, key, jsonData, ActivationExpired).Err()
 }
 
 func (cache *AuthCache) GetActivationCustomer(c context.Context, email string) (string, error) {
@@ -88,4 +89,35 @@ func (cache *AuthCache) GetTokenCustomer(c context.Context, email string) (*mode
 	}
 
 	return &token, nil
+}
+
+func (cache *AuthCache) SetCustomerRegistration(c context.Context, data model.CustomerRegistrationReq) error {
+	key := data.Email + PrefixCustomerRegistration
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return cache.Client.Set(c, key, jsonData, ActivationExpired).Err()
+}
+
+func (cache *AuthCache) GetCustomerRegistration(c context.Context, email string) (*model.CustomerRegistrationReq, error) {
+	key := email + PrefixCustomerRegistration
+
+	val, err := cache.Client.Get(c, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var data model.CustomerRegistrationReq
+	err = json.Unmarshal([]byte(val), &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &data, nil
 }
