@@ -7,31 +7,63 @@ import (
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
 	sellerModel "Dzaakk/simple-commerce/internal/seller/model"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
+	shoppingCartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
 	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/package/template"
 	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 )
 
 type AuthUseCaseImpl struct {
-	Repo             repo.AuthRepository
 	Cache            repo.AuthCache
 	CustomerRepo     customerRepo.CustomerRepository
 	SellerRepo       sellerRepo.SellerRepository
 	ShoppingCartRepo shoppingCartRepo.ShoppingCartRepository
 }
 
-func NewAuthUseCase(repo repo.AuthRepository, cache repo.AuthCache, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
-	return &AuthUseCaseImpl{repo, cache, customerRepo, sellerRepo, shoppingCartRepo}
+func NewAuthUseCase(cache repo.AuthCache, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
+	return &AuthUseCaseImpl{cache, customerRepo, sellerRepo, shoppingCartRepo}
 }
 
-func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.CustomerRegistration) (*int64, error) {
+func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.CustomerRegistrationReq) error {
+
+	codeActivation := GenerateActivationCode()
+	err := a.Cache.SetActivationCustomer(ctx, data.Email, codeActivation)
+	if err != nil {
+		return err
+	}
+
+	err = a.Cache.SetCustomerRegistration(ctx, data)
+	if err != nil {
+		return err
+	}
+
+	//send email
+
+	return nil
+}
+
+func (a *AuthUseCaseImpl) CustomerActivation(ctx context.Context, req model.CustomerActivationReq) error {
+	code, err := a.Cache.GetActivationCustomer(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+
+	if code != req.ActivationCode {
+		return errors.New("invalid activation code")
+	}
+
+	data, err := a.Cache.GetCustomerRegistration(ctx, req.Email)
+	if err != nil {
+		return err
+	}
 
 	hashedPassword, err := util.HashPassword(data.Password)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	customer := customerModel.TCustomers{
@@ -50,37 +82,34 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 			CreatedBy: "system",
 		},
 	}
-
 	customerID, err := a.CustomerRepo.Create(ctx, customer)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// NewShoppingCart := shoppingCartModel.TShoppingCart{
-	// 	CustomerID: int(customerID),
-	// 	Status:     template.StatusActive,
-	// 	Base: template.Base{
-	// 		Created:   customer.Created,
-	// 		CreatedBy: "System",
-	// 	},
-	// }
+	NewShoppingCart := shoppingCartModel.TShoppingCart{
+		CustomerID: int(customerID),
+		Status:     template.StatusActive,
+		Base: template.Base{
+			Created:   customer.Created,
+			CreatedBy: "System",
+		},
+	}
 
-	// _, err = a.ShoppingCartRepo.Create(ctx, NewShoppingCart)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	codeActivation := GenerateActivationCode()
-	err = a.Cache.SetActivationCustomer(ctx, data.Email, codeActivation)
+	_, err = a.ShoppingCartRepo.Create(ctx, NewShoppingCart)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	//send email
 
-	return &customerID, nil
+	return nil
 }
 
-func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.SellerRegistration) (*int64, error) {
+// CustomerLogin implements AuthUseCase.
+func (a *AuthUseCaseImpl) CustomerLogin(ctx context.Context, data model.LoginReq) error {
+	panic("unimplemented")
+}
+
+func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.SellerRegistrationReq) (*int64, error) {
 	hashedPassword, err := util.HashPassword(data.Password)
 	if err != nil {
 		return nil, err
@@ -103,19 +132,7 @@ func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.Sel
 		return nil, err
 	}
 
-	codeActivation := GenerateActivationCode()
-	newActivationCode := model.TSellerActivationCode{
-		SellerID:       sellerID,
-		CodeActivation: codeActivation,
-		IsUsed:         false,
-		CreatedAt:      time.Now(),
-	}
-
-	err = a.Repo.InsertSellerCodeActivation(ctx, newActivationCode)
-	if err != nil {
-		return nil, err
-	}
-
+	// codeActivation := GenerateActivationCode()
 	//send email
 
 	return &sellerID, nil
