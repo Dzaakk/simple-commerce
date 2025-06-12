@@ -12,24 +12,23 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/route"
 	"Dzaakk/simple-commerce/internal/auth/usecase"
 	repository2 "Dzaakk/simple-commerce/internal/customer/repository"
-	usecase2 "Dzaakk/simple-commerce/internal/customer/usecase"
 	repository3 "Dzaakk/simple-commerce/internal/seller/repository"
-	usecase3 "Dzaakk/simple-commerce/internal/seller/usecase"
+	usecase2 "Dzaakk/simple-commerce/internal/seller/usecase"
 	repository4 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"database/sql"
+	"github.com/go-redis/redis/v8"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *route.AuthRoutes {
-	authRepository := repository.NewAuthRepository(db)
+func InitializedService(db *sql.DB, redis2 *redis.Client) *route.AuthRoutes {
+	authCacheRepository := repository.NewAuthCacheRepository(redis2)
 	customerRepository := repository2.NewCustomerRepository(db)
 	sellerRepository := repository3.NewSellerRepository(db)
 	shoppingCartRepository := repository4.NewShoppingCartRepository(db)
-	authUseCase := usecase.NewAuthUseCase(authRepository, customerRepository, sellerRepository, shoppingCartRepository)
-	customerUseCase := usecase2.NewCustomerUseCase(customerRepository)
-	sellerUseCase := usecase3.NewSellerUseCase(sellerRepository)
-	authHandler := handler.NewAtuhHandler(authUseCase, customerUseCase, sellerUseCase)
+	authUseCase := usecase.NewAuthUseCase(authCacheRepository, customerRepository, sellerRepository, shoppingCartRepository)
+	sellerUseCase := usecase2.NewSellerUseCase(sellerRepository)
+	authHandler := handler.NewAtuhHandler(authUseCase, sellerUseCase)
 	authRoutes := route.NewAuthRoutes(authHandler)
 	return authRoutes
 }
