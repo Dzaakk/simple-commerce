@@ -27,7 +27,7 @@ func main() {
 
 	r := gin.Default()
 
-	auth.InitializedService(postgres).Route(&r.RouterGroup, redis)
+	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	customer.InitializedService(postgres).Route(&r.RouterGroup, redis)
 	product.InitializedService(postgres).Route(&r.RouterGroup, redis)
 	seller.InitializedService(postgres).Route(&r.RouterGroup, redis)
