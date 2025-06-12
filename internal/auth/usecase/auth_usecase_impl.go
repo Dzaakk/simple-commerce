@@ -19,13 +19,13 @@ import (
 )
 
 type AuthUseCaseImpl struct {
-	Cache            repo.AuthCache
+	Cache            repo.AuthCacheRepository
 	CustomerRepo     customerRepo.CustomerRepository
 	SellerRepo       sellerRepo.SellerRepository
 	ShoppingCartRepo shoppingCartRepo.ShoppingCartRepository
 }
 
-func NewAuthUseCase(cache repo.AuthCache, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
+func NewAuthUseCase(cache repo.AuthCacheRepository, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
 	return &AuthUseCaseImpl{cache, customerRepo, sellerRepo, shoppingCartRepo}
 }
 
