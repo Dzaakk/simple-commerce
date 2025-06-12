@@ -41,7 +41,7 @@ func (h *AuthHandler) CustomerRegistration(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success("Success Create User"))
 }
 
-func (h *AuthHandler) ActivationCustomer(ctx *gin.Context, r *redis.Client) {
+func (h *AuthHandler) ActivationCustomer(ctx *gin.Context) {
 	var data model.CustomerActivationReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
