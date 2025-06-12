@@ -60,18 +60,18 @@ func (cache *AuthCache) GetActivationCustomer(c context.Context, email string) (
 	return activationCode, nil
 }
 
-func (cache *AuthCache) SetTokenCustomer(c context.Context, data model.CustomerToken) error {
-	key := data.Email + PrefixCustomerToken
+func (cache *AuthCache) SetTokenCustomer(c context.Context, email, token string) error {
+	key := email + PrefixCustomerToken
 
-	jsonData, err := json.Marshal(data)
+	jsonToken, err := json.Marshal(token)
 	if err != nil {
 		return err
 	}
 
-	return cache.Client.Set(c, key, jsonData, TokenExpired).Err()
+	return cache.Client.Set(c, key, jsonToken, TokenExpired).Err()
 }
 
-func (cache *AuthCache) GetTokenCustomer(c context.Context, email string) (*model.CustomerToken, error) {
+func (cache *AuthCache) GetTokenCustomer(c context.Context, email string) (*string, error) {
 	key := email + PrefixCustomerToken
 
 	val, err := cache.Client.Get(c, key).Result()
@@ -82,7 +82,7 @@ func (cache *AuthCache) GetTokenCustomer(c context.Context, email string) (*mode
 		return nil, err
 	}
 
-	var token model.CustomerToken
+	var token string
 	err = json.Unmarshal([]byte(val), &token)
 	if err != nil {
 		return nil, err
