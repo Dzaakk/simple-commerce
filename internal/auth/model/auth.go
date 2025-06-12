@@ -1,16 +1,12 @@
 package model
 
-import (
-	"database/sql"
-)
+import "github.com/golang-jwt/jwt/v5"
 
 type CustomerToken struct {
-	Username    string       `json:"username"`
-	Email       string       `json:"email"`
-	PhoneNumber string       `json:"phone_number"`
-	Password    string       `json:"password"`
-	Gender      int          `json:"gender"`
-	DateOfBirth sql.NullTime `json:"date_of_birth"`
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	jwt.RegisteredClaims
 }
 
 type SellerToken struct {
