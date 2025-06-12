@@ -14,6 +14,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"os"
 	"time"
 )
 
@@ -104,9 +105,35 @@ func (a *AuthUseCaseImpl) CustomerActivation(ctx context.Context, req model.Cust
 	return nil
 }
 
-// CustomerLogin implements AuthUseCase.
-func (a *AuthUseCaseImpl) CustomerLogin(ctx context.Context, data model.LoginReq) error {
-	panic("unimplemented")
+func (a *AuthUseCaseImpl) CustomerLogin(ctx context.Context, req model.LoginReq) error {
+
+	customer, err := a.CustomerRepo.FindByEmail(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+
+	if !util.CheckPasswordHash(req.Password, customer.Password) {
+		return errors.New("invalid email or password")
+	}
+
+	tokenData := model.CustomerToken{
+		ID:       customer.ID,
+		Username: customer.Username,
+		Email:    customer.Email,
+	}
+
+	secretKey := []byte(os.Getenv("JWT_SECRET"))
+	jwtToken, err := util.GenerateJWTToken(secretKey, tokenData)
+	if err != nil {
+		return err
+	}
+
+	err = a.Cache.SetTokenCustomer(ctx, customer.Email, jwtToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *AuthUseCaseImpl) SellerRegistration(ctx context.Context, data model.SellerRegistrationReq) (*int64, error) {
