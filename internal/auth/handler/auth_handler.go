@@ -3,12 +3,9 @@ package handler
 import (
 	"Dzaakk/simple-commerce/internal/auth/model"
 	"Dzaakk/simple-commerce/internal/auth/usecase"
-	custUsecase "Dzaakk/simple-commerce/internal/customer/usecase"
 	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
-	"Dzaakk/simple-commerce/package/auth"
 	"Dzaakk/simple-commerce/package/response"
 	"Dzaakk/simple-commerce/package/util"
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,37 +13,52 @@ import (
 )
 
 type AuthHandler struct {
-	Usecase         usecase.AuthUseCase
-	CustomerUsecase custUsecase.CustomerUseCase
-	SellerUsecase   sellerUsecase.SellerUseCase
+	Usecase       usecase.AuthUseCase
+	SellerUsecase sellerUsecase.SellerUseCase
 }
 
-func NewAtuhHandler(usecase usecase.AuthUseCase, custUsecase custUsecase.CustomerUseCase, sellerUsecase sellerUsecase.SellerUseCase) *AuthHandler {
+func NewAtuhHandler(usecase usecase.AuthUseCase, sellerUsecase sellerUsecase.SellerUseCase) *AuthHandler {
 	return &AuthHandler{
-		Usecase:         usecase,
-		CustomerUsecase: custUsecase,
-		SellerUsecase:   sellerUsecase,
+		Usecase:       usecase,
+		SellerUsecase: sellerUsecase,
 	}
 }
 
-func (h *AuthHandler) RegistrationCustomer(ctx *gin.Context) {
+func (h *AuthHandler) CustomerRegistration(ctx *gin.Context) {
 	var data model.CustomerRegistrationReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
+
 	err := h.Usecase.CustomerRegistration(ctx, data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
+
 	ctx.JSON(http.StatusOK, response.Success("Success Create User"))
 }
-func (h *AuthHandler) ActivationCustomer(ctx *gin.Context, r *redis.Client) {
 
+func (h *AuthHandler) ActivationCustomer(ctx *gin.Context, r *redis.Client) {
+	var data model.CustomerActivationReq
+
+	if err := ctx.ShouldBindJSON(&data); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		return
+	}
+
+	err := h.Usecase.CustomerActivation(ctx, data)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.Success("Success Activate User"))
 }
-func (h *AuthHandler) LoginCustomer(ctx *gin.Context, r *redis.Client) {
+
+func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
@@ -54,23 +66,11 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context, r *redis.Client) {
 		return
 	}
 
-	data, err := h.CustomerUsecase.FindByEmail(ctx, reqData.Email)
+	err := h.Usecase.CustomerLogin(ctx, reqData)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
-
-	if !util.CheckPasswordHash(reqData.Password, data.Password) {
-		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
-		return
-	}
-
-	byteData, err := json.Marshal(data)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		return
-	}
-	_ = auth.NewTokenGenerator(r, byteData)
 
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
@@ -93,7 +93,7 @@ func (h *AuthHandler) ActivationSeller(ctx *gin.Context, r *redis.Client) {
 
 }
 
-func (h *AuthHandler) LoginSeller(ctx *gin.Context, r *redis.Client) {
+func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 	var reqData model.LoginReq
 
 	if err := ctx.ShouldBindJSON(&reqData); err != nil {
@@ -111,12 +111,12 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context, r *redis.Client) {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return
 	}
-	byteData, err := json.Marshal(data)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		return
-	}
-	_ = auth.NewTokenGenerator(r, byteData)
+	// byteData, err := json.Marshal(data)
+	// if err != nil {
+	// 	ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+	// 	return
+	// }
+	// _ = auth.NewTokenGenerator(r, byteData)
 
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
