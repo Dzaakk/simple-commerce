@@ -24,7 +24,7 @@ func NewAtuhHandler(usecase usecase.AuthUseCase, sellerUsecase sellerUsecase.Sel
 	}
 }
 
-func (h *AuthHandler) CustomerRegistration(ctx *gin.Context) {
+func (h *AuthHandler) RegistrationCustomer(ctx *gin.Context) {
 	var data model.CustomerRegistrationReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
@@ -32,7 +32,7 @@ func (h *AuthHandler) CustomerRegistration(ctx *gin.Context) {
 		return
 	}
 
-	err := h.Usecase.CustomerRegistration(ctx, data)
+	err := h.Usecase.RegistrationCustomer(ctx, data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -49,7 +49,7 @@ func (h *AuthHandler) ActivationCustomer(ctx *gin.Context) {
 		return
 	}
 
-	err := h.Usecase.CustomerActivation(ctx, data)
+	err := h.Usecase.ActivationCustomer(ctx, data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -66,7 +66,7 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 		return
 	}
 
-	err := h.Usecase.CustomerLogin(ctx, reqData)
+	err := h.Usecase.LoginCustomer(ctx, reqData)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
 		return

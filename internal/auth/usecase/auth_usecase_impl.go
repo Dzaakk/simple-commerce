@@ -29,7 +29,7 @@ func NewAuthUseCase(cache repo.AuthCacheRepository, customerRepo customerRepo.Cu
 	return &AuthUseCaseImpl{cache, customerRepo, sellerRepo, shoppingCartRepo}
 }
 
-func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.CustomerRegistrationReq) error {
+func (a *AuthUseCaseImpl) RegistrationCustomer(ctx context.Context, data model.CustomerRegistrationReq) error {
 
 	codeActivation := GenerateActivationCode()
 	err := a.Cache.SetActivationCustomer(ctx, data.Email, codeActivation)
@@ -47,7 +47,7 @@ func (a *AuthUseCaseImpl) CustomerRegistration(ctx context.Context, data model.C
 	return nil
 }
 
-func (a *AuthUseCaseImpl) CustomerActivation(ctx context.Context, req model.CustomerActivationReq) error {
+func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.CustomerActivationReq) error {
 	code, err := a.Cache.GetActivationCustomer(ctx, req.Email)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (a *AuthUseCaseImpl) CustomerActivation(ctx context.Context, req model.Cust
 	return nil
 }
 
-func (a *AuthUseCaseImpl) CustomerLogin(ctx context.Context, req model.LoginReq) error {
+func (a *AuthUseCaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq) error {
 
 	customer, err := a.CustomerRepo.FindByEmail(ctx, req.Email)
 	if err != nil {

@@ -6,8 +6,8 @@ import (
 )
 
 type AuthUseCase interface {
-	CustomerRegistration(ctx context.Context, data model.CustomerRegistrationReq) error
+	RegistrationCustomer(ctx context.Context, data model.CustomerRegistrationReq) error
+	ActivationCustomer(ctx context.Context, data model.CustomerActivationReq) error
+	LoginCustomer(ctx context.Context, data model.LoginReq) error
 	SellerRegistration(ctx context.Context, data model.SellerRegistrationReq) (*int64, error)
-	CustomerActivation(ctx context.Context, data model.CustomerActivationReq) error
-	CustomerLogin(ctx context.Context, data model.LoginReq) error
 }

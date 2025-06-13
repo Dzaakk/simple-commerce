@@ -21,7 +21,7 @@ func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
 
 	apiGroup.Use()
 	{
-		apiGroup.POST("/customer-register", ar.Handler.CustomerRegistration)
+		apiGroup.POST("/customer-register", ar.Handler.RegistrationCustomer)
 		apiGroup.POST("/customer-activation", func(ctx *gin.Context) {
 			ar.Handler.ActivationCustomer(ctx)
 		})
