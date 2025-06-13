@@ -14,8 +14,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthUseCaseImpl struct {
@@ -120,10 +121,13 @@ func (a *AuthUseCaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq)
 		ID:       customer.ID,
 		Username: customer.Username,
 		Email:    customer.Email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	}
 
-	secretKey := []byte(os.Getenv("JWT_SECRET"))
-	jwtToken, err := util.GenerateJWTToken(secretKey, tokenData)
+	jwtToken, err := util.GenerateToken(tokenData)
 	if err != nil {
 		return err
 	}
