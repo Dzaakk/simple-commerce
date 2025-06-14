@@ -23,7 +23,7 @@ func (m *JWTMiddleware) ValidateToken() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		header := ctx.GetHeader("Authorization")
 		if header == "" || !strings.HasPrefix(header, "Authorization") {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized("missing token"))
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized("missing or invalid token format"))
 			return
 		}
 
