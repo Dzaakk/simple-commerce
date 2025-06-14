@@ -2,7 +2,6 @@ package route
 
 import (
 	"Dzaakk/simple-commerce/internal/transaction/handler"
-	"Dzaakk/simple-commerce/package/auth"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -23,6 +22,6 @@ func (tr *TransactionRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
 
 	transactionHandler.Use()
 	{
-		transactionHandler.POST("/transaction", auth.JWTMiddleware(redis), tr.Handler.Checkout)
+		transactionHandler.POST("/transaction", tr.Handler.Checkout)
 	}
 }

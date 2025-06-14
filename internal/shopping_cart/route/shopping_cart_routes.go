@@ -2,7 +2,6 @@ package route
 
 import (
 	handler "Dzaakk/simple-commerce/internal/shopping_cart/handler"
-	"Dzaakk/simple-commerce/package/auth"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -22,8 +21,8 @@ func (scr *ShoppingCartRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
 
 	ShoppingHandler.Use()
 	{
-		ShoppingHandler.POST("/shopping-cart", auth.JWTMiddleware(redis), scr.Handler.AddProductToShoppingCart)
-		ShoppingHandler.GET("/shopping-cart", auth.JWTMiddleware(redis), scr.Handler.GetListShoppingCart)
-		ShoppingHandler.POST("/shopping-cart/delete", auth.JWTMiddleware(redis), scr.Handler.DeleteShoppingList)
+		ShoppingHandler.POST("/shopping-cart", scr.Handler.AddProductToShoppingCart)
+		ShoppingHandler.GET("/shopping-cart", scr.Handler.GetListShoppingCart)
+		ShoppingHandler.POST("/shopping-cart/delete", scr.Handler.DeleteShoppingList)
 	}
 }
