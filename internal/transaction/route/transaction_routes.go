@@ -1,26 +1,28 @@
 package route
 
 import (
+	middleware "Dzaakk/simple-commerce/internal/middleware/jwt"
 	"Dzaakk/simple-commerce/internal/transaction/handler"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type TransactionRoutes struct {
-	Handler *handler.TransactionHandler
+	Handler       *handler.TransactionHandler
+	JWTMiddleware *middleware.JWTMiddleware
 }
 
-func NewTransactionRoutes(handler *handler.TransactionHandler) *TransactionRoutes {
+func NewTransactionRoutes(handler *handler.TransactionHandler, jwtMiddleware *middleware.JWTMiddleware) *TransactionRoutes {
 	return &TransactionRoutes{
-		Handler: handler,
+		Handler:       handler,
+		JWTMiddleware: jwtMiddleware,
 	}
 }
 
-func (tr *TransactionRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
+func (tr *TransactionRoutes) Route(r *gin.RouterGroup) {
 	transactionHandler := r.Group("api/v1")
 
-	transactionHandler.Use()
+	transactionHandler.Use(tr.JWTMiddleware.ValidateToken())
 	{
 		transactionHandler.POST("/transaction", tr.Handler.Checkout)
 	}
