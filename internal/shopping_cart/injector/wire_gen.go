@@ -7,22 +7,27 @@
 package injector
 
 import (
+	repository3 "Dzaakk/simple-commerce/internal/auth/repository"
+	"Dzaakk/simple-commerce/internal/middleware/jwt"
 	repository2 "Dzaakk/simple-commerce/internal/product/repository"
 	"Dzaakk/simple-commerce/internal/shopping_cart/handler"
 	"Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"Dzaakk/simple-commerce/internal/shopping_cart/route"
 	"Dzaakk/simple-commerce/internal/shopping_cart/usecase"
 	"database/sql"
+	"github.com/go-redis/redis/v8"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *route.ShoppingCartRoutes {
+func InitializedService(db *sql.DB, redis2 *redis.Client) *route.ShoppingCartRoutes {
 	shoppingCartRepository := repository.NewShoppingCartRepository(db)
 	shoppingCartItemRepository := repository.NewShoppingCartItemRepository(db)
 	productRepository := repository2.NewProductRepository(db)
 	shoppingCartUseCase := usecase.NewShoppingCartUseCase(shoppingCartRepository, shoppingCartItemRepository, productRepository)
 	shoppingCartHandler := handler.NewShoppingCartHandler(shoppingCartUseCase)
-	shoppingCartRoutes := route.NewShoppingCartRoutes(shoppingCartHandler)
+	authCacheRepository := repository3.NewAuthCacheRepository(redis2)
+	jwtMiddleware := middleware.NewJwtMiddleware(authCacheRepository)
+	shoppingCartRoutes := route.NewShoppingCartRoutes(shoppingCartHandler, jwtMiddleware)
 	return shoppingCartRoutes
 }

@@ -1,25 +1,27 @@
 package route
 
 import (
+	middleware "Dzaakk/simple-commerce/internal/middleware/jwt"
 	handler "Dzaakk/simple-commerce/internal/shopping_cart/handler"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type ShoppingCartRoutes struct {
-	Handler *handler.ShoppingCartHandler
+	Handler       *handler.ShoppingCartHandler
+	JWTMiddleware *middleware.JWTMiddleware
 }
 
-func NewShoppingCartRoutes(handler *handler.ShoppingCartHandler) *ShoppingCartRoutes {
+func NewShoppingCartRoutes(handler *handler.ShoppingCartHandler, jwtMiddleware *middleware.JWTMiddleware) *ShoppingCartRoutes {
 	return &ShoppingCartRoutes{
-		Handler: handler,
+		Handler:       handler,
+		JWTMiddleware: jwtMiddleware,
 	}
 }
-func (scr *ShoppingCartRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
+func (scr *ShoppingCartRoutes) Route(r *gin.RouterGroup) {
 	ShoppingHandler := r.Group("api/v1")
 
-	ShoppingHandler.Use()
+	ShoppingHandler.Use(scr.JWTMiddleware.ValidateToken())
 	{
 		ShoppingHandler.POST("/shopping-cart", scr.Handler.AddProductToShoppingCart)
 		ShoppingHandler.GET("/shopping-cart", scr.Handler.GetListShoppingCart)
