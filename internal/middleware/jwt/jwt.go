@@ -12,13 +12,12 @@ import (
 )
 
 type JWTMiddleware struct {
-	AuthCache *repository.AuthCache
+	AuthCache repository.AuthCacheRepository
 }
 
-func NewJwtMiddleware(authCache *repository.AuthCache) *JWTMiddleware {
+func NewJwtMiddleware(authCache repository.AuthCacheRepository) *JWTMiddleware {
 	return &JWTMiddleware{AuthCache: authCache}
 }
-
 func (m *JWTMiddleware) ValidateToken() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		header := ctx.GetHeader("Authorization")
@@ -33,7 +32,6 @@ func (m *JWTMiddleware) ValidateToken() gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized(err.Error()))
 			return
 		}
-
 		storedToken, err := m.AuthCache.GetTokenCustomer(context.Background(), claims.Email)
 		if err != nil || storedToken == nil || *storedToken != reqToken {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized(""))
