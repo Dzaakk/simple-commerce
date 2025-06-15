@@ -2,28 +2,28 @@ package route
 
 import (
 	"Dzaakk/simple-commerce/internal/customer/handler"
-	"Dzaakk/simple-commerce/package/auth"
+	middleware "Dzaakk/simple-commerce/internal/middleware/jwt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type CustomerRoutes struct {
-	Handler *handler.CustomerHandler
+	Handler       *handler.CustomerHandler
+	JWTMiddleware *middleware.JWTMiddleware
 }
 
-func NewCustomerRoutes(handler *handler.CustomerHandler) *CustomerRoutes {
+func NewCustomerRoutes(handler *handler.CustomerHandler, jwtMiddleware *middleware.JWTMiddleware) *CustomerRoutes {
 	return &CustomerRoutes{
-		Handler: handler,
+		Handler:       handler,
+		JWTMiddleware: jwtMiddleware,
 	}
 }
 
-func (cr *CustomerRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
+func (cr *CustomerRoutes) Route(r *gin.RouterGroup) {
 	customerHandler := r.Group("/api/v1")
-
-	customerHandler.Use()
+	customerHandler.Use(cr.JWTMiddleware.ValidateToken())
 	{
-		customerHandler.GET("/customers", auth.JWTMiddleware(redis), cr.Handler.FindCustomerById)
-		customerHandler.POST("/balance", auth.JWTMiddleware(redis), cr.Handler.UpdateBalance)
+		customerHandler.GET("/customers", cr.Handler.FindCustomerById)
+		customerHandler.POST("/balance", cr.Handler.UpdateBalance)
 	}
 }
