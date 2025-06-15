@@ -9,6 +9,7 @@ const (
 	StatusActive   = "A"
 	StatusInactive = "I"
 	StatusBlock    = "B"
+	RoleCustomer   = "CUSTOMER"
 )
 
 type Base struct {

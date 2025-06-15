@@ -41,6 +41,7 @@ func (m *JWTMiddleware) ValidateToken() gin.HandlerFunc {
 		ctx.Set("username", claims.Username)
 		ctx.Set("email", claims.Email)
 		ctx.Set("id", claims.ID)
+		ctx.Set("role", claims.Role)
 		ctx.Next()
 	}
 }

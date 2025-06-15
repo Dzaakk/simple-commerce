@@ -121,6 +121,7 @@ func (a *AuthUseCaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq)
 		ID:       customer.ID,
 		Username: customer.Username,
 		Email:    customer.Email,
+		Role:     template.RoleCustomer,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
