@@ -7,19 +7,24 @@
 package injector
 
 import (
+	repository2 "Dzaakk/simple-commerce/internal/auth/repository"
 	"Dzaakk/simple-commerce/internal/customer/handler"
 	"Dzaakk/simple-commerce/internal/customer/repository"
 	"Dzaakk/simple-commerce/internal/customer/route"
 	"Dzaakk/simple-commerce/internal/customer/usecase"
+	"Dzaakk/simple-commerce/internal/middleware/jwt"
 	"database/sql"
+	"github.com/go-redis/redis/v8"
 )
 
 // Injectors from wire.go:
 
-func InitializedService(db *sql.DB) *route.CustomerRoutes {
+func InitializedService(db *sql.DB, redis2 *redis.Client) *route.CustomerRoutes {
 	customerRepository := repository.NewCustomerRepository(db)
 	customerUseCase := usecase.NewCustomerUseCase(customerRepository)
 	customerHandler := handler.NewCustomerHandler(customerUseCase)
-	customerRoutes := route.NewCustomerRoutes(customerHandler)
+	authCacheRepository := repository2.NewAuthCacheRepository(redis2)
+	jwtMiddleware := middleware.NewJwtMiddleware(authCacheRepository)
+	customerRoutes := route.NewCustomerRoutes(customerHandler, jwtMiddleware)
 	return customerRoutes
 }
