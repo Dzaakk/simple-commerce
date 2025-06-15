@@ -28,10 +28,10 @@ func main() {
 	r := gin.Default()
 
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
-	customer.InitializedService(postgres).Route(&r.RouterGroup, redis)
+	customer.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	product.InitializedService(postgres).Route(&r.RouterGroup, redis)
 	seller.InitializedService(postgres).Route(&r.RouterGroup, redis)
-	shoppingCart.InitializedService(postgres).Route(&r.RouterGroup, redis)
-	transaction.InitializedService(postgres).Route(&r.RouterGroup, redis)
+	shoppingCart.InitializedService(postgres, redis).Route(&r.RouterGroup)
+	transaction.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	r.Run()
 }
