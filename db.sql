@@ -10,19 +10,43 @@ CREATE TABLE public.customer (
     balance NUMERIC(10,2) DEFAULT 0,
     last_login TIMESTAMP,        
     status SMALLINT,
+    address TEXT,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INT NOT NULL DEFAULT 0, 
-    updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated TIMESTAMP,
     updated_by INT               
     -- email_verified BOOLEAN DEFAULT FALSE,
     -- phone_verified BOOLEAN DEFAULT FALSE,
     -- Optional future fields:
     -- referral_code VARCHAR(50),
 );
-
 CREATE INDEX idx_customer_username ON public.customer (username);
 CREATE INDEX idx_customer_email ON public.customer (email);
 CREATE INDEX idx_customer_phone_number ON public.customer (phone_number);
+--------------------------------------------------------
+
+CREATE TABLE seller (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL, 
+    phone_number VARCHAR(20),
+    store_name VARCHAR(255),
+    address TEXT,
+    balance NUMERIC(10,2) DEFAULT 0,
+    status SMALLINT, 
+    profile_picture TEXT,
+    bank_account_name VARCHAR(100),
+    bank_account_number VARCHAR(50),
+    bank_name VARCHAR(100)
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by INT NOT NULL DEFAULT 0,
+    updated TIMESTAMP,
+    updated_by INT,
+);
+CREATE INDEX idx_seller_username ON public.seller (username);
+CREATE INDEX idx_seller_email ON public.seller (email);
+--------------------------------------------------------
 
 CREATE TABLE public.category (
     id SERIAL PRIMARY KEY,
@@ -115,20 +139,7 @@ CREATE INDEX idx_history_transaction_customer_id ON public.history_transaction (
 CREATE INDEX idx_history_transaction_status ON public.history_transaction (status);
 
 
-CREATE TABLE seller (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    balance NUMERIC(10,2) DEFAULT 0.00,
-    status varchar(1) NOT NULL, 
-    created TIMESTAMP NOT NULL,
-    created_by VARCHAR(100),
-    updated  TIMESTAMP,
-    updated_by VARCHAR(100),
-);
-CREATE INDEX idx_seller_username ON public.seller (username);
-CREATE INDEX idx_seller_email ON public.seller (email);
+
 
 -- timestamp indexing
 -- CREATE INDEX idx_customer_created ON public.customer (created);
@@ -137,22 +148,6 @@ CREATE INDEX idx_seller_email ON public.seller (email);
 -- CREATE INDEX idx_transaction_created ON public.transaction (created);
 -- CREATE INDEX idx_history_transaction_created ON public.history_transaction (created);
 -- CREATE INDEX idx_seller_created ON public.seller (created);
-
-CREATE TABLE customer_activation_code (
-    customer_id BIGINT,
-    code_activation VARCHAR(6),
-    is_used BOOLEAN,
-    created TIMESTAMP NOT NULL,
-    used_at TIMESTAMP,
-)
-
-CREATE TABLE seller_activation_code (
-    seller_id BIGINT,
-    code_activation VARCHAR(6),
-    is_used BOOLEAN,
-    created TIMESTAMP NOT NULL,
-    used_at TIMESTAMP,
-)
 
 INSERT INTO public.category (name, created_by, created)
 VALUES ('Electronics', 'Admin', now()),
