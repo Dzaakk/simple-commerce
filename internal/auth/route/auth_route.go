@@ -19,19 +19,17 @@ func NewAuthRoutes(handler *handler.AuthHandler) *AuthRoutes {
 func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
 	apiGroup := r.Group("/api/v1")
 
-	apiGroup.Use()
+	customer := apiGroup.Group("/customer")
 	{
-		apiGroup.POST("/customer-register", ar.Handler.RegistrationCustomer)
-		apiGroup.POST("/customer-activation", func(ctx *gin.Context) {
-			ar.Handler.ActivationCustomer(ctx)
-		})
-		apiGroup.POST("/customer-login", func(ctx *gin.Context) {
-			ar.Handler.LoginCustomer(ctx)
-		})
+		customer.POST("/register", ar.Handler.RegistrationCustomer)
+		customer.POST("/activate", ar.Handler.ActivationCustomer)
+		customer.POST("/login", ar.Handler.LoginCustomer)
+	}
 
-		apiGroup.POST("/register-seller", ar.Handler.RegistrationSeller)
-		apiGroup.POST("/login-seller", func(ctx *gin.Context) {
-			ar.Handler.LoginSeller(ctx)
-		})
+	seller := apiGroup.Group("/seller")
+	{
+		seller.POST("/register", ar.Handler.RegistrationSeller)
+		seller.POST("/activate", ar.Handler.ActivationSeller)
+		seller.POST("/login", ar.Handler.LoginSeller)
 	}
 }
