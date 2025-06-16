@@ -17,12 +17,15 @@ type CustomerRegistrationReq struct {
 }
 
 type SellerRegistrationReq struct {
-	Username string `json:"username" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	Username    string `json:"username" validate:"required"`
+	Email       string `json:"email" validate:"required,email"`
+	Password    string `json:"password" validate:"required"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
+	StoreName   string `json:"store_name" validate:"required"`
+	Address     string `json:"address" validate:"required"`
 }
 
-type CustomerActivationReq struct {
+type ActivationReq struct {
 	Email          string `json:"email" validate:"required,email"`
 	ActivationCode string `json:"activation_code"`
 }
