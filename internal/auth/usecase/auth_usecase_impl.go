@@ -39,6 +39,12 @@ func (a *AuthUseCaseImpl) RegistrationCustomer(ctx context.Context, data model.C
 		return err
 	}
 
+	hashedPassword, err := util.HashPassword(data.Password)
+	if err != nil {
+		return err
+	}
+	data.Password = string(hashedPassword)
+
 	err = a.CustomerCache.SetCustomerRegistration(ctx, data)
 	if err != nil {
 		return err
@@ -64,16 +70,11 @@ func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.Acti
 		return err
 	}
 
-	hashedPassword, err := util.HashPassword(data.Password)
-	if err != nil {
-		return err
-	}
-
 	customer := customerModel.TCustomers{
 		Username:       data.Username,
 		Email:          data.Email,
 		PhoneNumber:    data.PhoneNumber,
-		Password:       string(hashedPassword),
+		Password:       data.Password,
 		Balance:        float64(10000000),
 		Status:         1,
 		Gender:         data.Gender,
@@ -149,6 +150,12 @@ func (a *AuthUseCaseImpl) RegistrationSeller(ctx context.Context, data model.Sel
 		return err
 	}
 
+	hashedPassword, err := util.HashPassword(data.Password)
+	if err != nil {
+		return err
+	}
+	data.Password = string(hashedPassword)
+
 	err = a.SellerCache.SetSellerRegistration(ctx, data)
 	if err != nil {
 		return err
@@ -173,16 +180,11 @@ func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.Activa
 		return err
 	}
 
-	hashedPassword, err := util.HashPassword(data.Password)
-	if err != nil {
-		return err
-	}
-
 	seller := sellerModel.TSeller{
 		Username:       data.Username,
 		Email:          data.Email,
 		PhoneNumber:    data.PhoneNumber,
-		Password:       string(hashedPassword),
+		Password:       data.Password,
 		Balance:        float64(10000000),
 		Status:         1,
 		StoreName:      data.StoreName,
@@ -193,6 +195,7 @@ func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.Activa
 			CreatedBy: "system",
 		},
 	}
+
 	_, err = a.SellerRepo.Create(ctx, seller)
 	if err != nil {
 		return err
