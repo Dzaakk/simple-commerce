@@ -20,7 +20,8 @@ import (
 
 func InitializedService(db *sql.DB, redis *redis.Client) *route.AuthRoutes {
 	wire.Build(
-		repository.NewAuthCacheRepository,
+		repository.NewAuthCacheSellerRepository,
+		repository.NewAuthCacheCustomerRepository,
 		sellerRepo.NewSellerRepository,
 		customerRepo.NewCustomerRepository,
 		shoppingCartRepo.NewShoppingCartRepository,

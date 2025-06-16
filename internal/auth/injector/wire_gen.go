@@ -22,11 +22,12 @@ import (
 // Injectors from wire.go:
 
 func InitializedService(db *sql.DB, redis2 *redis.Client) *route.AuthRoutes {
-	authCacheRepository := repository.NewAuthCacheRepository(redis2)
+	authCacheCustomer := repository.NewAuthCacheCustomerRepository(redis2)
+	authCacheSeller := repository.NewAuthCacheSellerRepository(redis2)
 	customerRepository := repository2.NewCustomerRepository(db)
 	sellerRepository := repository3.NewSellerRepository(db)
 	shoppingCartRepository := repository4.NewShoppingCartRepository(db)
-	authUseCase := usecase.NewAuthUseCase(authCacheRepository, customerRepository, sellerRepository, shoppingCartRepository)
+	authUseCase := usecase.NewAuthUseCase(authCacheCustomer, authCacheSeller, customerRepository, sellerRepository, shoppingCartRepository)
 	sellerUseCase := usecase2.NewSellerUseCase(sellerRepository)
 	authHandler := handler.NewAtuhHandler(authUseCase, sellerUseCase)
 	authRoutes := route.NewAuthRoutes(authHandler)
