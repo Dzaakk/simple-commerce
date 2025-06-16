@@ -11,17 +11,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type JWTMiddleware struct {
-	AuthCache repository.AuthCacheRepository
+type JWTCustomerMiddleware struct {
+	AuthCache repository.AuthCacheCustomer
 }
 
-func NewJwtMiddleware(authCache repository.AuthCacheRepository) *JWTMiddleware {
-	return &JWTMiddleware{AuthCache: authCache}
+func NewJWTCustomerMiddleware(authCache repository.AuthCacheCustomer) *JWTCustomerMiddleware {
+	return &JWTCustomerMiddleware{AuthCache: authCache}
 }
-func (m *JWTMiddleware) ValidateToken() gin.HandlerFunc {
+
+func (m *JWTCustomerMiddleware) ValidateToken() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		header := ctx.GetHeader("Authorization")
-		if header == "" || !strings.HasPrefix(header, "Authorization") {
+		if header == "" || !strings.HasPrefix(header, "Bearer ") {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized("missing or invalid token format"))
 			return
 		}
@@ -32,9 +33,10 @@ func (m *JWTMiddleware) ValidateToken() gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized(err.Error()))
 			return
 		}
+
 		storedToken, err := m.AuthCache.GetTokenCustomer(context.Background(), claims.Email)
 		if err != nil || storedToken == nil || *storedToken != reqToken {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized(""))
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized("token mismatch or expired"))
 			return
 		}
 
