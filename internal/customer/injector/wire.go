@@ -21,8 +21,8 @@ func InitializedService(db *sql.DB, redis *redis.Client) *route.CustomerRoutes {
 		repository.NewCustomerRepository,
 		usecase.NewCustomerUseCase,
 		handler.NewCustomerHandler,
-		auth.NewAuthCacheRepository,
-		middleware.NewJwtMiddleware,
+		auth.NewAuthCacheCustomerRepository,
+		middleware.NewJWTCustomerMiddleware,
 		route.NewCustomerRoutes,
 	)
 
