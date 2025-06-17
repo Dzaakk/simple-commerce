@@ -203,7 +203,6 @@ func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.Activa
 
 	return nil
 }
-
 func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) error {
 	customer, err := a.CustomerRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
@@ -233,6 +232,18 @@ func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) e
 	err = a.SellerCache.SetTokenSeller(ctx, customer.Email, jwtToken)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (a *AuthUseCaseImpl) Logout(ctx context.Context, email string, role string) error {
+
+	switch role {
+	case template.RoleCustomer:
+		return a.CustomerCache.DeleteTokenCustomer(ctx, email)
+	case template.RoleSeller:
+		return a.SellerCache.DeleteTokenSeller(ctx, email)
 	}
 
 	return nil

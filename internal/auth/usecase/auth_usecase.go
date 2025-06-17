@@ -13,4 +13,6 @@ type AuthUseCase interface {
 	RegistrationSeller(ctx context.Context, data model.SellerRegistrationReq) error
 	ActivationSeller(ctx context.Context, data model.ActivationReq) error
 	LoginSeller(ctx context.Context, data model.LoginReq) error
+
+	Logout(ctx context.Context, email, role string) error
 }
