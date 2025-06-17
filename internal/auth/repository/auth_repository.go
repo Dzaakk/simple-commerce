@@ -12,6 +12,7 @@ type AuthCacheCustomer interface {
 	GetTokenCustomer(ctx context.Context, email string) (*string, error)
 	SetCustomerRegistration(ctx context.Context, data model.CustomerRegistrationReq) error
 	GetCustomerRegistration(ctx context.Context, email string) (*model.CustomerRegistrationReq, error)
+	DeleteTokenCustomer(ctx context.Context, email string) error
 }
 
 type AuthCacheSeller interface {
@@ -21,4 +22,5 @@ type AuthCacheSeller interface {
 	GetTokenSeller(ctx context.Context, email string) (*string, error)
 	SetSellerRegistration(ctx context.Context, data model.SellerRegistrationReq) error
 	GetSellerRegistration(ctx context.Context, email string) (*model.SellerRegistrationReq, error)
+	DeleteTokenSeller(ctx context.Context, email string) error
 }

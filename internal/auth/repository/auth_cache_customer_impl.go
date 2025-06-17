@@ -121,3 +121,9 @@ func (cache *AuthCacheCustomerImpl) GetCustomerRegistration(c context.Context, e
 
 	return &data, nil
 }
+
+func (cache *AuthCacheCustomerImpl) DeleteTokenCustomer(c context.Context, email string) error {
+	key := email + PrefixSellerToken
+
+	return cache.Client.Del(c, key).Err()
+}
