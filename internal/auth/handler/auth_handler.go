@@ -5,6 +5,7 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/usecase"
 	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
 	"Dzaakk/simple-commerce/package/response"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -123,4 +124,24 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
+}
+
+func (h *AuthHandler) Logout(ctx *gin.Context) {
+	roleRaw, roleExists := ctx.Get("role")
+	emailRaw, emailExists := ctx.Get("email")
+
+	role, okRole := roleRaw.(string)
+	email, okEmail := emailRaw.(string)
+
+	if !roleExists || !emailExists || !okRole || !okEmail {
+		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(""))
+		return
+	}
+
+	err := h.Usecase.Logout(ctx, role, email)
+	if err != nil {
+		log.Printf("[Logout] Failed to delete token for %s (%s): %v", role, email, err)
+	}
+
+	ctx.JSON(http.StatusOK, response.Success("Logged out successfully"))
 }
