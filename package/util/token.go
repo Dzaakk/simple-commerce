@@ -1,7 +1,6 @@
 package util
 
 import (
-	"Dzaakk/simple-commerce/internal/auth/model"
 	"errors"
 	"os"
 
@@ -10,7 +9,7 @@ import (
 
 var secretKey = []byte(os.Getenv("JWT_SECRET"))
 
-func GenerateToken(claims model.CustomerToken) (string, error) {
+func GenerateToken[T jwt.Claims](claims T) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(secretKey)
@@ -21,20 +20,21 @@ func GenerateToken(claims model.CustomerToken) (string, error) {
 	return tokenString, nil
 }
 
-func ParseToken(tokenStr string) (*model.CustomerToken, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &model.CustomerToken{},
+func ParseToken[T jwt.Claims](tokenStr string) (T, error) {
+	var claims T
+	token, err := jwt.ParseWithClaims(tokenStr, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			return secretKey, nil
 		})
 
 	if err != nil {
-		return nil, err
+		var zero T
+		return zero, err
 	}
 
-	claims, ok := token.Claims.(*model.CustomerToken)
-	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
+	if !token.Valid {
+		var zero T
+		return zero, errors.New("invalid token")
 	}
-
 	return claims, nil
 }
