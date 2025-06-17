@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"Dzaakk/simple-commerce/internal/auth/model"
 	"Dzaakk/simple-commerce/internal/auth/repository"
 	"Dzaakk/simple-commerce/package/response"
 	"Dzaakk/simple-commerce/package/util"
@@ -28,7 +29,7 @@ func (m *JWTCustomerMiddleware) ValidateToken() gin.HandlerFunc {
 		}
 
 		reqToken := strings.TrimPrefix(header, "Bearer ")
-		claims, err := util.ParseToken(reqToken)
+		claims, err := util.ParseToken[*model.CustomerToken](reqToken)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized(err.Error()))
 			return
