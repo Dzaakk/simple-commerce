@@ -12,6 +12,7 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/route"
 	"Dzaakk/simple-commerce/internal/auth/usecase"
 	repository2 "Dzaakk/simple-commerce/internal/customer/repository"
+	"Dzaakk/simple-commerce/internal/middleware/jwt"
 	repository3 "Dzaakk/simple-commerce/internal/seller/repository"
 	usecase2 "Dzaakk/simple-commerce/internal/seller/usecase"
 	repository4 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
@@ -30,6 +31,8 @@ func InitializedService(db *sql.DB, redis2 *redis.Client) *route.AuthRoutes {
 	authUseCase := usecase.NewAuthUseCase(authCacheCustomer, authCacheSeller, customerRepository, sellerRepository, shoppingCartRepository)
 	sellerUseCase := usecase2.NewSellerUseCase(sellerRepository)
 	authHandler := handler.NewAtuhHandler(authUseCase, sellerUseCase)
-	authRoutes := route.NewAuthRoutes(authHandler)
+	jwtCustomerMiddleware := middleware.NewJWTCustomerMiddleware(authCacheCustomer)
+	jwtSellerMiddleware := middleware.NewJWTSellerMiddleware(authCacheSeller)
+	authRoutes := route.NewAuthRoutes(authHandler, jwtCustomerMiddleware, jwtSellerMiddleware)
 	return authRoutes
 }
