@@ -204,6 +204,36 @@ func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.Activa
 	return nil
 }
 
-func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, data model.LoginReq) error {
-	panic("unimplemented")
+func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) error {
+	customer, err := a.CustomerRepo.FindByEmail(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+
+	if !util.CheckPasswordHash(req.Password, customer.Password) {
+		return errors.New("invalid email or password")
+	}
+
+	tokenData := model.SellerToken{
+		ID:       customer.ID,
+		Username: customer.Username,
+		Email:    customer.Email,
+		Role:     template.RoleCustomer,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	jwtToken, err := util.GenerateToken(tokenData)
+	if err != nil {
+		return err
+	}
+
+	err = a.SellerCache.SetTokenSeller(ctx, customer.Email, jwtToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
