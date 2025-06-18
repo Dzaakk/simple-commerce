@@ -9,10 +9,10 @@ import (
 
 type TransactionRoutes struct {
 	Handler       *handler.TransactionHandler
-	JWTMiddleware *middleware.JWTMiddleware
+	JWTMiddleware *middleware.JWTCustomerMiddleware
 }
 
-func NewTransactionRoutes(handler *handler.TransactionHandler, jwtMiddleware *middleware.JWTMiddleware) *TransactionRoutes {
+func NewTransactionRoutes(handler *handler.TransactionHandler, jwtMiddleware *middleware.JWTCustomerMiddleware) *TransactionRoutes {
 	return &TransactionRoutes{
 		Handler:       handler,
 		JWTMiddleware: jwtMiddleware,

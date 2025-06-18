@@ -30,8 +30,8 @@ func InitializedService(db *sql.DB, redis2 *redis.Client) *route.TransactionRout
 	productRepository := repository4.NewProductRepository(db)
 	transactionUseCase := usecase.NewTransactionUseCase(transactionRepository, shoppingCartRepository, shoppingCartItemRepository, customerRepository, productRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
-	authCacheRepository := repository5.NewAuthCacheRepository(redis2)
-	jwtMiddleware := middleware.NewJwtMiddleware(authCacheRepository)
-	transactionRoutes := route.NewTransactionRoutes(transactionHandler, jwtMiddleware)
+	authCacheCustomer := repository5.NewAuthCacheCustomerRepository(redis2)
+	jwtCustomerMiddleware := middleware.NewJWTCustomerMiddleware(authCacheCustomer)
+	transactionRoutes := route.NewTransactionRoutes(transactionHandler, jwtCustomerMiddleware)
 	return transactionRoutes
 }
