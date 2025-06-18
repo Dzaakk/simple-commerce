@@ -25,8 +25,8 @@ func InitializedService(db *sql.DB, redis *redis.Client) *route.ShoppingCartRout
 		usecase.NewShoppingCartUseCase,
 		handler.NewShoppingCartHandler,
 		route.NewShoppingCartRoutes,
-		auth.NewAuthCacheRepository,
-		middleware.NewJwtMiddleware,
+		auth.NewAuthCacheCustomerRepository,
+		middleware.NewJWTCustomerMiddleware,
 	)
 
 	return &route.ShoppingCartRoutes{}

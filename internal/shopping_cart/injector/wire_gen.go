@@ -26,8 +26,8 @@ func InitializedService(db *sql.DB, redis2 *redis.Client) *route.ShoppingCartRou
 	productRepository := repository2.NewProductRepository(db)
 	shoppingCartUseCase := usecase.NewShoppingCartUseCase(shoppingCartRepository, shoppingCartItemRepository, productRepository)
 	shoppingCartHandler := handler.NewShoppingCartHandler(shoppingCartUseCase)
-	authCacheRepository := repository3.NewAuthCacheRepository(redis2)
-	jwtMiddleware := middleware.NewJwtMiddleware(authCacheRepository)
-	shoppingCartRoutes := route.NewShoppingCartRoutes(shoppingCartHandler, jwtMiddleware)
+	authCacheCustomer := repository3.NewAuthCacheCustomerRepository(redis2)
+	jwtCustomerMiddleware := middleware.NewJWTCustomerMiddleware(authCacheCustomer)
+	shoppingCartRoutes := route.NewShoppingCartRoutes(shoppingCartHandler, jwtCustomerMiddleware)
 	return shoppingCartRoutes
 }

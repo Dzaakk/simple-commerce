@@ -9,10 +9,10 @@ import (
 
 type ShoppingCartRoutes struct {
 	Handler       *handler.ShoppingCartHandler
-	JWTMiddleware *middleware.JWTMiddleware
+	JWTMiddleware *middleware.JWTCustomerMiddleware
 }
 
-func NewShoppingCartRoutes(handler *handler.ShoppingCartHandler, jwtMiddleware *middleware.JWTMiddleware) *ShoppingCartRoutes {
+func NewShoppingCartRoutes(handler *handler.ShoppingCartHandler, jwtMiddleware *middleware.JWTCustomerMiddleware) *ShoppingCartRoutes {
 	return &ShoppingCartRoutes{
 		Handler:       handler,
 		JWTMiddleware: jwtMiddleware,
