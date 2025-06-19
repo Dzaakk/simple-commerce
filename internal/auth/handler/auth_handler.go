@@ -18,10 +18,11 @@ type AuthHandler struct {
 	EmailUsecase  emailUsecase.EmailUseCase
 }
 
-func NewAtuhHandler(usecase usecase.AuthUseCase, sellerUsecase sellerUsecase.SellerUseCase) *AuthHandler {
+func NewAtuhHandler(usecase usecase.AuthUseCase, sellerUsecase sellerUsecase.SellerUseCase, emailUsecase emailUsecase.EmailUseCase) *AuthHandler {
 	return &AuthHandler{
 		Usecase:       usecase,
 		SellerUsecase: sellerUsecase,
+		EmailUsecase:  emailUsecase,
 	}
 }
 
