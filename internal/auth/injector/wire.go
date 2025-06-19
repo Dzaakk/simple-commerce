@@ -9,6 +9,7 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/route"
 	"Dzaakk/simple-commerce/internal/auth/usecase"
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
+	emailUsecase "Dzaakk/simple-commerce/internal/email/usecase"
 	middleware "Dzaakk/simple-commerce/internal/middleware/jwt"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
 	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
@@ -32,6 +33,7 @@ func InitializedService(db *sql.DB, redis *redis.Client) *route.AuthRoutes {
 		middleware.NewJWTCustomerMiddleware,
 		middleware.NewJWTSellerMiddleware,
 		route.NewAuthRoutes,
+		emailUsecase.NewEmailUseCase,
 	)
 
 	return &route.AuthRoutes{}
