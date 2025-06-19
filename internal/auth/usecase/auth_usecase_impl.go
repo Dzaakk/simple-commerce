@@ -5,6 +5,7 @@ import (
 	repo "Dzaakk/simple-commerce/internal/auth/repository"
 	customerModel "Dzaakk/simple-commerce/internal/customer/model"
 	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
+	eModel "Dzaakk/simple-commerce/internal/email/model"
 	sellerModel "Dzaakk/simple-commerce/internal/seller/model"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
 	shoppingCartModel "Dzaakk/simple-commerce/internal/shopping_cart/model"
@@ -31,28 +32,32 @@ func NewAuthUseCase(customerCache repo.AuthCacheCustomer, sellerCache repo.AuthC
 	return &AuthUseCaseImpl{customerCache, sellerCache, customerRepo, sellerRepo, shoppingCartRepo}
 }
 
-func (a *AuthUseCaseImpl) RegistrationCustomer(ctx context.Context, data model.CustomerRegistrationReq) error {
+func (a *AuthUseCaseImpl) RegistrationCustomer(ctx context.Context, data model.CustomerRegistrationReq) (*eModel.ActivationEmailReq, error) {
 
-	codeActivation := GenerateActivationCode()
-	err := a.CustomerCache.SetActivationCustomer(ctx, data.Email, codeActivation)
+	activationCode := GenerateActivationCode()
+	err := a.CustomerCache.SetActivationCustomer(ctx, data.Email, activationCode)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hashedPassword, err := util.HashPassword(data.Password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	data.Password = string(hashedPassword)
 
 	err = a.CustomerCache.SetCustomerRegistration(ctx, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	//send email
+	email := eModel.ActivationEmailReq{
+		Email:          data.Email,
+		Username:       data.Username,
+		ActivationCode: activationCode,
+	}
 
-	return nil
+	return &email, nil
 }
 
 func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.ActivationReq) error {
@@ -143,27 +148,31 @@ func (a *AuthUseCaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq)
 	return nil
 }
 
-func (a *AuthUseCaseImpl) RegistrationSeller(ctx context.Context, data model.SellerRegistrationReq) error {
-	codeActivation := GenerateActivationCode()
-	err := a.SellerCache.SetActivationSeller(ctx, data.Email, codeActivation)
+func (a *AuthUseCaseImpl) RegistrationSeller(ctx context.Context, data model.SellerRegistrationReq) (*eModel.ActivationEmailReq, error) {
+	activationCode := GenerateActivationCode()
+	err := a.SellerCache.SetActivationSeller(ctx, data.Email, activationCode)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hashedPassword, err := util.HashPassword(data.Password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	data.Password = string(hashedPassword)
 
 	err = a.SellerCache.SetSellerRegistration(ctx, data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	//send email
+	email := eModel.ActivationEmailReq{
+		Email:          data.Email,
+		Username:       data.Username,
+		ActivationCode: activationCode,
+	}
 
-	return nil
+	return &email, nil
 }
 func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.ActivationReq) error {
 	code, err := a.SellerCache.GetActivationSeller(ctx, req.Email)

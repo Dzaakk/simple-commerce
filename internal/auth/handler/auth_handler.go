@@ -3,6 +3,7 @@ package handler
 import (
 	"Dzaakk/simple-commerce/internal/auth/model"
 	"Dzaakk/simple-commerce/internal/auth/usecase"
+	emailUsecase "Dzaakk/simple-commerce/internal/email/usecase"
 	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
 	"Dzaakk/simple-commerce/package/response"
 	"log"
@@ -14,6 +15,7 @@ import (
 type AuthHandler struct {
 	Usecase       usecase.AuthUseCase
 	SellerUsecase sellerUsecase.SellerUseCase
+	EmailUsecase  emailUsecase.EmailUseCase
 }
 
 func NewAtuhHandler(usecase usecase.AuthUseCase, sellerUsecase sellerUsecase.SellerUseCase) *AuthHandler {
@@ -31,7 +33,13 @@ func (h *AuthHandler) RegistrationCustomer(ctx *gin.Context) {
 		return
 	}
 
-	err := h.Usecase.RegistrationCustomer(ctx, data)
+	dataEmail, err := h.Usecase.RegistrationCustomer(ctx, data)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+
+	err = h.EmailUsecase.SendEmailActivation(ctx, *dataEmail)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -82,7 +90,13 @@ func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {
 		return
 	}
 
-	err := h.Usecase.RegistrationSeller(ctx, data)
+	dataEmail, err := h.Usecase.RegistrationSeller(ctx, data)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+
+	err = h.EmailUsecase.SendEmailActivation(ctx, *dataEmail)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
