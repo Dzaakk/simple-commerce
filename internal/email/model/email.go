@@ -1,6 +1,6 @@
 package model
 
-type EmailRequest struct {
+type BaseEmailReq struct {
 	Sender      Sender      `json:"sender"`
 	To          []Recipient `json:"to"`
 	Subject     string      `json:"subject"`
@@ -14,4 +14,9 @@ type Sender struct {
 type Recipient struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
+}
+type ActivationEmailReq struct {
+	Email          string
+	Username       string
+	ActivationCode string
 }

@@ -1,5 +1,10 @@
 package usecase
 
+import (
+	"Dzaakk/simple-commerce/internal/email/model"
+	"context"
+)
+
 type EmailUseCase interface {
-	SendEmailVerification(recipientName, recipientEmail, activationCode string) error
+	SendEmailActivation(ctx context.Context, req model.ActivationEmailReq) error
 }
