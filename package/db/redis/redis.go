@@ -38,6 +38,7 @@ func Init() (*redis.Client, error) {
 			_, err = client.Ping(context.Background()).Result()
 			if err == nil {
 				log.Print("Success connect to Redis")
+				redisClient = client
 				return
 			}
 
