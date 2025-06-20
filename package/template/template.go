@@ -11,6 +11,7 @@ const (
 	StatusBlock    = "B"
 	RoleCustomer   = "CUSTOMER"
 	RoleSeller     = "SELLER"
+	FormatDate     = "02-01-2006"
 )
 
 type Base struct {

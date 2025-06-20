@@ -1,19 +1,17 @@
 package model
 
-import "database/sql"
-
 type LoginReq struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
 
 type CustomerRegistrationReq struct {
-	Username    string       `json:"username" validate:"required"`
-	Email       string       `json:"email" validate:"required,email"`
-	PhoneNumber string       `json:"phone_number" validate:"required"`
-	Password    string       `json:"password" validate:"required"`
-	Gender      int          `json:"gender"`
-	DateOfBirth sql.NullTime `json:"date_of_birth"`
+	Username    string `json:"username" validate:"required"`
+	Email       string `json:"email" validate:"required,email"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
+	Password    string `json:"password" validate:"required"`
+	Gender      string `json:"gender"`
+	DateOfBirth string `json:"date_of_birth"`
 }
 
 type SellerRegistrationReq struct {

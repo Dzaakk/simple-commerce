@@ -15,6 +15,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -75,6 +76,16 @@ func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.Acti
 		return err
 	}
 
+	gender, err := strconv.Atoi(data.Gender)
+	if err != nil {
+		return err
+	}
+
+	date, err := time.Parse(data.DateOfBirth, template.FormatDate)
+	if err != nil {
+		return err
+	}
+
 	customer := customerModel.TCustomers{
 		Username:       data.Username,
 		Email:          data.Email,
@@ -82,8 +93,8 @@ func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.Acti
 		Password:       data.Password,
 		Balance:        float64(10000000),
 		Status:         1,
-		Gender:         data.Gender,
-		DateOfBirth:    data.DateOfBirth,
+		Gender:         gender,
+		DateOfBirth:    sql.NullTime{Valid: true, Time: date},
 		LastLogin:      sql.NullTime{Time: time.Now(), Valid: true},
 		ProfilePicture: "",
 		Base: template.Base{
