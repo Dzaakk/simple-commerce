@@ -22,6 +22,7 @@ const (
 	queryUpdateBalance            = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
 	queryUpdatePassword           = `UPDATE public.customer SET password=$1, updated_by=$2, updated=now() WHERE id=$2`
 	queryDeactive                 = "UPDATE public.customer set status=$1 WHERE id=$2"
+	queryUpdateProfilePic         = "UPDATE public.customer set profile_picture=$1 WHERE id=$2"
 	queryUpdateBalanceWithReturn  = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
 	queryGetBalanceByID           = `SELECT balance FROM public.customer WHERE id = $1`
 	queryGetBalanceByIDWithReturn = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
@@ -260,4 +261,20 @@ func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sq
 		return nil, response.Error("error scan customer", err)
 	}
 	return customerBalance, nil
+}
+
+func (repo *CustomerRepositoryImpl) UpdateProfilePicture(ctx context.Context, customerID int64, image string) error {
+	if customerID <= 0 {
+		return response.InvalidParameter()
+	}
+
+	ctx, cancel := repo.contextWithTimeout(ctx)
+	defer cancel()
+
+	_, err := repo.DB.ExecContext(ctx, queryUpdateProfilePic, image, customerID)
+	if err != nil {
+		return response.ExecError("update profile picture", err)
+	}
+
+	return nil
 }
