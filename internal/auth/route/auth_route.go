@@ -37,6 +37,6 @@ func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
 		seller.POST("/register", ar.Handler.RegistrationSeller)
 		seller.POST("/activate", ar.Handler.ActivationSeller)
 		seller.POST("/login", ar.Handler.LoginSeller)
-		// customer.POST("/logout", ar.SellerMiddleware.ValidateToken(), ar.Handler.Logout)
+		seller.POST("/logout", ar.SellerMiddleware.ValidateToken(), ar.Handler.Logout)
 	}
 }
