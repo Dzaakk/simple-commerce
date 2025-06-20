@@ -15,7 +15,9 @@ type AuthRoutes struct {
 
 func NewAuthRoutes(handler *handler.AuthHandler, customerMiddleware *middleware.JWTCustomerMiddleware, sellerMiddleware *middleware.JWTSellerMiddleware) *AuthRoutes {
 	return &AuthRoutes{
-		Handler: handler,
+		Handler:            handler,
+		CustomerMiddleware: customerMiddleware,
+		SellerMiddleware:   sellerMiddleware,
 	}
 }
 
@@ -35,6 +37,6 @@ func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
 		seller.POST("/register", ar.Handler.RegistrationSeller)
 		seller.POST("/activate", ar.Handler.ActivationSeller)
 		seller.POST("/login", ar.Handler.LoginSeller)
-		customer.POST("/logout", ar.SellerMiddleware.ValidateToken(), ar.Handler.Logout)
+		// customer.POST("/logout", ar.SellerMiddleware.ValidateToken(), ar.Handler.Logout)
 	}
 }
