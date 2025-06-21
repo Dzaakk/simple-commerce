@@ -48,3 +48,6 @@ func (handler *ProductHandler) GetProduct(ctx *gin.Context) {
 	}
 
 }
+func (handler *ProductHandler) CreateProduct(ctx *gin.Context) {}
+func (handler *ProductHandler) UpdateProduct(ctx *gin.Context) {}
+func (handler *ProductHandler) DeleteProduct(ctx *gin.Context) {}
