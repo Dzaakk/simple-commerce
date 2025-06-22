@@ -33,13 +33,7 @@ const (
 	dbQueryTimeout      = 1 * time.Second
 )
 
-func (repo *SellerRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(ctx, dbQueryTimeout)
-}
-
 func (repo *SellerRepositoryImpl) Create(ctx context.Context, data model.TSeller) (int64, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	var id int64
 	err := repo.DB.QueryRowContext(ctx, queryCreate, data.Username, data.Email, data.Password, 0, time.Now(), "SYSTEM").Scan(id)
@@ -51,8 +45,6 @@ func (repo *SellerRepositoryImpl) Create(ctx context.Context, data model.TSeller
 }
 
 func (repo *SellerRepositoryImpl) Update(ctx context.Context, data model.TSeller) (int64, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 	result, err := repo.DB.ExecContext(ctx, queryUpdate, data.Username, data.Email, time.Now(), data.Username)
 	if err != nil {
 		return 0, err
@@ -62,9 +54,6 @@ func (repo *SellerRepositoryImpl) Update(ctx context.Context, data model.TSeller
 }
 
 func (repo *SellerRepositoryImpl) FindAll(ctx context.Context) ([]*model.TSeller, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
-
 	rows, err := repo.DB.QueryContext(ctx, queryFindAll)
 	if err != nil {
 		return nil, response.Error("error scan seller", err)
@@ -95,16 +84,12 @@ func (repo *SellerRepositoryImpl) FindByEmail(ctx context.Context, email string)
 }
 
 func (repo *SellerRepositoryImpl) findSeller(ctx context.Context, query string, args ...interface{}) (*model.TSeller, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	row := repo.DB.QueryRowContext(ctx, query, args...)
 	return scanSeller(row)
 }
 
 func (repo *SellerRepositoryImpl) InsertBalance(ctx context.Context, sellerId int64, balance int64) error {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	_, err := repo.DB.ExecContext(ctx, queryUpdateBalance, balance, sellerId)
 	if err != nil {
@@ -115,8 +100,6 @@ func (repo *SellerRepositoryImpl) InsertBalance(ctx context.Context, sellerId in
 }
 
 func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerId int64, newPassword string) (int64, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	result, err := repo.DB.ExecContext(ctx, queryUpdatePassword, newPassword, sellerId)
 	if err != nil {
@@ -128,8 +111,6 @@ func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerId i
 }
 
 func (repo *SellerRepositoryImpl) Deactive(ctx context.Context, sellerId int64) (int64, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	result, err := repo.DB.ExecContext(ctx, queryDeactive, "I", sellerId)
 	if err != nil {
