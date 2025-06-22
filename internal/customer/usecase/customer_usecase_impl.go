@@ -9,15 +9,15 @@ import (
 )
 
 type CustomerUseCaseImpl struct {
-	repo repo.CustomerRepository
+	Repo repo.CustomerRepository
 }
 
 func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
-	return &CustomerUseCaseImpl{repo}
+	return &CustomerUseCaseImpl{Repo: repo}
 }
 
 func (c *CustomerUseCaseImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {
-	data, err := c.repo.FindByEmail(ctx, email)
+	data, err := c.Repo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func (c *CustomerUseCaseImpl) FindByEmail(ctx context.Context, email string) (*m
 }
 
 func (c *CustomerUseCaseImpl) FindByID(ctx context.Context, customerID int64) (*model.DataRes, error) {
-	data, err := c.repo.FindByID(ctx, customerID)
+	data, err := c.Repo.FindByID(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (c *CustomerUseCaseImpl) FindByID(ctx context.Context, customerID int64) (*
 }
 
 func (c *CustomerUseCaseImpl) GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalanceRes, error) {
-	data, err := c.repo.GetBalance(ctx, customerID)
+	data, err := c.Repo.GetBalance(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (c *CustomerUseCaseImpl) GetBalance(ctx context.Context, customerID int64) 
 }
 
 func (c *CustomerUseCaseImpl) UpdateBalance(ctx context.Context, customerID int64, balance float64, actionType string) (int64, error) {
-	data, err := c.repo.GetBalance(ctx, customerID)
+	data, err := c.Repo.GetBalance(ctx, customerID)
 	if err != nil {
 		return 0, err
 	}
@@ -66,7 +66,7 @@ func (c *CustomerUseCaseImpl) UpdateBalance(ctx context.Context, customerID int6
 	//Add Balance
 	if actionType == "A" {
 		balance += data.Balance
-		balance, err := c.repo.UpdateBalance(ctx, customerID, balance)
+		balance, err := c.Repo.UpdateBalance(ctx, customerID, balance)
 		if err != nil {
 			return 0, err
 		}
@@ -77,7 +77,7 @@ func (c *CustomerUseCaseImpl) UpdateBalance(ctx context.Context, customerID int6
 	//payment
 	if actionType == "P" {
 		balance = data.Balance - balance
-		balance, err := c.repo.UpdateBalance(ctx, customerID, balance)
+		balance, err := c.Repo.UpdateBalance(ctx, customerID, balance)
 		if err != nil {
 			return 0, err
 		}
@@ -93,13 +93,13 @@ func (c *CustomerUseCaseImpl) DecreaseBalance(ctx context.Context, customerID in
 		return nil, fmt.Errorf("invalid amount")
 	}
 
-	data, err := c.repo.GetBalance(ctx, customerID)
+	data, err := c.Repo.GetBalance(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
 
 	amount += data.Balance
-	balance, err := c.repo.UpdateBalance(ctx, customerID, amount)
+	balance, err := c.Repo.UpdateBalance(ctx, customerID, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -115,13 +115,13 @@ func (c *CustomerUseCaseImpl) IncreaseBalance(ctx context.Context, customerID in
 		return nil, fmt.Errorf("invalid amount")
 	}
 
-	data, err := c.repo.GetBalance(ctx, customerID)
+	data, err := c.Repo.GetBalance(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
 
 	data.Balance -= amount
-	balance, err := c.repo.UpdateBalance(ctx, customerID, amount)
+	balance, err := c.Repo.UpdateBalance(ctx, customerID, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (c *CustomerUseCaseImpl) IncreaseBalance(ctx context.Context, customerID in
 
 func (c *CustomerUseCaseImpl) Deactivate(ctx context.Context, customerID int64) (int64, error) {
 
-	rowsAffected, err := c.repo.Deactive(ctx, customerID)
+	rowsAffected, err := c.Repo.Deactive(ctx, customerID)
 	if err != nil {
 		return 0, err
 	}
@@ -147,7 +147,7 @@ func (c *CustomerUseCaseImpl) UpdatePassword(ctx context.Context, customerID int
 	if err != nil {
 		return 0, err
 	}
-	rowsAffected, err := c.repo.UpdatePassword(ctx, customerID, string(hashedPassword))
+	rowsAffected, err := c.Repo.UpdatePassword(ctx, customerID, string(hashedPassword))
 	if err != nil {
 		return 0, err
 	}
