@@ -82,6 +82,7 @@ func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
+func (h *AuthHandler) ForgotPasswordCustomer(ctx *gin.Context) {}
 
 func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {
 	var data model.SellerRegistrationReq
@@ -140,6 +141,7 @@ func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.Success("Login Success"))
 }
+func (h *AuthHandler) ForgotPasswordSeller(ctx *gin.Context) {}
 
 func (h *AuthHandler) Logout(ctx *gin.Context) {
 	roleRaw, roleExists := ctx.Get("role")
