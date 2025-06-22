@@ -41,6 +41,9 @@ func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
 
+func (handler *CustomerHandler) FindCustomerByUsername(ctx *gin.Context) {}
+func (handler *CustomerHandler) Update(ctx *gin.Context)                 {}
+func (handler *CustomerHandler) ChangePassword(ctx *gin.Context)         {}
 func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	var data model.BalanceUpdateReq
 
