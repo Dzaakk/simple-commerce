@@ -3,6 +3,7 @@ package repository
 import (
 	"Dzaakk/simple-commerce/internal/customer/model"
 	response "Dzaakk/simple-commerce/package/response"
+	"Dzaakk/simple-commerce/package/template"
 	"context"
 	"database/sql"
 	"fmt"
@@ -34,12 +35,6 @@ var (
 	once                          sync.Once
 )
 
-const (
-	StatusActive   = "A"
-	StatusInactive = "I"
-	updatedBy      = "SYSTEM"
-)
-
 func InitCustomerQueries() {
 	once.Do(func() {
 		insertColumns := strings.Join(customerInsertColumns, ",")
@@ -52,7 +47,7 @@ func InitCustomerQueries() {
 		QueryFindByEmail = fmt.Sprintf(`SELECT %s FROM %s WHERE email = $1`, selectColumns, customerTable)
 		QueryFindByID = fmt.Sprintf(`SELECT %s FROM %s WHERE id = $1`, selectColumns, customerTable)
 
-		QueryUpdateBalance = `UPDATE public.customer SET balance=$1, updated_by=$2, updated=now() WHERE id=$3 RETURNING balance`
+		QueryUpdateBalance = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
 		QueryUpdatePassword = `UPDATE public.customer SET password=$1, updated_by=$2, updated=now() WHERE id=$2`
 		QueryGetBalanceByID = `SELECT balance FROM public.customer WHERE id = $1`
 		QueryGetBalanceByIDWithReturn = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
@@ -117,7 +112,7 @@ func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, customerI
 		return 0, response.InvalidParameter()
 	}
 
-	result, err := repo.DB.ExecContext(ctx, QueryUpdateBalance, newBalance, updatedBy, customerID)
+	result, err := repo.DB.ExecContext(ctx, QueryUpdateBalance, newBalance, customerID)
 
 	if err != nil {
 		return 0, response.ExecError("update balance", err)
@@ -146,7 +141,7 @@ func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, customerID int
 		return 0, response.InvalidParameter()
 	}
 
-	result, err := repo.DB.ExecContext(ctx, QueryDeactive, StatusInactive, customerID)
+	result, err := repo.DB.ExecContext(ctx, QueryDeactive, template.StatusInactive, customerID)
 	if err != nil {
 		return 0, response.ExecError("deactivate", err)
 	}
