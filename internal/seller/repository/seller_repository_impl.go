@@ -3,49 +3,92 @@ package repository
 import (
 	"Dzaakk/simple-commerce/internal/seller/model"
 	"Dzaakk/simple-commerce/package/response"
+	"Dzaakk/simple-commerce/package/util"
 	"context"
+	"fmt"
+	"strings"
+	"sync"
 
 	"database/sql"
 	"errors"
 	"time"
 )
 
+var (
+	sellerTable         = "public.seller"
+	sellerInsertColumns = []string{
+		"username", "email", "password", "phone_number", "store_name", "address", "balance", "status", "bank_account_name", "bank_account_number", "bank_name", "created", "created_by",
+	}
+	sellerSelectColumns = append(
+		[]string{"id"},
+		append(sellerInsertColumns, "updated", "updated_by")...,
+	)
+
+	QueryCreate         string
+	QueryUpdate         string
+	QueryUpdatePassword string
+	QueryDeactive       string
+	QueryFindBySellerID string
+	QueryFindAll        string
+	QueryFindByUsername string
+	QueryFindByEmail    string
+	QueryUpdateBalance  string
+	once                sync.Once
+)
+
+func InitSellerQueries() {
+	once.Do(func() {
+		insertColumns := strings.Join(sellerInsertColumns, ",")
+		selectColumns := strings.Join(sellerSelectColumns, ",")
+
+		insertArgs := util.GeneratePlaceHolders(len(insertColumns))
+
+		QueryCreate = fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) RRETURNIN id`, sellerTable, insertColumns, insertArgs)
+
+		QueryFindAll = fmt.Sprintf(`SELECT %s FROM %s ORDER BY username`, selectColumns, sellerTable)
+		QueryFindBySellerID = fmt.Sprintf(`SELECT %s FROM %s WHERE id = $1`, selectColumns, sellerTable)
+		QueryFindByUsername = fmt.Sprintf(`SELECT %s FROM %s WHERE username = $1`, selectColumns, sellerTable)
+		QueryFindByEmail = fmt.Sprintf(`SELECT %s FROM %s WHERE email = $1`, selectColumns, sellerTable)
+
+		QueryUpdate = "UPDATE public.seller SET username=$1, email=$2, updated=NOW(), updated_by=$3 WHERE id=$4"
+		QueryUpdatePassword = "UPDATE public.seller set password=$1 WHERE id=$2"
+		QueryDeactive = "UPDATE public.seller set status=$1 WHERE id=$2"
+		QueryUpdateBalance = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
+	})
+}
+
 type SellerRepositoryImpl struct {
 	DB *sql.DB
 }
 
 func NewSellerRepository(db *sql.DB) SellerRepository {
-	return &SellerRepositoryImpl{
-		DB: db,
-	}
+	InitSellerQueries()
+	return &SellerRepositoryImpl{DB: db}
 }
-
-const (
-	queryCreate         = "INSERT INTO public.seller (username, email, password, balance, created, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-	queryUpdate         = "UPDATE public.seller SET username=$1, email=$2, updated=NOW(), updated_by=$3 WHERE id=$4"
-	queryUpdatePassword = "UPDATE public.seller set password=$1 WHERE id=$2"
-	queryDeactive       = "UPDATE public.seller set status=$1 WHERE id=$2"
-	queryFindById       = "SELECT * FROM public.seller WHERE id = $1"
-	queryFindAll        = "SELECT * FROM public.seller"
-	queryFindByUsername = "SELECT * FROM public.seller WHERE username = $1"
-	queryFindByEmail    = "SELECT * FROM public.seller WHERE email = $1"
-	queryUpdateBalance  = "UPDATE public.seller SET balance=$1, updated=NOW(), updated_by=$2 WHERE id=$2"
-	dbQueryTimeout      = 1 * time.Second
-)
 
 func (repo *SellerRepositoryImpl) Create(ctx context.Context, data model.TSeller) (int64, error) {
 
-	var id int64
-	err := repo.DB.QueryRowContext(ctx, queryCreate, data.Username, data.Email, data.Password, 0, time.Now(), "SYSTEM").Scan(id)
+	result, err := repo.DB.ExecContext(
+		ctx, QueryCreate,
+		data.Username, data.Email, data.Password, data.PhoneNumber,
+		data.StoreName, data.Address, data.Balance, data.Status,
+		data.BankAccountName, data.BankAccountNumber, data.BankName,
+		data.Created, data.CreatedBy,
+	)
 	if err != nil {
-		return 0, err
+		return 0, response.ExecError("create seller", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, response.Error("failed to retrieve last id", err)
 	}
 
 	return id, nil
 }
 
 func (repo *SellerRepositoryImpl) Update(ctx context.Context, data model.TSeller) (int64, error) {
-	result, err := repo.DB.ExecContext(ctx, queryUpdate, data.Username, data.Email, time.Now(), data.Username)
+	result, err := repo.DB.ExecContext(ctx, QueryUpdate, data.Username, data.Email, time.Now(), data.Username)
 	if err != nil {
 		return 0, err
 	}
@@ -54,7 +97,7 @@ func (repo *SellerRepositoryImpl) Update(ctx context.Context, data model.TSeller
 }
 
 func (repo *SellerRepositoryImpl) FindAll(ctx context.Context) ([]*model.TSeller, error) {
-	rows, err := repo.DB.QueryContext(ctx, queryFindAll)
+	rows, err := repo.DB.QueryContext(ctx, QueryFindAll)
 	if err != nil {
 		return nil, response.Error("error scan seller", err)
 	}
@@ -67,31 +110,30 @@ func (repo *SellerRepositoryImpl) FindById(ctx context.Context, sellerId int64) 
 	if sellerId <= 0 {
 		return nil, errors.New("invalid input parameter")
 	}
+	row := repo.DB.QueryRowContext(ctx, QueryFindBySellerID, sellerId)
 
-	return repo.findSeller(ctx, queryFindById, sellerId)
+	return scanSeller(row)
 }
 func (repo *SellerRepositoryImpl) FindByUsername(ctx context.Context, username string) (*model.TSeller, error) {
 	if username == "" {
 		return nil, errors.New("invalid input parameter")
 	}
-	return repo.findSeller(ctx, queryFindByUsername, username)
+	row := repo.DB.QueryRowContext(ctx, QueryFindByUsername, username)
+
+	return scanSeller(row)
 }
 func (repo *SellerRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.TSeller, error) {
 	if email == "" {
 		return nil, errors.New("invalid input parameter")
 	}
-	return repo.findSeller(ctx, queryFindByEmail, email)
-}
+	row := repo.DB.QueryRowContext(ctx, QueryFindByEmail, email)
 
-func (repo *SellerRepositoryImpl) findSeller(ctx context.Context, query string, args ...interface{}) (*model.TSeller, error) {
-
-	row := repo.DB.QueryRowContext(ctx, query, args...)
 	return scanSeller(row)
 }
 
 func (repo *SellerRepositoryImpl) InsertBalance(ctx context.Context, sellerId int64, balance int64) error {
 
-	_, err := repo.DB.ExecContext(ctx, queryUpdateBalance, balance, sellerId)
+	_, err := repo.DB.ExecContext(ctx, QueryUpdateBalance, balance, sellerId)
 	if err != nil {
 		return err
 	}
@@ -101,7 +143,7 @@ func (repo *SellerRepositoryImpl) InsertBalance(ctx context.Context, sellerId in
 
 func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerId int64, newPassword string) (int64, error) {
 
-	result, err := repo.DB.ExecContext(ctx, queryUpdatePassword, newPassword, sellerId)
+	result, err := repo.DB.ExecContext(ctx, QueryUpdatePassword, newPassword, sellerId)
 	if err != nil {
 		return 0, err
 	}
@@ -112,7 +154,7 @@ func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerId i
 
 func (repo *SellerRepositoryImpl) Deactive(ctx context.Context, sellerId int64) (int64, error) {
 
-	result, err := repo.DB.ExecContext(ctx, queryDeactive, "I", sellerId)
+	result, err := repo.DB.ExecContext(ctx, QueryDeactive, "I", sellerId)
 	if err != nil {
 		return 0, err
 	}
