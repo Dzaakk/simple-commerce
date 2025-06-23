@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"database/sql"
-	"errors"
 	"time"
 )
 
@@ -106,34 +105,24 @@ func (repo *SellerRepositoryImpl) FindAll(ctx context.Context) ([]*model.TSeller
 	return scanListSeller(rows)
 }
 
-func (repo *SellerRepositoryImpl) FindById(ctx context.Context, sellerId int64) (*model.TSeller, error) {
-	if sellerId <= 0 {
-		return nil, errors.New("invalid input parameter")
-	}
-	row := repo.DB.QueryRowContext(ctx, QueryFindBySellerID, sellerId)
+func (repo *SellerRepositoryImpl) FindBySellerID(ctx context.Context, sellerID int64) (*model.TSeller, error) {
+	row := repo.DB.QueryRowContext(ctx, QueryFindBySellerID, sellerID)
 
 	return scanSeller(row)
 }
 func (repo *SellerRepositoryImpl) FindByUsername(ctx context.Context, username string) (*model.TSeller, error) {
-	if username == "" {
-		return nil, errors.New("invalid input parameter")
-	}
 	row := repo.DB.QueryRowContext(ctx, QueryFindByUsername, username)
 
 	return scanSeller(row)
 }
 func (repo *SellerRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.TSeller, error) {
-	if email == "" {
-		return nil, errors.New("invalid input parameter")
-	}
 	row := repo.DB.QueryRowContext(ctx, QueryFindByEmail, email)
 
 	return scanSeller(row)
 }
 
-func (repo *SellerRepositoryImpl) InsertBalance(ctx context.Context, sellerId int64, balance int64) error {
-
-	_, err := repo.DB.ExecContext(ctx, QueryUpdateBalance, balance, sellerId)
+func (repo *SellerRepositoryImpl) InsertBalance(ctx context.Context, sellerID int64, balance int64) error {
+	_, err := repo.DB.ExecContext(ctx, QueryUpdateBalance, balance, sellerID)
 	if err != nil {
 		return err
 	}
@@ -141,9 +130,9 @@ func (repo *SellerRepositoryImpl) InsertBalance(ctx context.Context, sellerId in
 	return nil
 }
 
-func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerId int64, newPassword string) (int64, error) {
+func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerID int64, newPassword string) (int64, error) {
 
-	result, err := repo.DB.ExecContext(ctx, QueryUpdatePassword, newPassword, sellerId)
+	result, err := repo.DB.ExecContext(ctx, QueryUpdatePassword, newPassword, sellerID)
 	if err != nil {
 		return 0, err
 	}
@@ -152,9 +141,9 @@ func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerId i
 	return rowsAffected, nil
 }
 
-func (repo *SellerRepositoryImpl) Deactive(ctx context.Context, sellerId int64) (int64, error) {
+func (repo *SellerRepositoryImpl) Deactive(ctx context.Context, sellerID int64) (int64, error) {
 
-	result, err := repo.DB.ExecContext(ctx, QueryDeactive, "I", sellerId)
+	result, err := repo.DB.ExecContext(ctx, QueryDeactive, "I", sellerID)
 	if err != nil {
 		return 0, err
 	}
