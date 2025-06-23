@@ -224,19 +224,19 @@ func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.Activa
 	return nil
 }
 func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) error {
-	customer, err := a.CustomerRepo.FindByEmail(ctx, req.Email)
+	seller, err := a.SellerRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return err
 	}
 
-	if !util.CheckPasswordHash(req.Password, customer.Password) {
+	if !util.CheckPasswordHash(req.Password, seller.Password) {
 		return errors.New("invalid email or password")
 	}
 
 	tokenData := model.SellerToken{
-		ID:       customer.ID,
-		Username: customer.Username,
-		Email:    customer.Email,
+		ID:       int(seller.Id),
+		Username: seller.Username,
+		Email:    seller.Email,
 		Role:     template.RoleCustomer,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
@@ -249,7 +249,7 @@ func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) e
 		return err
 	}
 
-	err = a.SellerCache.SetTokenSeller(ctx, customer.Email, jwtToken)
+	err = a.SellerCache.SetTokenSeller(ctx, seller.Email, jwtToken)
 	if err != nil {
 		return err
 	}
