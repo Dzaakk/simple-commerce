@@ -4,6 +4,7 @@ import (
 	"Dzaakk/simple-commerce/internal/customer/model"
 	response "Dzaakk/simple-commerce/package/response"
 	"Dzaakk/simple-commerce/package/template"
+	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"database/sql"
 	"fmt"
@@ -40,7 +41,7 @@ func InitCustomerQueries() {
 		insertColumns := strings.Join(customerInsertColumns, ",")
 		selectColumns := strings.Join(customerSelectColumns, ",")
 
-		insertArgs := generatePlaceHolders(len(insertColumns))
+		insertArgs := util.GeneratePlaceHolders(len(insertColumns))
 
 		QueryCreate = fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) RRETURNIN id`, customerTable, insertColumns, insertArgs)
 
