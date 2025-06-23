@@ -5,18 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 )
-
-func generatePlaceHolders(n int) string {
-	holders := make([]string, n)
-
-	for i := 1; i <= n; i++ {
-		holders[i-1] = fmt.Sprintf("$%d", i)
-	}
-
-	return strings.Join(holders, ", ")
-}
 
 func scanCustomer(row *sql.Row) (*model.TCustomers, error) {
 	customer := &model.TCustomers{}
