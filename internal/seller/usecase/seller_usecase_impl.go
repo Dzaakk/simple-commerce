@@ -36,17 +36,17 @@ func (s *SellerUseCaseImpl) Create(ctx context.Context, data model.ReqCreate) (i
 		},
 	}
 
-	sellerId, err := s.repo.Create(ctx, seller)
+	sellerID, err := s.repo.Create(ctx, seller)
 	if err != nil {
 		return 0, err
 	}
 
-	return sellerId, nil
+	return sellerID, nil
 }
 
-func (s *SellerUseCaseImpl) Deactivate(ctx context.Context, sellerId int64) (int64, error) {
+func (s *SellerUseCaseImpl) Deactivate(ctx context.Context, sellerID int64) (int64, error) {
 
-	rowsAffected, err := s.repo.Deactive(ctx, sellerId)
+	rowsAffected, err := s.repo.Deactive(ctx, sellerID)
 	if err != nil {
 		return 0, err
 	}
@@ -63,8 +63,8 @@ func (s *SellerUseCaseImpl) FindAll(ctx context.Context) ([]*model.ResData, erro
 	return listSeller, nil
 }
 
-func (s *SellerUseCaseImpl) FindById(ctx context.Context, sellerId int64) (*model.ResData, error) {
-	sellerData, err := s.repo.FindById(ctx, sellerId)
+func (s *SellerUseCaseImpl) FindBySellerID(ctx context.Context, sellerID int64) (*model.ResData, error) {
+	sellerData, err := s.repo.FindBySellerID(ctx, sellerID)
 	if err != nil {
 		return nil, err
 	}
@@ -96,8 +96,8 @@ func (s *SellerUseCaseImpl) FindByUsername(ctx context.Context, username string)
 }
 
 func (s *SellerUseCaseImpl) Update(ctx context.Context, data model.ReqUpdate) (int64, error) {
-	sellerId, _ := strconv.ParseInt(data.Id, 0, 64)
-	existingData, err := s.repo.FindById(ctx, sellerId)
+	sellerID, _ := strconv.ParseInt(data.Id, 0, 64)
+	existingData, err := s.repo.FindBySellerID(ctx, sellerID)
 	if err != nil {
 		return 0, err
 	}
@@ -133,13 +133,13 @@ func generateDataUpdate(existingData model.TSeller, newData model.ReqUpdate) mod
 	return updatedData
 }
 
-func (s *SellerUseCaseImpl) ChangePassword(ctx context.Context, sellerId int64, newPassword string) (int64, error) {
+func (s *SellerUseCaseImpl) ChangePassword(ctx context.Context, sellerID int64, newPassword string) (int64, error) {
 	hashedPassword, err := util.HashPassword(newPassword)
 	if err != nil {
 		return 0, err
 	}
 
-	rowsAffected, err := s.repo.UpdatePassword(ctx, sellerId, string(hashedPassword))
+	rowsAffected, err := s.repo.UpdatePassword(ctx, sellerID, string(hashedPassword))
 	if err != nil {
 		return 0, err
 	}
