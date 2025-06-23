@@ -21,7 +21,7 @@ func (sr *SellerRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
 	sellerHandler.Use()
 	{
 		sellerHandler.GET("", sr.Handler.FindAll)
-		sellerHandler.GET("/id", sr.Handler.FindById)
+		sellerHandler.GET("/id", sr.Handler.FindBySellerID)
 		sellerHandler.GET("/username", sr.Handler.FindByUsername)
 	}
 }
