@@ -3,6 +3,7 @@ package repository
 import (
 	"Dzaakk/simple-commerce/internal/seller/model"
 	"Dzaakk/simple-commerce/package/response"
+	"Dzaakk/simple-commerce/package/template"
 	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"fmt"
@@ -143,7 +144,7 @@ func (repo *SellerRepositoryImpl) UpdatePassword(ctx context.Context, sellerID i
 
 func (repo *SellerRepositoryImpl) Deactive(ctx context.Context, sellerID int64) (int64, error) {
 
-	result, err := repo.DB.ExecContext(ctx, QueryDeactive, "I", sellerID)
+	result, err := repo.DB.ExecContext(ctx, QueryDeactive, template.StatusInactive, sellerID)
 	if err != nil {
 		return 0, err
 	}
