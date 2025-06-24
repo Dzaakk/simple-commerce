@@ -6,9 +6,7 @@ import (
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
-	"time"
 )
 
 type ProductRepositoryImpl struct {
@@ -32,16 +30,10 @@ const (
 	queryGetStockByProductID         = `SELECT stock FROM public.product WHERE id = $1`
 	queryFindByName                  = `SELECT * FROM public.product WHERE product_name like '%' || $1 || '%'`
 	querySetStockByProductID         = `UPDATE public.product SET stock = $1 WHERE id = $2`
-	dbQueryTimeout                   = 3 * time.Second
 	queryBase                        = "SELECT * FROM products WHERE 1=1"
 )
 
-func (repo *ProductRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(ctx, dbQueryTimeout)
-}
 func (repo *ProductRepositoryImpl) Create(ctx context.Context, data model.TProduct) (*model.TProduct, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	result, err := repo.DB.ExecContext(ctx, queryCreate, data.ProductName, data.Price, data.Stock, data.CategoryID, data.SellerID, data.Base.Created, data.Base.CreatedBy)
 	if err != nil {
@@ -58,11 +50,6 @@ func (repo *ProductRepositoryImpl) Create(ctx context.Context, data model.TProdu
 }
 
 func (repo *ProductRepositoryImpl) Update(ctx context.Context, data model.TProduct) (int64, error) {
-	if data.Price < 0 {
-		return 0, errors.New("invalid input parameter")
-	}
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	result, err := repo.DB.ExecContext(ctx, queryUpdate, data.ProductName, data.Price, data.Stock, data.UpdatedBy, data.ID)
 	if err != nil {
@@ -74,8 +61,6 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, data model.TProdu
 }
 
 func (repo *ProductRepositoryImpl) FindByProductID(ctx context.Context, productID int) (*model.TProduct, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	rows, err := repo.DB.QueryContext(ctx, queryFindByProductID, productID)
 	if err != nil {
@@ -92,8 +77,6 @@ func (repo *ProductRepositoryImpl) FindByProductID(ctx context.Context, productI
 }
 
 func (repo *ProductRepositoryImpl) FindProductByFilters(ctx context.Context, categoryID, sellerID *int) ([]*model.TProduct, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	query := queryBase
 	args := []interface{}{}
@@ -117,8 +100,6 @@ func (repo *ProductRepositoryImpl) FindProductByFilters(ctx context.Context, cat
 }
 
 func (repo *ProductRepositoryImpl) GetPriceByProductID(ctx context.Context, productID int) (float32, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	var balance float32
 	err := repo.DB.QueryRowContext(ctx, queryGetPriceByProductID, productID).Scan(&balance)
@@ -130,8 +111,6 @@ func (repo *ProductRepositoryImpl) GetPriceByProductID(ctx context.Context, prod
 }
 
 func (repo *ProductRepositoryImpl) GetStockByProductID(ctx context.Context, productID int) (int, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	var stock int
 	err := repo.DB.QueryRowContext(ctx, queryGetPriceByProductID, productID).Scan(stock)
@@ -143,8 +122,6 @@ func (repo *ProductRepositoryImpl) GetStockByProductID(ctx context.Context, prod
 }
 
 func (repo *ProductRepositoryImpl) SetStockByProductID(ctx context.Context, productID int, stock int) (int64, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	result, err := repo.DB.ExecContext(ctx, querySetStockByProductID, stock, productID)
 	if err != nil {
@@ -155,8 +132,6 @@ func (repo *ProductRepositoryImpl) SetStockByProductID(ctx context.Context, prod
 }
 
 func (repo *ProductRepositoryImpl) FindByProductName(ctx context.Context, productName string) (*model.TProduct, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	rows, err := repo.DB.QueryContext(ctx, queryFindByName, productName)
 	if err != nil {
@@ -172,6 +147,7 @@ func (repo *ProductRepositoryImpl) FindByProductName(ctx context.Context, produc
 }
 
 func (repo *ProductRepositoryImpl) UpdateStock(ctx context.Context, listData []*cartModel.TCartItemDetail, name string) error {
+
 	query, args := generateMultipleStockUpdateQuery(listData)
 	_, err := repo.DB.Exec(query, args...)
 	if err != nil {
