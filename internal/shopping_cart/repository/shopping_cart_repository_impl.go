@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"strconv"
-	"time"
 )
 
 type ShoppingCartRepositoryImpl struct {
@@ -27,16 +26,9 @@ const (
 	queryUpdateStatusById          = `UPDATE public.shopping_cart SET status=$1, updated_by=$2, updated=now() WHERE id=$3`
 	queryCheckStatus               = `SELECT status FROM public.shopping_cart WHERE id=$1 AND customer_id=$2`
 	queryDeleteShoppingCart        = `DELETE FROM public.shopping_cart WHERE id=$1`
-	dbQueryTimeout                 = 2 * time.Second
 )
 
-func (repo *ShoppingCartRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(ctx, dbQueryTimeout)
-}
-
 func (repo *ShoppingCartRepositoryImpl) Create(ctx context.Context, data model.TShoppingCart) (*model.TShoppingCart, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	result, err := repo.DB.ExecContext(ctx, queryCreateShoppingCart, data.CustomerID, data.Status, data.Base.Created, data.Base.CreatedBy)
 	if err != nil {
@@ -53,39 +45,27 @@ func (repo *ShoppingCartRepositoryImpl) Create(ctx context.Context, data model.T
 	return newData, nil
 }
 func (repo *ShoppingCartRepositoryImpl) FindByCustomerID(ctx context.Context, customerID int) (*model.TShoppingCart, error) {
-	if customerID <= 0 {
-		return nil, response.InvalidParameter()
-	}
 
-	return repo.findShoppingCart(ctx, queryFindByCustomerId, customerID)
+	row := repo.DB.QueryRowContext(ctx, queryFindByCustomerId, customerID)
+
+	return scanCart(row)
 }
 
 func (repo *ShoppingCartRepositoryImpl) FindByCartID(ctx context.Context, cartID int) (*model.TShoppingCart, error) {
-	if cartID <= 0 {
-		return nil, response.InvalidParameter()
-	}
 
-	return repo.findShoppingCart(ctx, queryFindById, cartID)
+	row := repo.DB.QueryRowContext(ctx, queryFindById, cartID)
+
+	return scanCart(row)
 }
 
 func (repo *ShoppingCartRepositoryImpl) FindByStatusAndCustomerID(ctx context.Context, customerID int, status string) (*model.TShoppingCart, error) {
-	if customerID <= 0 || status == "" {
-		return nil, response.InvalidParameter()
-	}
-	return repo.findShoppingCart(ctx, queryFindByCustomerIdAndStatus, customerID, status)
-}
 
-func (repo *ShoppingCartRepositoryImpl) findShoppingCart(ctx context.Context, query string, args ...interface{}) (*model.TShoppingCart, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
+	row := repo.DB.QueryRowContext(ctx, queryFindByCustomerIdAndStatus, customerID, status)
 
-	row := repo.DB.QueryRowContext(ctx, query, args...)
 	return scanCart(row)
 }
 
 func (repo *ShoppingCartRepositoryImpl) UpdateStatusByCartID(ctx context.Context, cartID int, status, customerID string) (*model.TShoppingCart, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	_, err := repo.DB.ExecContext(ctx, queryUpdateStatusById, status, customerID, cartID)
 	if err != nil {
@@ -103,12 +83,6 @@ func (repo *ShoppingCartRepositoryImpl) UpdateStatusByCartID(ctx context.Context
 }
 
 func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, cartID int, customerID int) (string, error) {
-	if cartID <= 0 || customerID <= 0 {
-		return "", response.InvalidParameter()
-	}
-
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	var status string
 	_ = repo.DB.QueryRowContext(ctx, queryCheckStatus, cartID, customerID).Scan(&status)
@@ -117,19 +91,12 @@ func (repo *ShoppingCartRepositoryImpl) CheckStatus(ctx context.Context, cartID 
 }
 
 func (repo *ShoppingCartRepositoryImpl) UpdateStatusByCartIDWithTx(ctx context.Context, tx *sql.Tx, cartID int, status string, customerID string) error {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	_, err := tx.ExecContext(ctx, queryUpdateStatusById, status, customerID, cartID)
 	return err
 }
 
 func (repo *ShoppingCartRepositoryImpl) DeleteShoppingCart(ctx context.Context, cartID int) error {
-	if cartID <= 0 {
-		return response.InvalidParameter()
-	}
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	_, err := repo.DB.ExecContext(ctx, queryDeleteShoppingCart, cartID)
 	if err != nil {

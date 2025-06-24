@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type ShoppingCartItemRepositoryImpl struct {
@@ -29,16 +28,9 @@ const (
 	queryCountProductQuantity   = `SELECT SUM(quantity) FROM public.shopping_cart_item WHERE product_id=$1 AND cart_id=$2`
 	queryRetrieveCartItems      = "SELECT sci.product_id, p.product_name, p.price, sci.quantity FROM public.shopping_cart_item sci JOIN public.product p ON sci.product_id = p.id WHERE sci.cart_id=$1 ORDER BY p.product_name ASC"
 	queryDeleteCartItems        = "DELETE FROM shopping_cart_item WHERE cart_id=$1 AND product_id=$2"
-	dbQueryItemTimeout          = 2 * time.Second
 )
 
-func (repo *ShoppingCartItemRepositoryImpl) contextWithTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(ctx, dbQueryItemTimeout)
-}
-
 func (repo *ShoppingCartItemRepositoryImpl) Create(ctx context.Context, data model.TShoppingCartItem) (*model.TShoppingCartItem, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	_, err := repo.DB.ExecContext(ctx, queryCreateShoppingCartItem, data.CartID, data.ProductID, data.Quantity, data.Base.Created, data.Base.CreatedBy)
 	if err != nil {
@@ -49,12 +41,11 @@ func (repo *ShoppingCartItemRepositoryImpl) Create(ctx context.Context, data mod
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) SetEmptyQuantityWithTx(ctx context.Context, tx *sql.Tx, listProductID []*int) error {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	if len(listProductID) == 0 {
 		return nil
 	}
+
 	var query strings.Builder
 
 	query.WriteString("UPDATE public.shopping_cart_item SET quantity = 0 WHERE product_id IN (")
@@ -79,12 +70,6 @@ func (repo *ShoppingCartItemRepositoryImpl) SetEmptyQuantityWithTx(ctx context.C
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) DeleteAll(ctx context.Context, cartID int) error {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
-
-	if cartID <= 0 {
-		return response.InvalidParameter()
-	}
 
 	_, err := repo.DB.ExecContext(ctx, queryDeleteAllCartItems, cartID)
 	if err != nil {
@@ -95,12 +80,6 @@ func (repo *ShoppingCartItemRepositoryImpl) DeleteAll(ctx context.Context, cartI
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) DeleteAllWithTx(ctx context.Context, tx *sql.Tx, cartID int) error {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
-
-	if cartID <= 0 {
-		return response.InvalidParameter()
-	}
 
 	_, err := tx.ExecContext(ctx, queryDeleteAllCartItems, cartID)
 	if err != nil {
@@ -111,12 +90,6 @@ func (repo *ShoppingCartItemRepositoryImpl) DeleteAllWithTx(ctx context.Context,
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) CountByCartID(ctx context.Context, cartID int) (int, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
-
-	if cartID <= 0 {
-		return 0, response.InvalidParameter()
-	}
 
 	var total int
 	_ = repo.DB.QueryRowContext(ctx, queryCountItemByChartId, cartID).Scan(&total)
@@ -124,8 +97,6 @@ func (repo *ShoppingCartItemRepositoryImpl) CountByCartID(ctx context.Context, c
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) Update(ctx context.Context, data model.TShoppingCartItem, customerID string) (*model.TShoppingCartItem, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
 
 	custId, err := strconv.Atoi(customerID)
 	if custId <= 0 || err != nil {
@@ -145,12 +116,6 @@ func (repo *ShoppingCartItemRepositoryImpl) Update(ctx context.Context, data mod
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) Delete(ctx context.Context, productID int, cartID int) error {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
-
-	if cartID <= 0 || productID <= 0 {
-		return response.InvalidParameter()
-	}
 
 	_, err := repo.DB.ExecContext(ctx, queryDeleteCartItems, cartID, productID)
 	if err != nil {
@@ -212,12 +177,6 @@ func (repo *ShoppingCartItemRepositoryImpl) RetrieveCartItemsByCartIDWithTx(ctx 
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) CountQuantityByProductIDAndCartID(ctx context.Context, productID int, cartID int) (int, error) {
-	ctx, cancel := repo.contextWithTimeout(ctx)
-	defer cancel()
-
-	if productID <= 0 || cartID <= 0 {
-		return 0, response.InvalidParameter()
-	}
 
 	var totalQuantity int
 	_ = repo.DB.QueryRowContext(ctx, queryCountProductQuantity, productID, cartID).Scan(&totalQuantity)
