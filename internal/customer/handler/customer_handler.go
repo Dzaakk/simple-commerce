@@ -22,7 +22,7 @@ func NewCustomerHandler(usecase usecase.CustomerUseCase) *CustomerHandler {
 	}
 }
 
-func (handler *CustomerHandler) FindCustomerById(ctx *gin.Context) {
+func (handler *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
 	customerID, err := strconv.ParseInt(ctx.Query("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BadRequest(err.Error()))

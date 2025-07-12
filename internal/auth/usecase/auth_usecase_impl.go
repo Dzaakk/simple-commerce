@@ -234,7 +234,7 @@ func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) e
 	}
 
 	tokenData := model.SellerToken{
-		ID:       int(seller.Id),
+		ID:       int(seller.ID),
 		Username: seller.Username,
 		Email:    seller.Email,
 		Role:     template.RoleCustomer,

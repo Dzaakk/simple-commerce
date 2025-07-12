@@ -70,7 +70,7 @@ func (s *SellerUseCaseImpl) FindBySellerID(ctx context.Context, sellerID int64) 
 	}
 
 	res := &model.ResData{
-		Id:       fmt.Sprintf("%d", sellerData.Id),
+		Id:       fmt.Sprintf("%d", sellerData.ID),
 		Username: sellerData.Username,
 		Email:    sellerData.Email,
 		Balance:  fmt.Sprintf("%.2f", sellerData.Balance),
@@ -86,7 +86,7 @@ func (s *SellerUseCaseImpl) FindByUsername(ctx context.Context, username string)
 	}
 
 	res := &model.ResData{
-		Id:       fmt.Sprintf("%d", sellerData.Id),
+		Id:       fmt.Sprintf("%d", sellerData.ID),
 		Username: sellerData.Username,
 		Email:    sellerData.Email,
 		Balance:  fmt.Sprintf("%.2f", sellerData.Balance),

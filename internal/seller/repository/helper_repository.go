@@ -14,7 +14,7 @@ func scanSeller(row *sql.Row) (*model.TSeller, error) {
 	var updated sql.NullTime
 
 	err := row.Scan(
-		&seller.Id, &seller.Username, &seller.Email, &seller.Password, &seller.Balance, &seller.Status,
+		&seller.ID, &seller.Username, &seller.Email, &seller.Password, &seller.Balance, &seller.Status,
 		&base.Created, &base.CreatedBy, &updated, &base.UpdatedBy,
 	)
 	if err != nil {
@@ -45,7 +45,7 @@ func scanListSeller(rows *sql.Rows) ([]*model.TSeller, error) {
 		var updated sql.NullTime
 
 		err := rows.Scan(
-			&seller.Id, &seller.Username, &seller.Email, &seller.Password, &seller.Balance, &seller.Status,
+			&seller.ID, &seller.Username, &seller.Email, &seller.Password, &seller.Balance, &seller.Status,
 			&base.Created, &base.CreatedBy, &updated, &base.UpdatedBy,
 		)
 		if err != nil {

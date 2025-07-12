@@ -23,7 +23,7 @@ func (cr *CustomerRoutes) Route(r *gin.RouterGroup) {
 	customerHandler := r.Group("/api/v1")
 	customerHandler.Use(cr.JWTMiddleware.ValidateToken())
 	{
-		customerHandler.GET("/customers", cr.Handler.FindCustomerById)
+		customerHandler.GET("/customers", cr.Handler.FindCustomerByID)
 		customerHandler.POST("/balance", cr.Handler.UpdateBalance)
 	}
 }

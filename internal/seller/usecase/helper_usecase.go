@@ -9,7 +9,7 @@ func ConvertSellersToResData(sellers []*model.TSeller) []*model.ResData {
 	resDataList := make([]*model.ResData, len(sellers))
 	for i, seller := range sellers {
 		resData := &model.ResData{
-			Id:       strconv.FormatInt(seller.Id, 10),
+			Id:       strconv.FormatInt(seller.ID, 10),
 			Username: seller.Username,
 			Email:    seller.Email,
 			Balance:  strconv.FormatFloat(seller.Balance, 'f', -1, 64),
