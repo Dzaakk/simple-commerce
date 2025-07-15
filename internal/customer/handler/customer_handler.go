@@ -22,7 +22,7 @@ func NewCustomerHandler(usecase usecase.CustomerUseCase) *CustomerHandler {
 	}
 }
 
-func (handler *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
+func (h *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
 	customerID, err := strconv.ParseInt(ctx.Query("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.BadRequest(err.Error()))
@@ -31,7 +31,7 @@ func (handler *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
 
 	template.AuthorizedChecker(ctx, ctx.Query("id"))
 
-	data, err := handler.Usecase.FindByID(ctx, customerID)
+	data, err := h.Usecase.FindByID(ctx, customerID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.NotFound(err.Error()))
 		ctx.Abort()
@@ -41,10 +41,35 @@ func (handler *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
 
-func (handler *CustomerHandler) FindCustomerByUsername(ctx *gin.Context) {}
-func (handler *CustomerHandler) Update(ctx *gin.Context)                 {}
-func (handler *CustomerHandler) ChangePassword(ctx *gin.Context)         {}
-func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
+func (h *CustomerHandler) FindCustomerByUsername(ctx *gin.Context) {}
+func (h *CustomerHandler) Update(ctx *gin.Context)                 {}
+
+func (h *CustomerHandler) ChangePassword(ctx *gin.Context) {
+	var req model.ChangePasswordReq
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		return
+	}
+
+	customerID, err := strconv.ParseInt(ctx.Query("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, response.BadRequest(err.Error()))
+		return
+	}
+
+	template.AuthorizedChecker(ctx, ctx.Query("id"))
+
+	_, err = h.Usecase.UpdatePassword(ctx, customerID, req.NewPassword)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.Success("Success change password!"))
+}
+
+func (h *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	var data model.BalanceUpdateReq
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
@@ -59,13 +84,13 @@ func (handler *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	}
 
 	id, _ := strconv.ParseInt(data.CustomerID, 10, 64)
-	oldData, err := handler.Usecase.GetBalance(ctx, id)
+	oldData, err := h.Usecase.GetBalance(ctx, id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 	template.AuthorizedChecker(ctx, data.CustomerID)
-	newBalance, err := handler.Usecase.UpdateBalance(ctx, id, float64(balance), data.ActionType)
+	newBalance, err := h.Usecase.UpdateBalance(ctx, id, float64(balance), data.ActionType)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, response.NotFound(err.Error()))
 		ctx.Abort()

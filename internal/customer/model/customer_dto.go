@@ -6,7 +6,9 @@ type UpdateReq struct {
 	Email       string `json:"email" validate:"required,email"`
 	PhoneNumber string `json:"phone_number" validate:"required"`
 }
-
+type ChangePasswordReq struct {
+	NewPassword string `json:"newPassword" validate:"required"`
+}
 type DataRes struct {
 	CustomerID  string `json:"customer_id"`
 	Username    string `json:"username,omitempty"`

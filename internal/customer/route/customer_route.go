@@ -20,10 +20,11 @@ func NewCustomerRoutes(handler *handler.CustomerHandler, jwtMiddleware *middlewa
 }
 
 func (cr *CustomerRoutes) Route(r *gin.RouterGroup) {
-	customerHandler := r.Group("/api/v1")
+	customerHandler := r.Group("/api/v1/customer")
 	customerHandler.Use(cr.JWTMiddleware.ValidateToken())
 	{
-		customerHandler.GET("/customers", cr.Handler.FindCustomerByID)
+		customerHandler.GET("/find-all", cr.Handler.FindCustomerByID)
 		customerHandler.POST("/balance", cr.Handler.UpdateBalance)
+		customerHandler.POST("/change-password", cr.Handler.ChangePassword)
 	}
 }
