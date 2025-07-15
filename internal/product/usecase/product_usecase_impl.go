@@ -70,6 +70,21 @@ func (p *ProductUseCaseImpl) Update(ctx context.Context, dataReq model.ProductRe
 
 	return nil
 }
+func (p *ProductUseCaseImpl) FindByFilter(ctx context.Context, params model.ProductFilter) ([]*model.ProductRes, error) {
+
+	listProduct, err := p.repo.FindByFilters(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var listData []*model.ProductRes
+	for _, p := range listProduct {
+		product := p.ToResponse()
+		listData = append(listData, &product)
+	}
+
+	return listData, nil
+}
 
 func (p *ProductUseCaseImpl) FindByCategoryID(ctx context.Context, categoryID int) ([]*model.ProductRes, error) {
 	listData, err := p.repo.FindProductByFilters(ctx, nil, &categoryID)

@@ -11,4 +11,5 @@ type ProductUseCase interface {
 	Update(ctx context.Context, data model.ProductReq) error
 	FilterByProductPrice(ctx context.Context, productPrice int) ([]*model.ProductRes, error)
 	FindByProductName(ctx context.Context, productName string) (*model.ProductRes, error)
+	FindByFilter(ctx context.Context, params model.ProductFilter) ([]*model.ProductRes, error)
 }

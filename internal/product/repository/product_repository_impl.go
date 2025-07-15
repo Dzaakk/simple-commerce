@@ -60,6 +60,10 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, data model.TProdu
 	return rowsAffected, nil
 }
 
+func (repo *ProductRepositoryImpl) FindByFilters(ctx context.Context, params model.ProductFilter) ([]*model.TProduct, error) {
+	panic("unimplemented")
+}
+
 func (repo *ProductRepositoryImpl) FindByProductID(ctx context.Context, productID int) (*model.TProduct, error) {
 
 	rows, err := repo.DB.QueryContext(ctx, queryFindByProductID, productID)
