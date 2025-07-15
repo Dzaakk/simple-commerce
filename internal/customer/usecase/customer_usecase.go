@@ -7,6 +7,7 @@ import (
 
 type CustomerUseCase interface {
 	FindByID(ctx context.Context, customerID int64) (*model.DataRes, error)
+	FindByUsername(ctx context.Context, username string) (*model.DataRes, error)
 	UpdateBalance(ctx context.Context, customerID int64, balance float64, actionType string) (int64, error)
 	GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalanceRes, error)
 	IncreaseBalance(ctx context.Context, customerID int64, amount float64) (*model.CustomerBalanceRes, error)

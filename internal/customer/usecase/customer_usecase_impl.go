@@ -158,3 +158,7 @@ func (c *CustomerUseCaseImpl) UpdatePassword(ctx context.Context, customerID int
 func (c *CustomerUseCaseImpl) Update(ctx context.Context, dataReq model.UpdateReq) (int64, error) {
 	panic("unimplemented")
 }
+
+func (c *CustomerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.DataRes, error) {
+	panic("unimplemented")
+}
