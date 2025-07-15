@@ -40,6 +40,6 @@ func (h *ProductHandler) GetProducts(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success(listProduct))
 
 }
-func (handler *ProductHandler) CreateProduct(ctx *gin.Context) {}
-func (handler *ProductHandler) UpdateProduct(ctx *gin.Context) {}
-func (handler *ProductHandler) DeleteProduct(ctx *gin.Context) {}
+func (h *ProductHandler) CreateProduct(ctx *gin.Context) {}
+func (h *ProductHandler) UpdateProduct(ctx *gin.Context) {}
+func (h *ProductHandler) DeleteProduct(ctx *gin.Context) {}
