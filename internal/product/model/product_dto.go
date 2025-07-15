@@ -17,3 +17,13 @@ type ProductReq struct {
 	CategoryID  string `json:"category_id,omitempty"`
 	SellerID    string `json:"seller_id,omitempty"`
 }
+
+type ProductFilter struct {
+	ProductName string `form:"product_name"`
+	CategoryID  string `form:"category_id"`
+	SellerID    string `form:"seller_id"`
+	LowPrice    string `form:"low_price"`
+	HighPrice   string `form:"high_price"`
+	Offset      int    `form:"offset"`
+	Limit       int    `form:"limit"`
+}
