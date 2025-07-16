@@ -44,10 +44,6 @@ func (p *ProductUseCaseImpl) Create(ctx context.Context, dataReq model.ProductRe
 	return productRes, nil
 }
 
-func (p *ProductUseCaseImpl) FilterByProductPrice(ctx context.Context, productPrice int) ([]*model.ProductRes, error) {
-	panic("unimplemented")
-}
-
 func (p *ProductUseCaseImpl) Update(ctx context.Context, dataReq model.ProductReq) error {
 	price, _ := strconv.ParseFloat(dataReq.Price, 32)
 	sellerID, _ := strconv.ParseInt(dataReq.SellerID, 0, 64)
