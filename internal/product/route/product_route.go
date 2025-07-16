@@ -21,6 +21,6 @@ func (pr *ProductRoutes) Route(r *gin.RouterGroup, redis *redis.Client) {
 
 	productHandler.Use()
 	{
-		productHandler.GET("/product", pr.Handler.GetProduct)
+		productHandler.GET("/product", pr.Handler.GetProducts)
 	}
 }
