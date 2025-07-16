@@ -61,7 +61,64 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, data model.TProdu
 }
 
 func (repo *ProductRepositoryImpl) FindByFilters(ctx context.Context, params model.ProductFilter) ([]*model.TProduct, error) {
-	panic("unimplemented")
+	baseQuery := `
+		SELECT id, product_name, price, stock, category_id, seller_id
+		FROM t_product
+		WHERE 1=1
+	`
+	args := []interface{}{}
+	i := 1
+
+	if params.ProductName != "" {
+		baseQuery += fmt.Sprintf(" AND product_name ILIKE $%d", i)
+		args = append(args, "%"+params.ProductName+"%")
+		i++
+	}
+
+	if params.CategoryID != "" {
+		baseQuery += fmt.Sprintf(" AND category_id = $%d", i)
+		args = append(args, params.CategoryID)
+		i++
+	}
+
+	if params.SellerID != "" {
+		baseQuery += fmt.Sprintf(" AND seller_id = $%d", i)
+		args = append(args, params.SellerID)
+		i++
+	}
+
+	if params.LowPrice != "" {
+		baseQuery += fmt.Sprintf(" AND price >= $%d", i)
+		args = append(args, params.LowPrice)
+		i++
+	}
+
+	if params.HighPrice != "" {
+		baseQuery += fmt.Sprintf(" AND price <= $%d", i)
+		args = append(args, params.HighPrice)
+		i++
+	}
+
+	baseQuery += " ORDER BY id DESC"
+
+	if params.Limit > 0 {
+		baseQuery += fmt.Sprintf(" LIMIT $%d", i)
+		args = append(args, params.Limit)
+		i++
+	}
+
+	if params.Offset >= 0 {
+		baseQuery += fmt.Sprintf(" OFFSET $%d", i)
+		args = append(args, params.Offset)
+	}
+
+	rows, err := repo.DB.QueryContext(ctx, baseQuery, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	return scanProducts(rows)
 }
 
 func (repo *ProductRepositoryImpl) FindByProductID(ctx context.Context, productID int) (*model.TProduct, error) {
