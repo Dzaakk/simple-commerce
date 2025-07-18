@@ -54,23 +54,28 @@ func (s *SellerUseCaseImpl) Deactivate(ctx context.Context, sellerID int64) (int
 	return rowsAffected, nil
 
 }
-func (s *SellerUseCaseImpl) FindAll(ctx context.Context) ([]*model.ResData, error) {
-	sellers, err := s.repo.FindAll(ctx)
+func (s *SellerUseCaseImpl) FindAll(ctx context.Context) ([]*model.SellerRes, error) {
+	listSeller, err := s.repo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
-	listSeller := ConvertSellersToResData(sellers)
-	return listSeller, nil
+	var listData []*model.SellerRes
+	for _, s := range listSeller {
+		seller := s.ToResponse()
+		listData = append(listData, &seller)
+	}
+
+	return listData, nil
 }
 
-func (s *SellerUseCaseImpl) FindBySellerID(ctx context.Context, sellerID int64) (*model.ResData, error) {
+func (s *SellerUseCaseImpl) FindBySellerID(ctx context.Context, sellerID int64) (*model.SellerRes, error) {
 	sellerData, err := s.repo.FindBySellerID(ctx, sellerID)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &model.ResData{
-		Id:       fmt.Sprintf("%d", sellerData.ID),
+	res := &model.SellerRes{
+		ID:       fmt.Sprintf("%d", sellerData.ID),
 		Username: sellerData.Username,
 		Email:    sellerData.Email,
 		Balance:  fmt.Sprintf("%.2f", sellerData.Balance),
@@ -79,14 +84,14 @@ func (s *SellerUseCaseImpl) FindBySellerID(ctx context.Context, sellerID int64) 
 	return res, nil
 }
 
-func (s *SellerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.ResData, error) {
+func (s *SellerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.SellerRes, error) {
 	sellerData, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &model.ResData{
-		Id:       fmt.Sprintf("%d", sellerData.ID),
+	res := &model.SellerRes{
+		ID:       fmt.Sprintf("%d", sellerData.ID),
 		Username: sellerData.Username,
 		Email:    sellerData.Email,
 		Balance:  fmt.Sprintf("%.2f", sellerData.Balance),
@@ -96,7 +101,7 @@ func (s *SellerUseCaseImpl) FindByUsername(ctx context.Context, username string)
 }
 
 func (s *SellerUseCaseImpl) Update(ctx context.Context, data model.ReqUpdate) (int64, error) {
-	sellerID, _ := strconv.ParseInt(data.Id, 0, 64)
+	sellerID, _ := strconv.ParseInt(data.ID, 0, 64)
 	existingData, err := s.repo.FindBySellerID(ctx, sellerID)
 	if err != nil {
 		return 0, err
@@ -109,28 +114,6 @@ func (s *SellerUseCaseImpl) Update(ctx context.Context, data model.ReqUpdate) (i
 	}
 
 	return rowsAffected, nil
-}
-
-func generateDataUpdate(existingData model.TSeller, newData model.ReqUpdate) model.TSeller {
-	updatedData := existingData
-	var email, username string
-
-	if newData.Email != existingData.Email {
-		email = newData.Email
-	} else {
-		email = existingData.Email
-	}
-
-	if newData.Username != existingData.Username {
-		username = newData.Username
-	} else {
-		username = existingData.Username
-	}
-
-	updatedData.Email = email
-	updatedData.Username = username
-
-	return updatedData
 }
 
 func (s *SellerUseCaseImpl) ChangePassword(ctx context.Context, sellerID int64, newPassword string) (int64, error) {
