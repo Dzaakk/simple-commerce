@@ -29,7 +29,7 @@ func main() {
 
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	customer.InitializedService(postgres, redis).Route(&r.RouterGroup)
-	product.InitializedService(postgres).Route(&r.RouterGroup, redis)
+	product.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	seller.InitializedService(postgres).Route(&r.RouterGroup, redis)
 	shoppingCart.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	transaction.InitializedService(postgres, redis).Route(&r.RouterGroup)
