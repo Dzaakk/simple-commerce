@@ -16,7 +16,7 @@ import (
 	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"database/sql"
 
-	redis "github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v8"
 	"github.com/google/wire"
 )
 
