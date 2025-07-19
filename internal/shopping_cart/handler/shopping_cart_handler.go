@@ -37,6 +37,7 @@ func (handler *ShoppingCartHandler) AddProductToShoppingCart(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.Success(newShopingCart))
 }
+func (handler *ShoppingCartHandler) UpdateShoppingCart(ctx *gin.Context) {}
 
 func (handler *ShoppingCartHandler) GetListShoppingCart(ctx *gin.Context) {
 	customerID, _ := strconv.Atoi(ctx.Query("customerId"))
