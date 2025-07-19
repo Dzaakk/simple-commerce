@@ -40,3 +40,5 @@ func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.Success(receipt))
 }
+
+func (handler *TransactionHandler) GetListHistoryTransaction(ctx *gin.Context) {}
