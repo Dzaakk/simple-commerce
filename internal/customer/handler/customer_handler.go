@@ -41,8 +41,7 @@ func (h *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
 
-func (h *CustomerHandler) FindCustomerByUsername(ctx *gin.Context) {}
-func (h *CustomerHandler) Update(ctx *gin.Context)                 {}
+func (h *CustomerHandler) Update(ctx *gin.Context) {}
 
 func (h *CustomerHandler) ChangePassword(ctx *gin.Context) {
 	var req model.ChangePasswordReq
@@ -106,3 +105,5 @@ func (h *CustomerHandler) UpdateBalance(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, response.Success(res))
 }
+
+// func (h *CustomerHandler) FindCustomerByUsername(ctx *gin.Context) {}

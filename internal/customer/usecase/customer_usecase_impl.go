@@ -132,15 +132,15 @@ func (c *CustomerUseCaseImpl) IncreaseBalance(ctx context.Context, customerID in
 	return res, nil
 }
 
-func (c *CustomerUseCaseImpl) Deactivate(ctx context.Context, customerID int64) (int64, error) {
+// func (c *CustomerUseCaseImpl) Deactivate(ctx context.Context, customerID int64) (int64, error) {
 
-	rowsAffected, err := c.Repo.Deactive(ctx, customerID)
-	if err != nil {
-		return 0, err
-	}
+// 	rowsAffected, err := c.Repo.Deactive(ctx, customerID)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-	return rowsAffected, nil
-}
+// 	return rowsAffected, nil
+// }
 
 func (c *CustomerUseCaseImpl) UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error) {
 	hashedPassword, err := util.HashPassword(newPassword)

@@ -3,7 +3,6 @@ package repository
 import (
 	"Dzaakk/simple-commerce/internal/customer/model"
 	response "Dzaakk/simple-commerce/package/response"
-	"Dzaakk/simple-commerce/package/template"
 	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"database/sql"
@@ -137,35 +136,6 @@ func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, customer
 	return rowsAffected, nil
 }
 
-func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, customerID int64) (int64, error) {
-	if customerID <= 0 {
-		return 0, response.InvalidParameter()
-	}
-
-	result, err := repo.DB.ExecContext(ctx, QueryDeactive, template.StatusInactive, customerID)
-	if err != nil {
-		return 0, response.ExecError("deactivate", err)
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	return rowsAffected, nil
-}
-
-func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalance, error) {
-	if customerID <= 0 {
-		return nil, response.InvalidParameter()
-	}
-
-	customerBalance := model.CustomerBalance{CustomerID: customerID}
-
-	err := repo.DB.QueryRowContext(ctx, QueryGetBalanceByID, customerID).Scan(&customerBalance.Balance)
-	if err != nil {
-		return nil, err
-	}
-
-	return &customerBalance, nil
-}
-
 func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, customerID int64) (float64, error) {
 	if customerID <= 0 {
 		return 0, response.InvalidParameter()
@@ -218,4 +188,33 @@ func (repo *CustomerRepositoryImpl) UpdateProfilePicture(ctx context.Context, cu
 	}
 
 	return nil
+}
+
+// func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, customerID int64) (int64, error) {
+// 	if customerID <= 0 {
+// 		return 0, response.InvalidParameter()
+// 	}
+
+// 	result, err := repo.DB.ExecContext(ctx, QueryDeactive, template.StatusInactive, customerID)
+// 	if err != nil {
+// 		return 0, response.ExecError("deactivate", err)
+// 	}
+
+// 	rowsAffected, _ := result.RowsAffected()
+// 	return rowsAffected, nil
+// }
+
+func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalance, error) {
+	if customerID <= 0 {
+		return nil, response.InvalidParameter()
+	}
+
+	customerBalance := model.CustomerBalance{CustomerID: customerID}
+
+	err := repo.DB.QueryRowContext(ctx, QueryGetBalanceByID, customerID).Scan(&customerBalance.Balance)
+	if err != nil {
+		return nil, err
+	}
+
+	return &customerBalance, nil
 }

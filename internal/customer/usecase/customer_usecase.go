@@ -15,6 +15,6 @@ type CustomerUseCase interface {
 	FindByEmail(ctx context.Context, email string) (*model.TCustomers, error)
 	Update(ctx context.Context, data model.UpdateReq) (int64, error)
 	UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error)
-	Deactivate(ctx context.Context, customerID int64) (int64, error)
+	// Deactivate(ctx context.Context, customerID int64) (int64, error)
 	//inquiry balance
 }
