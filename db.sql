@@ -2,14 +2,14 @@ CREATE TABLE public.customer (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    gender SMALLINT,
+    gender SMALLINT, -- 0: Female / 1: Male
     password VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
     profile_picture TEXT,
     date_of_birth DATE,
     balance NUMERIC(10,2) DEFAULT 0,
     last_login TIMESTAMP,        
-    status SMALLINT,
+    status SMALLINT, -- 0: Inactive / 1: Active
     address TEXT,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INT NOT NULL DEFAULT 0, 
