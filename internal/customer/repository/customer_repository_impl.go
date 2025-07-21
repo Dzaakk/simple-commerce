@@ -27,13 +27,14 @@ var (
 	QueryUpdate                   string
 	QueryFindByID                 string
 	QueryUpdateBalance            string
-	QueryUpdatePassword           string
-	QueryDeactive                 string
-	QueryUpdateProfilePic         string
-	QueryUpdateBalanceWithReturn  string
-	QueryGetBalanceByID           string
 	QueryGetBalanceByIDWithReturn string
 	once                          sync.Once
+
+	// QueryUpdatePassword           string
+	// QueryGetBalanceByID           string
+	// QueryUpdateProfilePic        string
+	// QueryDeactive                 string
+	// QueryUpdateBalanceWithReturn  string
 )
 
 func InitCustomerQueries() {
@@ -54,12 +55,13 @@ func InitCustomerQueries() {
 		date_of_birth = $4, address = $5, updated_by = $6, updated = NOW() 
 		WHERE id = $7`
 		QueryUpdateBalance = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
-		QueryUpdatePassword = `UPDATE public.customer SET password=$1, updated_by=$2, updated=now() WHERE id=$2`
-		QueryGetBalanceByID = `SELECT balance FROM public.customer WHERE id = $1`
 		QueryGetBalanceByIDWithReturn = `SELECT id, balance FROM public.customer WHERE id = $1 FOR UPDATE`
-		QueryUpdateProfilePic = "UPDATE public.customer set profile_picture=$1 WHERE id=$2"
-		QueryUpdateBalanceWithReturn = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
-		QueryDeactive = "UPDATE public.customer set status=$1 WHERE id=$2"
+
+		// QueryUpdatePassword = `UPDATE public.customer SET password=$1, updated_by=$2, updated=now() WHERE id=$2`
+		// QueryGetBalanceByID = `SELECT balance FROM public.customer WHERE id = $1`
+		// QueryUpdateProfilePic = "UPDATE public.customer set profile_picture=$1 WHERE id=$2"
+		// QueryDeactive = "UPDATE public.customer set status=$1 WHERE id=$2"
+		// QueryUpdateBalanceWithReturn = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
 	})
 }
 
@@ -70,26 +72,6 @@ type CustomerRepositoryImpl struct {
 func NewCustomerRepository(db *sql.DB) CustomerRepository {
 	InitCustomerQueries()
 	return &CustomerRepositoryImpl{DB: db}
-}
-
-func (repo *CustomerRepositoryImpl) Update(ctx context.Context, data model.TCustomers) (int64, error) {
-	result, err := repo.DB.ExecContext(
-		ctx, QueryUpdate,
-		data.Username, data.Email, data.PhoneNumber,
-		data.DateOfBirth, data.Address, data.UpdatedBy,
-		data.ID,
-	)
-
-	if err != nil {
-		return 0, err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-
-	return rowsAffected, nil
 }
 
 func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCustomers) (int64, error) {
@@ -113,6 +95,26 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 	return id, nil
 }
 
+func (repo *CustomerRepositoryImpl) Update(ctx context.Context, data model.TCustomers) (int64, error) {
+	result, err := repo.DB.ExecContext(
+		ctx, QueryUpdate,
+		data.Username, data.Email, data.PhoneNumber,
+		data.DateOfBirth, data.Address, data.UpdatedBy,
+		data.ID,
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
+}
+
 func (repo *CustomerRepositoryImpl) FindByID(ctx context.Context, customerID int64) (*model.TCustomers, error) {
 	if customerID <= 0 {
 		return nil, response.InvalidParameter()
@@ -133,47 +135,18 @@ func (repo *CustomerRepositoryImpl) FindByEmail(ctx context.Context, email strin
 	return scanCustomer(row)
 }
 
-func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, customerID int64, newBalance float64) (int64, error) {
-	if customerID <= 0 || newBalance <= -1 {
-		return 0, response.InvalidParameter()
-	}
+func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sql.Tx, customerID int64) (*model.CustomerBalance, error) {
+	row := tx.QueryRowContext(ctx, QueryGetBalanceByIDWithReturn, customerID)
 
-	result, err := repo.DB.ExecContext(ctx, QueryUpdateBalance, newBalance, customerID)
-
+	customerBalance := &model.CustomerBalance{}
+	err := row.Scan(&customerBalance.CustomerID, &customerBalance.Balance)
 	if err != nil {
-		return 0, response.ExecError("update balance", err)
+		if err == sql.ErrNoRows {
+			return nil, response.Error("customer not found", err)
+		}
+		return nil, response.Error("error scan customer", err)
 	}
-
-	rowsAffected, _ := result.RowsAffected()
-	return rowsAffected, nil
-}
-
-func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error) {
-	if customerID <= 0 || newPassword == "" {
-		return 0, response.InvalidParameter()
-	}
-
-	result, err := repo.DB.ExecContext(ctx, QueryUpdatePassword, newPassword, customerID)
-	if err != nil {
-		return 0, response.ExecError("update password", err)
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	return rowsAffected, nil
-}
-
-func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, customerID int64) (float64, error) {
-	if customerID <= 0 {
-		return 0, response.InvalidParameter()
-	}
-
-	var balance float64
-
-	err := repo.DB.QueryRowContext(ctx, QueryGetBalanceByID, customerID).Scan(&balance)
-	if err != nil {
-		return 0, err
-	}
-	return balance, nil
+	return customerBalance, nil
 }
 
 func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(ctx context.Context, tx *sql.Tx, customerID int64, newBalance float64) error {
@@ -189,32 +162,61 @@ func (repo *CustomerRepositoryImpl) UpdateBalanceWithTx(ctx context.Context, tx 
 	return nil
 }
 
-func (repo *CustomerRepositoryImpl) GetBalanceWithTx(ctx context.Context, tx *sql.Tx, customerID int64) (*model.CustomerBalance, error) {
-	row := tx.QueryRowContext(ctx, QueryGetBalanceByIDWithReturn, customerID)
+// func (repo *CustomerRepositoryImpl) UpdateBalance(ctx context.Context, customerID int64, newBalance float64) (int64, error) {
+// 	if customerID <= 0 || newBalance <= -1 {
+// 		return 0, response.InvalidParameter()
+// 	}
 
-	customerBalance := &model.CustomerBalance{}
-	err := row.Scan(&customerBalance.CustomerID, &customerBalance.Balance)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, response.Error("customer not found", err)
-		}
-		return nil, response.Error("error scan customer", err)
-	}
-	return customerBalance, nil
-}
+// 	result, err := repo.DB.ExecContext(ctx, QueryUpdateBalance, newBalance, customerID)
 
-func (repo *CustomerRepositoryImpl) UpdateProfilePicture(ctx context.Context, customerID int64, image string) error {
-	if customerID <= 0 {
-		return response.InvalidParameter()
-	}
+// 	if err != nil {
+// 		return 0, response.ExecError("update balance", err)
+// 	}
 
-	_, err := repo.DB.ExecContext(ctx, QueryUpdateProfilePic, image, customerID)
-	if err != nil {
-		return response.ExecError("update profile picture", err)
-	}
+// 	rowsAffected, _ := result.RowsAffected()
+// 	return rowsAffected, nil
+// }
 
-	return nil
-}
+// func (repo *CustomerRepositoryImpl) UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error) {
+// 	if customerID <= 0 || newPassword == "" {
+// 		return 0, response.InvalidParameter()
+// 	}
+
+// 	result, err := repo.DB.ExecContext(ctx, QueryUpdatePassword, newPassword, customerID)
+// 	if err != nil {
+// 		return 0, response.ExecError("update password", err)
+// 	}
+
+// 	rowsAffected, _ := result.RowsAffected()
+// 	return rowsAffected, nil
+// }
+
+// func (repo *CustomerRepositoryImpl) InquiryBalance(ctx context.Context, customerID int64) (float64, error) {
+// 	if customerID <= 0 {
+// 		return 0, response.InvalidParameter()
+// 	}
+
+// 	var balance float64
+
+// 	err := repo.DB.QueryRowContext(ctx, QueryGetBalanceByID, customerID).Scan(&balance)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	return balance, nil
+// }
+
+// func (repo *CustomerRepositoryImpl) UpdateProfilePicture(ctx context.Context, customerID int64, image string) error {
+// 	if customerID <= 0 {
+// 		return response.InvalidParameter()
+// 	}
+
+// 	_, err := repo.DB.ExecContext(ctx, QueryUpdateProfilePic, image, customerID)
+// 	if err != nil {
+// 		return response.ExecError("update profile picture", err)
+// 	}
+
+// 	return nil
+// }
 
 // func (repo *CustomerRepositoryImpl) Deactive(ctx context.Context, customerID int64) (int64, error) {
 // 	if customerID <= 0 {
@@ -230,17 +232,17 @@ func (repo *CustomerRepositoryImpl) UpdateProfilePicture(ctx context.Context, cu
 // 	return rowsAffected, nil
 // }
 
-func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalance, error) {
-	if customerID <= 0 {
-		return nil, response.InvalidParameter()
-	}
+// func (repo *CustomerRepositoryImpl) GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalance, error) {
+// 	if customerID <= 0 {
+// 		return nil, response.InvalidParameter()
+// 	}
 
-	customerBalance := model.CustomerBalance{CustomerID: customerID}
+// 	customerBalance := model.CustomerBalance{CustomerID: customerID}
 
-	err := repo.DB.QueryRowContext(ctx, QueryGetBalanceByID, customerID).Scan(&customerBalance.Balance)
-	if err != nil {
-		return nil, err
-	}
+// 	err := repo.DB.QueryRowContext(ctx, QueryGetBalanceByID, customerID).Scan(&customerBalance.Balance)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return &customerBalance, nil
-}
+// 	return &customerBalance, nil
+// }
