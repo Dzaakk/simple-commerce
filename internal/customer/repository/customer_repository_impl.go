@@ -24,6 +24,7 @@ var (
 
 	QueryFindByEmail              string
 	QueryCreate                   string
+	QueryUpdate                   string
 	QueryFindByID                 string
 	QueryUpdateBalance            string
 	QueryUpdatePassword           string
@@ -47,6 +48,11 @@ func InitCustomerQueries() {
 		QueryFindByEmail = fmt.Sprintf(`SELECT %s FROM %s WHERE email = $1`, selectColumns, customerTable)
 		QueryFindByID = fmt.Sprintf(`SELECT %s FROM %s WHERE id = $1`, selectColumns, customerTable)
 
+		QueryUpdate = `
+		UPDATE public.customer 
+		SET username = $1, email = $2, phone_number = $3, 
+		date_of_birth = $4, address = $5, updated_by = $6, updated = NOW() 
+		WHERE id = $7`
 		QueryUpdateBalance = `UPDATE public.customer SET balance=$1, updated_by='SYSTEM', updated=now() WHERE id=$2 RETURNING balance`
 		QueryUpdatePassword = `UPDATE public.customer SET password=$1, updated_by=$2, updated=now() WHERE id=$2`
 		QueryGetBalanceByID = `SELECT balance FROM public.customer WHERE id = $1`
@@ -64,6 +70,26 @@ type CustomerRepositoryImpl struct {
 func NewCustomerRepository(db *sql.DB) CustomerRepository {
 	InitCustomerQueries()
 	return &CustomerRepositoryImpl{DB: db}
+}
+
+func (repo *CustomerRepositoryImpl) Update(ctx context.Context, data model.TCustomers) (int64, error) {
+	result, err := repo.DB.ExecContext(
+		ctx, QueryUpdate,
+		data.Username, data.Email, data.PhoneNumber,
+		data.DateOfBirth, data.Address, data.UpdatedBy,
+		data.ID,
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }
 
 func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCustomers) (int64, error) {

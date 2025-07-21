@@ -13,7 +13,7 @@ type CustomerUseCase interface {
 	IncreaseBalance(ctx context.Context, customerID int64, amount float64) (*model.CustomerBalanceRes, error)
 	DecreaseBalance(ctx context.Context, customerID int64, amount float64) (*model.CustomerBalanceRes, error)
 	FindByEmail(ctx context.Context, email string) (*model.TCustomers, error)
-	Update(ctx context.Context, data model.UpdateReq) (int64, error)
+	Update(ctx context.Context, data model.UpdateReq) error
 	UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error)
 	// Deactivate(ctx context.Context, customerID int64) (int64, error)
 	//inquiry balance

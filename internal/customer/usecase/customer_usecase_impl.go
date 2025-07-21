@@ -6,6 +6,8 @@ import (
 	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 )
 
 type CustomerUseCaseImpl struct {
@@ -14,6 +16,27 @@ type CustomerUseCaseImpl struct {
 
 func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
 	return &CustomerUseCaseImpl{Repo: repo}
+}
+
+func (c *CustomerUseCaseImpl) Update(ctx context.Context, req model.UpdateReq) error {
+
+	dateOfBirth, err := time.Parse("02-01-2006", req.DateOfBirth)
+	if err != nil {
+		return err
+	}
+	customerID, err := strconv.ParseInt(req.CustomerID, 0, 64)
+	if err != nil {
+		return err
+	}
+
+	data := req.ToCustomerModel(dateOfBirth, customerID)
+
+	rowsAffected, err := c.Repo.Update(ctx, data)
+	if err != nil || rowsAffected == 0 {
+		return err
+	}
+
+	return nil
 }
 
 func (c *CustomerUseCaseImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {
@@ -153,10 +176,6 @@ func (c *CustomerUseCaseImpl) UpdatePassword(ctx context.Context, customerID int
 	}
 
 	return rowsAffected, nil
-}
-
-func (c *CustomerUseCaseImpl) Update(ctx context.Context, dataReq model.UpdateReq) (int64, error) {
-	panic("unimplemented")
 }
 
 func (c *CustomerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.DataRes, error) {

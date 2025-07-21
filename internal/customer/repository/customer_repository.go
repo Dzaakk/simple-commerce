@@ -8,6 +8,7 @@ import (
 
 type CustomerRepository interface {
 	Create(ctx context.Context, data model.TCustomers) (int64, error)
+	Update(ctx context.Context, data model.TCustomers) (int64, error)
 	FindByID(ctx context.Context, customerID int64) (*model.TCustomers, error)
 	UpdateBalance(ctx context.Context, customerID int64, balance float64) (int64, error)
 	GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalance, error)
