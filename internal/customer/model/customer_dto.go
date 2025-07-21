@@ -29,9 +29,6 @@ func (req UpdateReq) ToCustomerModel(dateOfBirth time.Time, customerID int64) TC
 	}
 }
 
-type ChangePasswordReq struct {
-	NewPassword string `json:"newPassword" validate:"required"`
-}
 type DataRes struct {
 	CustomerID  string `json:"customer_id"`
 	Username    string `json:"username,omitempty"`
@@ -40,17 +37,22 @@ type DataRes struct {
 	Balance     string `json:"balance,omitempty"`
 }
 
-type BalanceUpdateReq struct {
-	CustomerID string `json:"customer_id" validate:"required,numeric,min=1"`
-	ActionType string `json:"actionType" validate:"required"`
-	Balance    string `json:"balance" validate:"required"`
-}
-type BalanceUpdateRes struct {
-	BalanceOld CustomerBalanceRes `json:"oldData"`
-	BalanceNew CustomerBalanceRes `json:"newData"`
-}
+// type ChangePasswordReq struct {
+// 	NewPassword string `json:"newPassword" validate:"required"`
+// }
 
-type CustomerBalanceRes struct {
-	CustomerID string `json:"customer_id"`
-	Balance    string `json:"balance"`
-}
+// type BalanceUpdateReq struct {
+// 	CustomerID string `json:"customer_id" validate:"required,numeric,min=1"`
+// 	ActionType string `json:"actionType" validate:"required"`
+// 	Balance    string `json:"balance" validate:"required"`
+// }
+
+// type BalanceUpdateRes struct {
+// 	BalanceOld CustomerBalanceRes `json:"oldData"`
+// 	BalanceNew CustomerBalanceRes `json:"newData"`
+// }
+
+// type CustomerBalanceRes struct {
+// 	CustomerID string `json:"customer_id"`
+// 	Balance    string `json:"balance"`
+// }
