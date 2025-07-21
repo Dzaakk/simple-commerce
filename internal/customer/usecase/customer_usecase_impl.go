@@ -3,7 +3,6 @@ package usecase
 import (
 	"Dzaakk/simple-commerce/internal/customer/model"
 	repo "Dzaakk/simple-commerce/internal/customer/repository"
-	"Dzaakk/simple-commerce/package/util"
 	"context"
 	"fmt"
 	"strconv"
@@ -66,94 +65,98 @@ func (c *CustomerUseCaseImpl) FindByID(ctx context.Context, customerID int64) (*
 
 }
 
-func (c *CustomerUseCaseImpl) GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalanceRes, error) {
-	data, err := c.Repo.GetBalance(ctx, customerID)
-	if err != nil {
-		return nil, err
-	}
+// func (c *CustomerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.DataRes, error) {
+// 	panic("unimplemented")
+// }
 
-	customer := &model.CustomerBalanceRes{
-		CustomerID: fmt.Sprintf("%d", data.CustomerID),
-		Balance:    fmt.Sprintf("%.2f", data.Balance),
-	}
+// func (c *CustomerUseCaseImpl) GetBalance(ctx context.Context, customerID int64) (*model.CustomerBalanceRes, error) {
+// 	data, err := c.Repo.GetBalance(ctx, customerID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return customer, nil
-}
+// 	customer := &model.CustomerBalanceRes{
+// 		CustomerID: fmt.Sprintf("%d", data.CustomerID),
+// 		Balance:    fmt.Sprintf("%.2f", data.Balance),
+// 	}
 
-func (c *CustomerUseCaseImpl) UpdateBalance(ctx context.Context, customerID int64, balance float64, actionType string) (int64, error) {
-	data, err := c.Repo.GetBalance(ctx, customerID)
-	if err != nil {
-		return 0, err
-	}
+// 	return customer, nil
+// }
 
-	//Add Balance
-	if actionType == "A" {
-		balance += data.Balance
-		balance, err := c.Repo.UpdateBalance(ctx, customerID, balance)
-		if err != nil {
-			return 0, err
-		}
+// func (c *CustomerUseCaseImpl) UpdateBalance(ctx context.Context, customerID int64, balance float64, actionType string) (int64, error) {
+// 	data, err := c.Repo.GetBalance(ctx, customerID)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-		return balance, nil
-	}
+// 	//Add Balance
+// 	if actionType == "A" {
+// 		balance += data.Balance
+// 		balance, err := c.Repo.UpdateBalance(ctx, customerID, balance)
+// 		if err != nil {
+// 			return 0, err
+// 		}
 
-	//payment
-	if actionType == "P" {
-		balance = data.Balance - balance
-		balance, err := c.Repo.UpdateBalance(ctx, customerID, balance)
-		if err != nil {
-			return 0, err
-		}
+// 		return balance, nil
+// 	}
 
-		return balance, nil
-	}
+// 	//payment
+// 	if actionType == "P" {
+// 		balance = data.Balance - balance
+// 		balance, err := c.Repo.UpdateBalance(ctx, customerID, balance)
+// 		if err != nil {
+// 			return 0, err
+// 		}
 
-	return 0, nil
-}
+// 		return balance, nil
+// 	}
 
-func (c *CustomerUseCaseImpl) DecreaseBalance(ctx context.Context, customerID int64, amount float64) (*model.CustomerBalanceRes, error) {
-	if amount < 0 {
-		return nil, fmt.Errorf("invalid amount")
-	}
+// 	return 0, nil
+// }
 
-	data, err := c.Repo.GetBalance(ctx, customerID)
-	if err != nil {
-		return nil, err
-	}
+// func (c *CustomerUseCaseImpl) DecreaseBalance(ctx context.Context, customerID int64, amount float64) (*model.CustomerBalanceRes, error) {
+// 	if amount < 0 {
+// 		return nil, fmt.Errorf("invalid amount")
+// 	}
 
-	amount += data.Balance
-	balance, err := c.Repo.UpdateBalance(ctx, customerID, amount)
-	if err != nil {
-		return nil, err
-	}
-	res := &model.CustomerBalanceRes{
-		CustomerID: fmt.Sprintf("%d", customerID),
-		Balance:    fmt.Sprintf("%d", balance),
-	}
-	return res, nil
-}
+// 	data, err := c.Repo.GetBalance(ctx, customerID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-func (c *CustomerUseCaseImpl) IncreaseBalance(ctx context.Context, customerID int64, amount float64) (*model.CustomerBalanceRes, error) {
-	if amount < 0 {
-		return nil, fmt.Errorf("invalid amount")
-	}
+// 	amount += data.Balance
+// 	balance, err := c.Repo.UpdateBalance(ctx, customerID, amount)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	res := &model.CustomerBalanceRes{
+// 		CustomerID: fmt.Sprintf("%d", customerID),
+// 		Balance:    fmt.Sprintf("%d", balance),
+// 	}
+// 	return res, nil
+// }
 
-	data, err := c.Repo.GetBalance(ctx, customerID)
-	if err != nil {
-		return nil, err
-	}
+// func (c *CustomerUseCaseImpl) IncreaseBalance(ctx context.Context, customerID int64, amount float64) (*model.CustomerBalanceRes, error) {
+// 	if amount < 0 {
+// 		return nil, fmt.Errorf("invalid amount")
+// 	}
 
-	data.Balance -= amount
-	balance, err := c.Repo.UpdateBalance(ctx, customerID, amount)
-	if err != nil {
-		return nil, err
-	}
-	res := &model.CustomerBalanceRes{
-		CustomerID: fmt.Sprintf("%d", customerID),
-		Balance:    fmt.Sprintf("%d", balance),
-	}
-	return res, nil
-}
+// 	data, err := c.Repo.GetBalance(ctx, customerID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	data.Balance -= amount
+// 	balance, err := c.Repo.UpdateBalance(ctx, customerID, amount)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	res := &model.CustomerBalanceRes{
+// 		CustomerID: fmt.Sprintf("%d", customerID),
+// 		Balance:    fmt.Sprintf("%d", balance),
+// 	}
+// 	return res, nil
+// }
 
 // func (c *CustomerUseCaseImpl) Deactivate(ctx context.Context, customerID int64) (int64, error) {
 
@@ -165,19 +168,15 @@ func (c *CustomerUseCaseImpl) IncreaseBalance(ctx context.Context, customerID in
 // 	return rowsAffected, nil
 // }
 
-func (c *CustomerUseCaseImpl) UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error) {
-	hashedPassword, err := util.HashPassword(newPassword)
-	if err != nil {
-		return 0, err
-	}
-	rowsAffected, err := c.Repo.UpdatePassword(ctx, customerID, string(hashedPassword))
-	if err != nil {
-		return 0, err
-	}
+// func (c *CustomerUseCaseImpl) UpdatePassword(ctx context.Context, customerID int64, newPassword string) (int64, error) {
+// 	hashedPassword, err := util.HashPassword(newPassword)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	rowsAffected, err := c.Repo.UpdatePassword(ctx, customerID, string(hashedPassword))
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-	return rowsAffected, nil
-}
-
-func (c *CustomerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.DataRes, error) {
-	panic("unimplemented")
-}
+// 	return rowsAffected, nil
+// }
