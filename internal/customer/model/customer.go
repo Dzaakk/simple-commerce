@@ -3,6 +3,7 @@ package model
 import (
 	"Dzaakk/simple-commerce/package/template"
 	"database/sql"
+	"fmt"
 )
 
 type TCustomers struct {
@@ -20,6 +21,16 @@ type TCustomers struct {
 	LastLogin      sql.NullTime `json:"last_login"`
 	template.Base
 }
+
+func (c *TCustomers) ToResponse() CustomerRes {
+	return CustomerRes{
+		ID:          fmt.Sprintf("%d", c.ID),
+		Username:    c.Username,
+		Email:       c.Email,
+		PhoneNumber: c.PhoneNumber,
+	}
+}
+
 type CustomerBalance struct {
 	CustomerID int64   `json:"customer_id"`
 	Balance    float64 `json:"balance"`

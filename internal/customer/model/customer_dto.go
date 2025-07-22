@@ -29,8 +29,8 @@ func (req UpdateReq) ToCustomerModel(dateOfBirth time.Time, customerID int64) TC
 	}
 }
 
-type DataRes struct {
-	CustomerID  string `json:"customer_id"`
+type CustomerRes struct {
+	ID          string `json:"id"`
 	Username    string `json:"username,omitempty"`
 	Email       string `json:"email,omitempty"`
 	PhoneNumber string `json:"phone_number,omitempty"`
