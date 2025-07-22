@@ -4,7 +4,6 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/model"
 	"Dzaakk/simple-commerce/internal/auth/usecase"
 	emailUsecase "Dzaakk/simple-commerce/internal/email/usecase"
-	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
 	"Dzaakk/simple-commerce/package/response"
 	"log"
 	"net/http"
@@ -13,16 +12,14 @@ import (
 )
 
 type AuthHandler struct {
-	Usecase       usecase.AuthUseCase
-	SellerUsecase sellerUsecase.SellerUseCase
-	EmailUsecase  emailUsecase.EmailUseCase
+	Usecase      usecase.AuthUseCase
+	EmailUsecase emailUsecase.EmailUseCase
 }
 
-func NewAtuhHandler(usecase usecase.AuthUseCase, sellerUsecase sellerUsecase.SellerUseCase, emailUsecase emailUsecase.EmailUseCase) *AuthHandler {
+func NewAtuhHandler(usecase usecase.AuthUseCase, emailUsecase emailUsecase.EmailUseCase) *AuthHandler {
 	return &AuthHandler{
-		Usecase:       usecase,
-		SellerUsecase: sellerUsecase,
-		EmailUsecase:  emailUsecase,
+		Usecase:      usecase,
+		EmailUsecase: emailUsecase,
 	}
 }
 

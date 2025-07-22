@@ -12,7 +12,6 @@ import (
 	emailUsecase "Dzaakk/simple-commerce/internal/email/usecase"
 	middleware "Dzaakk/simple-commerce/internal/middleware/jwt"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
-	sellerUsecase "Dzaakk/simple-commerce/internal/seller/usecase"
 	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"database/sql"
 
@@ -28,7 +27,6 @@ func InitializedService(db *sql.DB, redis *redis.Client) *route.AuthRoutes {
 		customerRepo.NewCustomerRepository,
 		shoppingCartRepo.NewShoppingCartRepository,
 		usecase.NewAuthUseCase,
-		sellerUsecase.NewSellerUseCase,
 		handler.NewAtuhHandler,
 		middleware.NewJWTCustomerMiddleware,
 		middleware.NewJWTSellerMiddleware,

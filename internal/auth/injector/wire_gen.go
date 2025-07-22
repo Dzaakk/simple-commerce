@@ -12,10 +12,9 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/route"
 	"Dzaakk/simple-commerce/internal/auth/usecase"
 	repository2 "Dzaakk/simple-commerce/internal/customer/repository"
-	usecase3 "Dzaakk/simple-commerce/internal/email/usecase"
+	usecase2 "Dzaakk/simple-commerce/internal/email/usecase"
 	"Dzaakk/simple-commerce/internal/middleware/jwt"
 	repository3 "Dzaakk/simple-commerce/internal/seller/repository"
-	usecase2 "Dzaakk/simple-commerce/internal/seller/usecase"
 	repository4 "Dzaakk/simple-commerce/internal/shopping_cart/repository"
 	"database/sql"
 	"github.com/go-redis/redis/v8"
@@ -30,9 +29,8 @@ func InitializedService(db *sql.DB, redis2 *redis.Client) *route.AuthRoutes {
 	sellerRepository := repository3.NewSellerRepository(db)
 	shoppingCartRepository := repository4.NewShoppingCartRepository(db)
 	authUseCase := usecase.NewAuthUseCase(authCacheCustomer, authCacheSeller, customerRepository, sellerRepository, shoppingCartRepository)
-	sellerUseCase := usecase2.NewSellerUseCase(sellerRepository)
-	emailUseCase := usecase3.NewEmailUseCase()
-	authHandler := handler.NewAtuhHandler(authUseCase, sellerUseCase, emailUseCase)
+	emailUseCase := usecase2.NewEmailUseCase()
+	authHandler := handler.NewAtuhHandler(authUseCase, emailUseCase)
 	jwtCustomerMiddleware := middleware.NewJWTCustomerMiddleware(authCacheCustomer)
 	jwtSellerMiddleware := middleware.NewJWTSellerMiddleware(authCacheSeller)
 	authRoutes := route.NewAuthRoutes(authHandler, jwtCustomerMiddleware, jwtSellerMiddleware)
