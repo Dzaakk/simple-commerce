@@ -4,7 +4,6 @@ import (
 	"Dzaakk/simple-commerce/internal/seller/usecase"
 	"Dzaakk/simple-commerce/package/response"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,23 +16,10 @@ func NewSellerHandler(usecase usecase.SellerUseCase) *SellerHandler {
 	return &SellerHandler{Usecase: usecase}
 }
 
-func (handler *SellerHandler) FindBySellerID(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Query("id"))
-
-	if id != 0 {
-		seller, err := handler.Usecase.FindBySellerID(ctx, int64(id))
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-			return
-		}
-		ctx.JSON(http.StatusOK, response.Success(seller))
-	}
-}
-
-func (handler *SellerHandler) FindByUsername(ctx *gin.Context) {
-	username := ctx.Query("username")
+func (handler *SellerHandler) FindByStoreName(ctx *gin.Context) {
+	username := ctx.Query("storeName")
 	if username != "" {
-		seller, err := handler.Usecase.FindByUsername(ctx, username)
+		seller, err := handler.Usecase.FindByStoreName(ctx, username)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 			return
@@ -41,11 +27,37 @@ func (handler *SellerHandler) FindByUsername(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, response.Success(seller))
 	}
 }
-func (handler *SellerHandler) FindAll(ctx *gin.Context) {
-	seller, err := handler.Usecase.FindAll(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		return
-	}
-	ctx.JSON(http.StatusOK, response.Success(seller))
-}
+
+// func (handler *SellerHandler) FindBySellerID(ctx *gin.Context) {
+// 	id, _ := strconv.Atoi(ctx.Query("id"))
+
+// 	if id != 0 {
+// 		seller, err := handler.Usecase.FindBySellerID(ctx, int64(id))
+// 		if err != nil {
+// 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+// 			return
+// 		}
+// 		ctx.JSON(http.StatusOK, response.Success(seller))
+// 	}
+// }
+
+// func (handler *SellerHandler) FindByUsername(ctx *gin.Context) {
+// 	username := ctx.Query("username")
+// 	if username != "" {
+// 		seller, err := handler.Usecase.FindByUsername(ctx, username)
+// 		if err != nil {
+// 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+// 			return
+// 		}
+// 		ctx.JSON(http.StatusOK, response.Success(seller))
+// 	}
+// }
+
+// func (handler *SellerHandler) FindAll(ctx *gin.Context) {
+// 	seller, err := handler.Usecase.FindAll(ctx)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+// 		return
+// 	}
+// 	ctx.JSON(http.StatusOK, response.Success(seller))
+// }
