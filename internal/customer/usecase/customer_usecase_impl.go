@@ -4,7 +4,6 @@ import (
 	"Dzaakk/simple-commerce/internal/customer/model"
 	repo "Dzaakk/simple-commerce/internal/customer/repository"
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 )
@@ -47,22 +46,15 @@ func (c *CustomerUseCaseImpl) FindByEmail(ctx context.Context, email string) (*m
 	return data, nil
 }
 
-func (c *CustomerUseCaseImpl) FindByID(ctx context.Context, customerID int64) (*model.DataRes, error) {
+func (c *CustomerUseCaseImpl) FindByID(ctx context.Context, customerID int64) (*model.CustomerRes, error) {
 	data, err := c.Repo.FindByID(ctx, customerID)
 	if err != nil {
 		return nil, err
 	}
 
-	customer := &model.DataRes{
-		CustomerID:  fmt.Sprintf("%v", data.ID),
-		Username:    data.Username,
-		Email:       data.Email,
-		PhoneNumber: data.PhoneNumber,
-		Balance:     fmt.Sprintf("%0.f", data.Balance),
-	}
+	customer := data.ToResponse()
 
-	return customer, nil
-
+	return &customer, nil
 }
 
 // func (c *CustomerUseCaseImpl) FindByUsername(ctx context.Context, username string) (*model.DataRes, error) {
