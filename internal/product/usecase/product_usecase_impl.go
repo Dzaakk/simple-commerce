@@ -82,24 +82,24 @@ func (p *ProductUseCaseImpl) FindByFilter(ctx context.Context, params model.Prod
 	return listData, nil
 }
 
-func (p *ProductUseCaseImpl) FindByCategoryID(ctx context.Context, categoryID int) ([]*model.ProductRes, error) {
-	listData, err := p.repo.FindProductByFilters(ctx, nil, &categoryID)
-	if err != nil {
-		return nil, err
-	}
-	var listProduct []*model.ProductRes
-	for _, p := range listData {
-		product := model.ProductRes{
-			ProductName: p.ProductName,
-			Price:       fmt.Sprintf("%0.f", p.Price),
-			Stock:       fmt.Sprintf("%d", p.Stock),
-			CategoryID:  fmt.Sprintf("%d", p.CategoryID),
-		}
-		listProduct = append(listProduct, &product)
-	}
+// func (p *ProductUseCaseImpl) FindByCategoryID(ctx context.Context, categoryID int) ([]*model.ProductRes, error) {
+// 	listData, err := p.repo.FindProductByFilters(ctx, nil, &categoryID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	var listProduct []*model.ProductRes
+// 	for _, p := range listData {
+// 		product := model.ProductRes{
+// 			ProductName: p.ProductName,
+// 			Price:       fmt.Sprintf("%0.f", p.Price),
+// 			Stock:       fmt.Sprintf("%d", p.Stock),
+// 			CategoryID:  fmt.Sprintf("%d", p.CategoryID),
+// 		}
+// 		listProduct = append(listProduct, &product)
+// 	}
 
-	return listProduct, nil
-}
+// 	return listProduct, nil
+// }
 
 func (p *ProductUseCaseImpl) FindByProductName(ctx context.Context, productName string) (*model.ProductRes, error) {
 	data, err := p.repo.FindByProductName(ctx, productName)

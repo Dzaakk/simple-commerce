@@ -121,7 +121,7 @@ func (repo *ProductRepositoryImpl) FindByFilters(ctx context.Context, params mod
 	return scanProducts(rows)
 }
 
-func (repo *ProductRepositoryImpl) FindByProductID(ctx context.Context, productID int) (*model.TProduct, error) {
+func (repo *ProductRepositoryImpl) FindByID(ctx context.Context, productID int) (*model.TProduct, error) {
 
 	rows, err := repo.DB.QueryContext(ctx, queryFindByProductID, productID)
 	if err != nil {
@@ -135,61 +135,6 @@ func (repo *ProductRepositoryImpl) FindByProductID(ctx context.Context, productI
 	}
 
 	return product, nil
-}
-
-func (repo *ProductRepositoryImpl) FindProductByFilters(ctx context.Context, categoryID, sellerID *int) ([]*model.TProduct, error) {
-
-	query := queryBase
-	args := []interface{}{}
-
-	if categoryID != nil {
-		query += " AND category_id = ?"
-		args = append(args, *categoryID)
-	}
-	if sellerID != nil {
-		query += " AND seller_id = ?"
-		args = append(args, *sellerID)
-	}
-
-	rows, err := repo.DB.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer rows.Close()
-
-	return scanProducts(rows)
-}
-
-func (repo *ProductRepositoryImpl) GetPriceByProductID(ctx context.Context, productID int) (float32, error) {
-
-	var balance float32
-	err := repo.DB.QueryRowContext(ctx, queryGetPriceByProductID, productID).Scan(&balance)
-	if err != nil {
-		return 0, err
-	}
-
-	return balance, nil
-}
-
-func (repo *ProductRepositoryImpl) GetStockByProductID(ctx context.Context, productID int) (int, error) {
-
-	var stock int
-	err := repo.DB.QueryRowContext(ctx, queryGetPriceByProductID, productID).Scan(stock)
-	if err != nil {
-		return 0, err
-	}
-
-	return stock, nil
-}
-
-func (repo *ProductRepositoryImpl) SetStockByProductID(ctx context.Context, productID int, stock int) (int64, error) {
-
-	result, err := repo.DB.ExecContext(ctx, querySetStockByProductID, stock, productID)
-	if err != nil {
-		return 0, err
-	}
-	rowsAffected, _ := result.RowsAffected()
-	return rowsAffected, nil
 }
 
 func (repo *ProductRepositoryImpl) FindByProductName(ctx context.Context, productName string) (*model.TProduct, error) {
@@ -238,3 +183,58 @@ func (repo *ProductRepositoryImpl) UpdateStockWithTx(ctx context.Context, tx *sq
 	}
 	return listEmptyProductID, nil
 }
+
+// func (repo *ProductRepositoryImpl) FindProductByFilters(ctx context.Context, categoryID, sellerID *int) ([]*model.TProduct, error) {
+
+// 	query := queryBase
+// 	args := []interface{}{}
+
+// 	if categoryID != nil {
+// 		query += " AND category_id = ?"
+// 		args = append(args, *categoryID)
+// 	}
+// 	if sellerID != nil {
+// 		query += " AND seller_id = ?"
+// 		args = append(args, *sellerID)
+// 	}
+
+// 	rows, err := repo.DB.QueryContext(ctx, query, args...)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to execute query: %w", err)
+// 	}
+// 	defer rows.Close()
+
+// 	return scanProducts(rows)
+// }
+
+// func (repo *ProductRepositoryImpl) GetPriceByID(ctx context.Context, productID int) (float32, error) {
+
+// 	var balance float32
+// 	err := repo.DB.QueryRowContext(ctx, queryGetPriceByProductID, productID).Scan(&balance)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return balance, nil
+// }
+
+// func (repo *ProductRepositoryImpl) GetStockByID(ctx context.Context, productID int) (int, error) {
+
+// 	var stock int
+// 	err := repo.DB.QueryRowContext(ctx, queryGetPriceByProductID, productID).Scan(stock)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return stock, nil
+// }
+
+// func (repo *ProductRepositoryImpl) SetStockByID(ctx context.Context, productID int, stock int) (int64, error) {
+
+// 	result, err := repo.DB.ExecContext(ctx, querySetStockByProductID, stock, productID)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	rowsAffected, _ := result.RowsAffected()
+// 	return rowsAffected, nil
+// }
