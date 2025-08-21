@@ -16,10 +16,10 @@ func NewSellerHandler(usecase usecase.SellerUseCase) *SellerHandler {
 	return &SellerHandler{Usecase: usecase}
 }
 
-func (handler *SellerHandler) FindByStoreName(ctx *gin.Context) {
+func (h *SellerHandler) FindByStoreName(ctx *gin.Context) {
 	username := ctx.Query("storeName")
 	if username != "" {
-		seller, err := handler.Usecase.FindByStoreName(ctx, username)
+		seller, err := h.Usecase.FindByStoreName(ctx, username)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 			return
