@@ -88,9 +88,9 @@ func (s *ShoppingCartUseCaseImpl) AddV2(ctx context.Context, data model.Shopping
 func (s *ShoppingCartUseCaseImpl) Add(ctx context.Context, data model.ShoppingCartReq) (*model.ShoppingCartItem, error) {
 	customerID, _ := strconv.Atoi(data.CustomerID)
 	quantity, _ := strconv.Atoi(data.Quantity)
-	productId, _ := strconv.Atoi(data.ProductID)
+	productID, _ := strconv.Atoi(data.ProductID)
 
-	dataProduct, err := s.repoProduct.FindByProductID(ctx, productId) //find product and check the stock
+	dataProduct, err := s.repoProduct.FindByID(ctx, productID) //find product and check the stock
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +119,9 @@ func (s *ShoppingCartUseCaseImpl) Add(ctx context.Context, data model.ShoppingCa
 
 		return &item, nil
 	} else {
-		itemQuantity, _ := s.repoItem.CountQuantityByProductIDAndCartID(ctx, productId, shoppingCart.ID) //check current quantity product
+		itemQuantity, _ := s.repoItem.CountQuantityByProductIDAndCartID(ctx, productID, shoppingCart.ID) //check current quantity product
 		if itemQuantity+quantity == 0 {
-			err = s.repoItem.Delete(ctx, productId, shoppingCart.ID) //delete from cart item
+			err = s.repoItem.Delete(ctx, productID, shoppingCart.ID) //delete from cart item
 			if err != nil {
 				return nil, err
 			}
@@ -156,7 +156,7 @@ func (s *ShoppingCartUseCaseImpl) Add(ctx context.Context, data model.ShoppingCa
 		} else { //update quantity if the product is exist on the cart item
 			itemQuantity += quantity
 			newItem := model.TShoppingCartItem{
-				ProductID: productId,
+				ProductID: productID,
 				CartID:    shoppingCart.ID,
 				Quantity:  itemQuantity,
 				Base: template.Base{
@@ -201,12 +201,12 @@ func (s *ShoppingCartUseCaseImpl) CreateCart(ctx context.Context, customerID int
 func (s *ShoppingCartUseCaseImpl) CreateCartItem(ctx context.Context, data model.ShoppingCartReq) (*model.TShoppingCartItem, error) {
 	customerID, _ := strconv.Atoi(data.CustomerID)
 	quantity, _ := strconv.Atoi(data.Quantity)
-	productId, _ := strconv.Atoi(data.ProductID)
-	cartId, _ := strconv.Atoi(data.ShoppingCartID)
+	productID, _ := strconv.Atoi(data.ProductID)
+	cartID, _ := strconv.Atoi(data.ShoppingCartID)
 
 	newItem := model.TShoppingCartItem{
-		ProductID: productId,
-		CartID:    cartId,
+		ProductID: productID,
+		CartID:    cartID,
 		Quantity:  quantity,
 		Base: template.Base{
 			Created:   time.Now(),

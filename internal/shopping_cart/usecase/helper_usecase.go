@@ -17,7 +17,7 @@ func (s *ShoppingCartUseCaseImpl) parseAndValidateQuantityProduct(ctx context.Co
 	quantity, _ := strconv.Atoi(data.Quantity)
 	productID, _ := strconv.Atoi(data.ProductID)
 
-	product, err := s.repoProduct.FindByProductID(ctx, productID)
+	product, err := s.repoProduct.FindByID(ctx, productID)
 	if err != nil {
 		return 0, 0, nil, err
 	}
