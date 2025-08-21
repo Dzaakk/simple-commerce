@@ -20,7 +20,7 @@ func NewTransactionHandler(usecase usecase.TransactionUseCase) *TransactionHandl
 	}
 }
 
-func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
+func (h *TransactionHandler) Checkout(ctx *gin.Context) {
 	var data model.TransactionReq
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
@@ -32,7 +32,7 @@ func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 		return
 	}
 
-	receipt, err := handler.Usecase.CreateTransaction(ctx, data)
+	receipt, err := h.Usecase.CreateTransaction(ctx, data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -41,4 +41,5 @@ func (handler *TransactionHandler) Checkout(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success(receipt))
 }
 
-func (handler *TransactionHandler) GetListHistoryTransaction(ctx *gin.Context) {}
+func (h *TransactionHandler) GetListHistoryTransaction(ctx *gin.Context) {}
+func (h *TransactionHandler) Paid(ctx *gin.Context)                      {}
