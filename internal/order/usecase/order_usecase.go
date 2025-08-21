@@ -1,4 +1,6 @@
 package usecase
 
-type OrderUseCase struct {
+type OrderUseCase interface {
+	CreateOrder()
+	CancelOrder()
 }
