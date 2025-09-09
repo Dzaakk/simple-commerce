@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	postgres     *sql.DB
+	db           *sql.DB
 	postgresOnce sync.Once
 	err          error
 )
@@ -35,15 +35,20 @@ func Init() (*sql.DB, error) {
 		connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
 		for range 5 {
-			postgres, err = sql.Open("postgres", connectionString)
-			if err == nil && postgres.Ping() == nil {
+			db, err = sql.Open("postgres", connectionString)
+			if err == nil && db.Ping() == nil {
+				db.SetMaxOpenConns(25)
+				db.SetMaxIdleConns(5)
+				db.SetConnMaxLifetime(5 * time.Minute)
+				db.SetConnMaxIdleTime(1 * time.Minute)
+
 				log.Print("Success connect to Postgres")
 				return
 			}
 
-			if postgres != nil {
-				postgres.Close()
-				postgres = nil
+			if db != nil {
+				db.Close()
+				db = nil
 			}
 
 			log.Print("Postgres is not ready, retrying...")
@@ -53,5 +58,5 @@ func Init() (*sql.DB, error) {
 		err = errors.New("failed to connect to Postgres after multiple attempts")
 
 	})
-	return postgres, err
+	return db, err
 }
