@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 )
 
 type ProductRepositoryImpl struct {
@@ -76,26 +77,42 @@ func (repo *ProductRepositoryImpl) FindByFilters(ctx context.Context, params mod
 	}
 
 	if params.CategoryID != "" {
+		categoryID, err := strconv.Atoi(params.CategoryID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid category ID: %w", err)
+		}
 		baseQuery += fmt.Sprintf(" AND category_id = $%d", i)
-		args = append(args, params.CategoryID)
+		args = append(args, categoryID)
 		i++
 	}
 
 	if params.SellerID != "" {
+		sellerID, err := strconv.Atoi(params.SellerID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid seller ID: %w", err)
+		}
 		baseQuery += fmt.Sprintf(" AND seller_id = $%d", i)
-		args = append(args, params.SellerID)
+		args = append(args, sellerID)
 		i++
 	}
 
 	if params.LowPrice != "" {
+		lowPrice, err := strconv.ParseFloat(params.LowPrice, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid low price: %w", err)
+		}
 		baseQuery += fmt.Sprintf(" AND price >= $%d", i)
-		args = append(args, params.LowPrice)
+		args = append(args, lowPrice)
 		i++
 	}
 
 	if params.HighPrice != "" {
+		highPrice, err := strconv.ParseFloat(params.HighPrice, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid high price: %w", err)
+		}
 		baseQuery += fmt.Sprintf(" AND price <= $%d", i)
-		args = append(args, params.HighPrice)
+		args = append(args, highPrice)
 		i++
 	}
 
