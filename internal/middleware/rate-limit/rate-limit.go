@@ -42,11 +42,22 @@ func (rl *RateLimiter) Middleware() gin.HandlerFunc {
 		}
 
 		if count > 60 {
+			ttl, _ := rl.redis.TTL(ctx, key).Result()
+			ctx.Header("Retry-After", strconv.Itoa(int(ttl.Seconds())))
+			ctx.Header("X-RateLimit-Limit", "60")
+			ctx.Header("X-RateLimit-Remaining", "0")
+			ctx.Header("X-RateLimit-Reset", strconv.FormatInt(time.Now().Add(ttl).Unix(), 10))
+
 			ctx.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
 				"error": "Rate limit exceeded",
 			})
 			return
 		}
+
+		ctx.Header("X-RateLimit-Limit", "60")
+		ctx.Header("X-RateLimit-Remaining", strconv.FormatInt(60-count, 10))
+
+		ctx.Next()
 	}
 
 }
