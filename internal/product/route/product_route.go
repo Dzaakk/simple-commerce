@@ -25,7 +25,7 @@ func (pr *ProductRoutes) Route(r *gin.RouterGroup) {
 	{
 		productHandler.POST("/product", pr.SellerMiddleware.ValidateToken(), pr.Handler.CreateProduct)
 		productHandler.GET("/product", pr.Handler.GetProducts)
-		productHandler.POST("/product", pr.SellerMiddleware.ValidateToken(), pr.Handler.UpdateProduct)
-		productHandler.POST("/product", pr.SellerMiddleware.ValidateToken(), pr.Handler.DeleteProduct)
+		productHandler.PUT("/product/:id", pr.SellerMiddleware.ValidateToken(), pr.Handler.UpdateProduct)
+		productHandler.DELETE("/product/:id", pr.SellerMiddleware.ValidateToken(), pr.Handler.DeleteProduct)
 	}
 }
