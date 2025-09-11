@@ -17,8 +17,14 @@ func NewProductUseCase(repo repo.ProductRepository) ProductUseCase {
 }
 
 func (p *ProductUseCaseImpl) Create(ctx context.Context, dataReq model.ProductReq) (*model.ProductRes, error) {
-	price, _ := strconv.ParseFloat(dataReq.Price, 32)
-	sellerID, _ := strconv.ParseInt(dataReq.SellerID, 0, 64)
+	price, err := strconv.ParseFloat(dataReq.Price, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid price format: %w", err)
+	}
+	sellerID, err := strconv.ParseInt(dataReq.SellerID, 0, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid seller ID: %w", err)
+	}
 	categoryID, _ := strconv.ParseInt(dataReq.CategoryID, 0, 0)
 	stock, _ := strconv.ParseInt(dataReq.Stock, 0, 0)
 	newProduct := model.TProduct{
@@ -45,8 +51,14 @@ func (p *ProductUseCaseImpl) Create(ctx context.Context, dataReq model.ProductRe
 }
 
 func (p *ProductUseCaseImpl) Update(ctx context.Context, dataReq model.ProductReq) error {
-	price, _ := strconv.ParseFloat(dataReq.Price, 32)
-	sellerID, _ := strconv.ParseInt(dataReq.SellerID, 0, 64)
+	price, err := strconv.ParseFloat(dataReq.Price, 32)
+	if err != nil {
+		return fmt.Errorf("invalid price format: %w", err)
+	}
+	sellerID, err := strconv.ParseInt(dataReq.SellerID, 0, 64)
+	if err != nil {
+		return fmt.Errorf("invalid seller ID: %w", err)
+	}
 	productID, _ := strconv.ParseInt(dataReq.ProductID, 0, 64)
 	categoryID, _ := strconv.ParseInt(dataReq.CategoryID, 0, 0)
 	stock, _ := strconv.ParseInt(dataReq.Stock, 0, 0)
@@ -59,7 +71,7 @@ func (p *ProductUseCaseImpl) Update(ctx context.Context, dataReq model.ProductRe
 		SellerID:    int(sellerID),
 	}
 
-	_, err := p.repo.Update(ctx, updatedProduct)
+	_, err = p.repo.Update(ctx, updatedProduct)
 	if err != nil {
 		return err
 	}
