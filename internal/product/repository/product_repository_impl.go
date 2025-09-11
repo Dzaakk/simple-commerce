@@ -64,7 +64,7 @@ func (repo *ProductRepositoryImpl) Update(ctx context.Context, data model.TProdu
 func (repo *ProductRepositoryImpl) FindByFilters(ctx context.Context, params model.ProductFilter) ([]*model.TProduct, error) {
 	baseQuery := `
 		SELECT id, product_name, price, stock, category_id, seller_id
-		FROM t_product
+		FROM public.product
 		WHERE 1=1
 	`
 	args := []interface{}{}
@@ -119,6 +119,9 @@ func (repo *ProductRepositoryImpl) FindByFilters(ctx context.Context, params mod
 	baseQuery += " ORDER BY id DESC"
 
 	if params.Limit > 0 {
+		if params.Limit > 100 {
+			params.Limit = 100
+		}
 		baseQuery += fmt.Sprintf(" LIMIT $%d", i)
 		args = append(args, params.Limit)
 		i++
