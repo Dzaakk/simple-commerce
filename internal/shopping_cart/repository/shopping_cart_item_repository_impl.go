@@ -5,8 +5,8 @@ import (
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -22,7 +22,7 @@ func NewShoppingCartItemRepository(db *sql.DB) ShoppingCartItemRepository {
 
 const (
 	queryDeleteAllCartItems     = "DELETE FROM shopping_cart_item WHERE cart_id=$1"
-	queryCountItemByChartId     = `SELECT COUNT(*) FROM public.shopping_cart_item WHERE cart_id=$1`
+	queryCountItemByCartId      = `SELECT COUNT(*) FROM public.shopping_cart_item WHERE cart_id=$1`
 	queryUpdateShoppingCartItem = `UPDATE public.shopping_cart_item SET quantity=$1, updated=now(), updated_by=$2 WHERE cart_id=$3 AND product_id=$4 RETURNING quantity`
 	queryCreateShoppingCartItem = `INSERT INTO public.shopping_cart_item (cart_id, product_id, quantity, created, created_by) VALUES ($1, $2, $3, $4, $5)`
 	queryCountProductQuantity   = `SELECT SUM(quantity) FROM public.shopping_cart_item WHERE product_id=$1 AND cart_id=$2`
@@ -92,20 +92,26 @@ func (repo *ShoppingCartItemRepositoryImpl) DeleteAllWithTx(ctx context.Context,
 func (repo *ShoppingCartItemRepositoryImpl) CountByCartID(ctx context.Context, cartID int) (int, error) {
 
 	var total int
-	_ = repo.DB.QueryRowContext(ctx, queryCountItemByChartId, cartID).Scan(&total)
+	err := repo.DB.QueryRowContext(ctx, queryCountItemByCartId, cartID).Scan(&total)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, response.ExecError("count by cart id", err)
+	}
 	return total, nil
 }
 
 func (repo *ShoppingCartItemRepositoryImpl) Update(ctx context.Context, data model.TShoppingCartItem, customerID string) (*model.TShoppingCartItem, error) {
 
-	custId, err := strconv.Atoi(customerID)
-	if custId <= 0 || err != nil {
-		return nil, response.InvalidParameter()
-	}
-
 	var updatedQuantity int
-	_ = repo.DB.QueryRowContext(ctx, queryUpdateShoppingCartItem, data.Quantity, customerID, data.CartID, data.ProductID).Scan(&updatedQuantity)
-
+	err := repo.DB.QueryRowContext(ctx, queryUpdateShoppingCartItem, data.Quantity, customerID, data.CartID, data.ProductID).Scan(&updatedQuantity)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, response.Error("cart item", err)
+		}
+		return nil, response.ExecError("update cart item", err)
+	}
 	resData := &model.TShoppingCartItem{
 		ProductID: data.ProductID,
 		CartID:    data.CartID,
