@@ -36,23 +36,3 @@ type CustomerRes struct {
 	PhoneNumber string `json:"phone_number,omitempty"`
 	Balance     string `json:"balance,omitempty"`
 }
-
-// type ChangePasswordReq struct {
-// 	NewPassword string `json:"newPassword" validate:"required"`
-// }
-
-// type BalanceUpdateReq struct {
-// 	CustomerID string `json:"customer_id" validate:"required,numeric,min=1"`
-// 	ActionType string `json:"actionType" validate:"required"`
-// 	Balance    string `json:"balance" validate:"required"`
-// }
-
-// type BalanceUpdateRes struct {
-// 	BalanceOld CustomerBalanceRes `json:"oldData"`
-// 	BalanceNew CustomerBalanceRes `json:"newData"`
-// }
-
-// type CustomerBalanceRes struct {
-// 	CustomerID string `json:"customer_id"`
-// 	Balance    string `json:"balance"`
-// }

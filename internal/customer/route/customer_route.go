@@ -24,7 +24,5 @@ func (cr *CustomerRoutes) Route(r *gin.RouterGroup) {
 	customerHandler.Use(cr.JWTMiddleware.ValidateToken())
 	{
 		customerHandler.GET("/find-all", cr.Handler.FindCustomerByID)
-		// customerHandler.POST("/balance", cr.Handler.UpdateBalance)
-		// customerHandler.POST("/change-password", cr.Handler.ChangePassword)
 	}
 }
