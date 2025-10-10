@@ -1,4 +1,8 @@
 package repository
 
-type OrderRepository struct {
+type OrderRepository interface {
+	Create()
+	Update()
+	FindByID()
+	FindByCustomerID()
 }
