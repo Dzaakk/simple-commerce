@@ -15,8 +15,4 @@ type ProductRepository interface {
 	UpdateStock(ctx context.Context, listData []*cartModel.TCartItemDetail, name string) error
 	UpdateStockWithTx(ctx context.Context, tx *sql.Tx, listData []*cartModel.TCartItemDetail) ([]*int, error)
 	FindByFilters(ctx context.Context, params model.ProductFilter) ([]*model.TProduct, error)
-	// SetStockByID(ctx context.Context, id int, stock int) (int64, error)
-	// GetPriceByID(ictx context.Context, id int) (float32, error)
-	// GetStockByID(ctx context.Context, id int) (int, error)
-	// FindProductByFilters(ctx context.Context, sellerID, categoryID *int) ([]*model.TProduct, error)
 }
