@@ -2,9 +2,9 @@ package repository
 
 import (
 	"Dzaakk/simple-commerce/internal/customer/model"
+	"Dzaakk/simple-commerce/package/response"
 	"database/sql"
 	"errors"
-	"fmt"
 )
 
 func scanCustomer(row *sql.Row) (*model.TCustomers, error) {
@@ -12,20 +12,31 @@ func scanCustomer(row *sql.Row) (*model.TCustomers, error) {
 	var updated sql.NullTime
 
 	err := row.Scan(
-		&customer.ID, &customer.Username, &customer.Email, &customer.Password, &customer.PhoneNumber, &customer.Balance, &customer.Status,
-		&customer.Created, &customer.CreatedBy, &updated, &customer.UpdatedBy)
+		&customer.ID,
+		&customer.Username,
+		&customer.Email,
+		&customer.Password,
+		&customer.Gender,
+		&customer.PhoneNumber,
+		&customer.Balance,
+		&customer.Status,
+		&customer.DateOfBirth,
+		&customer.ProfilePicture,
+		&customer.LastLogin,
+		&customer.Created,
+		&customer.CreatedBy,
+		&updated,
+		&customer.UpdatedBy,
+	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to scan customer: %w", err)
+		return nil, response.Error("error scan", err)
 	}
 
 	if updated.Valid {
 		customer.Updated.Time = updated.Time
-	}
-	if !customer.UpdatedBy.Valid {
-		customer.UpdatedBy.String = ""
 	}
 
 	return customer, nil
