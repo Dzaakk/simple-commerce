@@ -2,23 +2,23 @@ package usecase
 
 import (
 	"Dzaakk/simple-commerce/internal/customer/model"
-	repo "Dzaakk/simple-commerce/internal/customer/repository"
+	"Dzaakk/simple-commerce/package/constant"
 	"context"
 	"strconv"
 	"time"
 )
 
 type CustomerUseCaseImpl struct {
-	Repo repo.CustomerRepository
+	Repo CustomerRepository
 }
 
-func NewCustomerUseCase(repo repo.CustomerRepository) CustomerUseCase {
+func NewCustomerUseCase(repo CustomerRepository) CustomerUseCase {
 	return &CustomerUseCaseImpl{Repo: repo}
 }
 
 func (c *CustomerUseCaseImpl) Update(ctx context.Context, req model.UpdateReq) error {
 
-	dateOfBirth, err := time.Parse("02-01-2006", req.DateOfBirth)
+	dateOfBirth, err := time.Parse(constant.DateLayout, req.DateOfBirth)
 	if err != nil {
 		return err
 	}
