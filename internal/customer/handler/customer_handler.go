@@ -28,12 +28,19 @@ func (h *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
 		return
 	}
 
-	template.AuthorizedChecker(ctx, ctx.Query("id"))
+	if !template.AuthorizedChecker(ctx, ctx.Query("id")) {
+		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(""))
+		return
+	}
 
 	data, err := h.Usecase.FindByID(ctx, customerID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.NotFound(err.Error()))
-		ctx.Abort()
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+
+	if data == nil {
+		ctx.JSON(http.StatusNotFound, response.NotFound("customer not found"))
 		return
 	}
 
