@@ -41,14 +41,14 @@ func Success(data interface{}) ApiResponse {
 	return Response(http.StatusOK, "Success", data)
 }
 
-func NotFound(message any) ApiResponse {
+func NotFound(message string) ApiResponse {
 	if message != "" {
 		return Response(http.StatusNotFound, "Not Found", message)
 	}
 	return Response(http.StatusNotFound, "Not Found", nil)
 }
 
-func Unauthorized(message any) ApiResponse {
+func Unauthorized(message string) ApiResponse {
 	if message != "" {
 		return Response(http.StatusUnauthorized, "Unauthorized", message)
 	}
