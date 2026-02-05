@@ -6,6 +6,34 @@ import (
 	"time"
 )
 
+type CreateReq struct {
+	Username    string `json:"username" validate:"required"`
+	Password    string `json:"password" validate:"required"`
+	Email       string `json:"email" validate:"required,email"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
+	DateOfBirth string `json:"date_of_birth" validate:"required,datetime=02-01-2006"`
+	Address     string `json:"address"`
+}
+
+func (c *CreateReq) ToCreateData(dateOfBirth time.Time) *TCustomers {
+	return &TCustomers{
+		Username:    c.Username,
+		Email:       c.Email,
+		PhoneNumber: c.PhoneNumber,
+		Password:    c.Password,
+		Balance:     float64(10000000),
+		Status:      1,
+		// Gender:         gender,
+		DateOfBirth:    sql.NullTime{Valid: true, Time: dateOfBirth},
+		LastLogin:      sql.NullTime{Time: time.Now(), Valid: true},
+		ProfilePicture: "",
+		Base: template.Base{
+			Created:   time.Now(),
+			CreatedBy: "system",
+		},
+	}
+}
+
 type UpdateReq struct {
 	CustomerID  string `json:"customer_id" validate:"required,min=1"`
 	Username    string `json:"username" validate:"required"`
@@ -15,16 +43,16 @@ type UpdateReq struct {
 	Address     string `json:"address"`
 }
 
-func (req UpdateReq) ToCustomerModel(dateOfBirth time.Time, customerID int64) TCustomers {
-	return TCustomers{
+func (u *UpdateReq) ToUpdateData(dateOfBirth time.Time, customerID int64) *TCustomers {
+	return &TCustomers{
 		ID:          customerID,
-		Username:    req.Username,
-		Email:       req.Email,
-		PhoneNumber: req.PhoneNumber,
+		Username:    u.Username,
+		Email:       u.Email,
+		PhoneNumber: u.PhoneNumber,
 		DateOfBirth: sql.NullTime{Time: dateOfBirth, Valid: true},
-		Address:     req.Address,
+		Address:     u.Address,
 		Base: template.Base{
-			UpdatedBy: sql.NullString{String: req.Username, Valid: true},
+			UpdatedBy: sql.NullString{String: u.Username, Valid: true},
 		},
 	}
 }
