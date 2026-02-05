@@ -6,7 +6,7 @@ import (
 	"log"
 
 	auth "Dzaakk/simple-commerce/internal/auth/injector"
-	customer "Dzaakk/simple-commerce/internal/customer/injector"
+	customer "Dzaakk/simple-commerce/internal/customer/route"
 	product "Dzaakk/simple-commerce/internal/product/injector"
 	seller "Dzaakk/simple-commerce/internal/seller/injector"
 	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/injector"
