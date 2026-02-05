@@ -24,7 +24,7 @@ func NewCustomerRepository(db *sql.DB) *CustomerRepositoryImpl {
 	return &CustomerRepositoryImpl{DB: db}
 }
 
-func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCustomers) (int64, error) {
+func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data *model.TCustomers) (int64, error) {
 	var id int64
 	err := repo.DB.QueryRowContext(
 		ctx,
@@ -41,7 +41,7 @@ func (repo *CustomerRepositoryImpl) Create(ctx context.Context, data model.TCust
 	return id, nil
 }
 
-func (repo *CustomerRepositoryImpl) Update(ctx context.Context, data model.TCustomers) (int64, error) {
+func (repo *CustomerRepositoryImpl) Update(ctx context.Context, data *model.TCustomers) (int64, error) {
 	result, err := repo.DB.ExecContext(
 		ctx, queryUpdate,
 		data.Username, data.Email, data.PhoneNumber,
@@ -56,9 +56,6 @@ func (repo *CustomerRepositoryImpl) Update(ctx context.Context, data model.TCust
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return 0, response.Error("failed to get rows affected", err)
-	}
-	if rowsAffected == 0 {
-		return 0, response.Error("no rows updated", sql.ErrNoRows)
 	}
 
 	return rowsAffected, nil
