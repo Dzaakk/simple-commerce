@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"Dzaakk/simple-commerce/internal/auth/model"
-	"Dzaakk/simple-commerce/internal/auth/repository"
+	authUsecase "Dzaakk/simple-commerce/internal/auth/usecase"
 	"Dzaakk/simple-commerce/package/response"
 	"Dzaakk/simple-commerce/package/util"
 	"context"
@@ -13,11 +13,11 @@ import (
 )
 
 type JWTCustomerMiddleware struct {
-	AuthCache repository.AuthCacheCustomer
+	TokenUsecase authUsecase.CustomerTokenUsecase
 }
 
-func NewJWTCustomerMiddleware(authCache repository.AuthCacheCustomer) *JWTCustomerMiddleware {
-	return &JWTCustomerMiddleware{AuthCache: authCache}
+func NewJWTCustomerMiddleware(tokenUsecase authUsecase.CustomerTokenUsecase) *JWTCustomerMiddleware {
+	return &JWTCustomerMiddleware{TokenUsecase: tokenUsecase}
 }
 
 func (m *JWTCustomerMiddleware) ValidateToken() gin.HandlerFunc {
@@ -35,7 +35,7 @@ func (m *JWTCustomerMiddleware) ValidateToken() gin.HandlerFunc {
 			return
 		}
 
-		storedToken, err := m.AuthCache.GetTokenCustomer(context.Background(), claims.Email)
+		storedToken, err := m.TokenUsecase.GetToken(context.Background(), claims.Email)
 		if err != nil || storedToken == nil || *storedToken != reqToken {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Unauthorized("token mismatch or expired"))
 			return
