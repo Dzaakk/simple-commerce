@@ -14,7 +14,7 @@ type AuthCacheCustomerImpl struct {
 	Client *redis.Client
 }
 
-func NewAuthCacheCustomerRepository(client *redis.Client) AuthCacheCustomer {
+func NewAuthCacheCustomerRepository(client *redis.Client) *AuthCacheCustomerImpl {
 	return &AuthCacheCustomerImpl{Client: client}
 }
 
@@ -29,7 +29,7 @@ var (
 	PrefixCustomerRegistration = os.Getenv("REDIS_PREFIX_REGISTRATION_CUSTOMER")
 )
 
-func (cache *AuthCacheCustomerImpl) SetActivationCustomer(c context.Context, email string, activationCode string) error {
+func (cache *AuthCacheCustomerImpl) SetActivation(c context.Context, email string, activationCode string) error {
 	key := email + PrefixCodeActivation
 
 	jsonData, err := json.Marshal(activationCode)
@@ -40,7 +40,7 @@ func (cache *AuthCacheCustomerImpl) SetActivationCustomer(c context.Context, ema
 	return cache.Client.Set(c, key, jsonData, ActivationExpired).Err()
 }
 
-func (cache *AuthCacheCustomerImpl) GetActivationCustomer(c context.Context, email string) (string, error) {
+func (cache *AuthCacheCustomerImpl) GetActivation(c context.Context, email string) (string, error) {
 	key := email + PrefixCodeActivation
 
 	val, err := cache.Client.Get(c, key).Result()
@@ -60,7 +60,7 @@ func (cache *AuthCacheCustomerImpl) GetActivationCustomer(c context.Context, ema
 	return activationCode, nil
 }
 
-func (cache *AuthCacheCustomerImpl) SetTokenCustomer(c context.Context, email, token string) error {
+func (cache *AuthCacheCustomerImpl) SetToken(c context.Context, email, token string) error {
 	key := email + PrefixCustomerToken
 
 	jsonToken, err := json.Marshal(token)
@@ -71,7 +71,7 @@ func (cache *AuthCacheCustomerImpl) SetTokenCustomer(c context.Context, email, t
 	return cache.Client.Set(c, key, jsonToken, TokenExpired).Err()
 }
 
-func (cache *AuthCacheCustomerImpl) GetTokenCustomer(c context.Context, email string) (*string, error) {
+func (cache *AuthCacheCustomerImpl) GetToken(c context.Context, email string) (*string, error) {
 	key := email + PrefixCustomerToken
 
 	val, err := cache.Client.Get(c, key).Result()
@@ -91,7 +91,7 @@ func (cache *AuthCacheCustomerImpl) GetTokenCustomer(c context.Context, email st
 	return &token, nil
 }
 
-func (cache *AuthCacheCustomerImpl) SetCustomerRegistration(c context.Context, data model.CustomerRegistrationReq) error {
+func (cache *AuthCacheCustomerImpl) SetRegistration(c context.Context, data model.CustomerRegistrationReq) error {
 	key := data.Email + PrefixCustomerRegistration
 
 	jsonData, err := json.Marshal(data)
@@ -102,7 +102,7 @@ func (cache *AuthCacheCustomerImpl) SetCustomerRegistration(c context.Context, d
 	return cache.Client.Set(c, key, jsonData, ActivationExpired).Err()
 }
 
-func (cache *AuthCacheCustomerImpl) GetCustomerRegistration(c context.Context, email string) (*model.CustomerRegistrationReq, error) {
+func (cache *AuthCacheCustomerImpl) GetRegistration(c context.Context, email string) (*model.CustomerRegistrationReq, error) {
 	key := email + PrefixCustomerRegistration
 
 	val, err := cache.Client.Get(c, key).Result()
@@ -122,8 +122,8 @@ func (cache *AuthCacheCustomerImpl) GetCustomerRegistration(c context.Context, e
 	return &data, nil
 }
 
-func (cache *AuthCacheCustomerImpl) DeleteTokenCustomer(c context.Context, email string) error {
-	key := email + PrefixSellerToken
+func (cache *AuthCacheCustomerImpl) DeleteToken(c context.Context, email string) error {
+	key := email + PrefixCustomerToken
 
 	return cache.Client.Del(c, key).Err()
 }
