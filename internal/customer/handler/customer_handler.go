@@ -12,10 +12,10 @@ import (
 )
 
 type CustomerHandler struct {
-	Usecase usecase.CustomerUseCase
+	Usecase usecase.CustomerUsecase
 }
 
-func NewCustomerHandler(usecase usecase.CustomerUseCase) *CustomerHandler {
+func NewCustomerHandler(usecase usecase.CustomerUsecase) *CustomerHandler {
 	return &CustomerHandler{
 		Usecase: usecase,
 	}
@@ -55,7 +55,7 @@ func (h *CustomerHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	err := h.Usecase.Update(ctx, req)
+	err := h.Usecase.Update(ctx, &req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
