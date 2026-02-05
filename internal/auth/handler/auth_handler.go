@@ -12,11 +12,11 @@ import (
 )
 
 type AuthHandler struct {
-	Usecase      usecase.AuthUseCase
+	Usecase      usecase.AuthUsecase
 	EmailUsecase emailUsecase.EmailUseCase
 }
 
-func NewAtuhHandler(usecase usecase.AuthUseCase, emailUsecase emailUsecase.EmailUseCase) *AuthHandler {
+func NewAtuhHandler(usecase usecase.AuthUsecase, emailUsecase emailUsecase.EmailUseCase) *AuthHandler {
 	return &AuthHandler{
 		Usecase:      usecase,
 		EmailUsecase: emailUsecase,
