@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func GenerateActivationCode() string {
+func generateActivationCode() string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const codeLength = 6
 

@@ -2,9 +2,8 @@ package usecase
 
 import (
 	"Dzaakk/simple-commerce/internal/auth/model"
-	repo "Dzaakk/simple-commerce/internal/auth/repository"
 	customerModel "Dzaakk/simple-commerce/internal/customer/model"
-	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
+	customerUsecase "Dzaakk/simple-commerce/internal/customer/usecase"
 	eModel "Dzaakk/simple-commerce/internal/email/model"
 	sellerModel "Dzaakk/simple-commerce/internal/seller/model"
 	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
@@ -13,30 +12,34 @@ import (
 	"Dzaakk/simple-commerce/package/template"
 	"Dzaakk/simple-commerce/package/util"
 	"context"
-	"database/sql"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type AuthUseCaseImpl struct {
-	CustomerCache    repo.AuthCacheCustomer
-	SellerCache      repo.AuthCacheSeller
-	CustomerRepo     customerRepo.CustomerRepository
-	SellerRepo       sellerRepo.SellerRepository
-	ShoppingCartRepo shoppingCartRepo.ShoppingCartRepository
+type AuthUsecaseImpl struct {
+	AuthCacheCustomer AuthCacheCustomer
+	AuthCacheSeller   AuthCacheSeller
+	CustomerUsecase   customerUsecase.CustomerUsecase
+	SellerRepo        sellerRepo.SellerRepository
+	ShoppingCartRepo  shoppingCartRepo.ShoppingCartRepository
 }
 
-func NewAuthUseCase(customerCache repo.AuthCacheCustomer, sellerCache repo.AuthCacheSeller, customerRepo customerRepo.CustomerRepository, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) AuthUseCase {
-	return &AuthUseCaseImpl{customerCache, sellerCache, customerRepo, sellerRepo, shoppingCartRepo}
+func NewAuthUsecase(authCacheCustomer AuthCacheCustomer, authCacheSeller AuthCacheSeller, customerUsecase customerUsecase.CustomerUsecase, sellerRepo sellerRepo.SellerRepository, shoppingCartRepo shoppingCartRepo.ShoppingCartRepository) *AuthUsecaseImpl {
+	return &AuthUsecaseImpl{
+		AuthCacheCustomer: authCacheCustomer,
+		AuthCacheSeller:   authCacheSeller,
+		CustomerUsecase:   customerUsecase,
+		SellerRepo:        sellerRepo,
+		ShoppingCartRepo:  shoppingCartRepo,
+	}
 }
 
-func (a *AuthUseCaseImpl) RegistrationCustomer(ctx context.Context, data model.CustomerRegistrationReq) (*eModel.ActivationEmailReq, error) {
+func (a *AuthUsecaseImpl) RegistrationCustomer(ctx context.Context, data model.CustomerRegistrationReq) (*eModel.ActivationEmailReq, error) {
 
-	activationCode := GenerateActivationCode()
-	err := a.CustomerCache.SetActivationCustomer(ctx, data.Email, activationCode)
+	activationCode := generateActivationCode()
+	err := a.AuthCacheCustomer.SetActivation(ctx, data.Email, activationCode)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +50,7 @@ func (a *AuthUseCaseImpl) RegistrationCustomer(ctx context.Context, data model.C
 	}
 	data.Password = string(hashedPassword)
 
-	err = a.CustomerCache.SetCustomerRegistration(ctx, data)
+	err = a.AuthCacheCustomer.SetRegistration(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +64,8 @@ func (a *AuthUseCaseImpl) RegistrationCustomer(ctx context.Context, data model.C
 	return &email, nil
 }
 
-func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.ActivationReq) error {
-	code, err := a.CustomerCache.GetActivationCustomer(ctx, req.Email)
+func (a *AuthUsecaseImpl) ActivationCustomer(ctx context.Context, req model.ActivationReq) error {
+	code, err := a.AuthCacheCustomer.GetActivation(ctx, req.Email)
 	if err != nil {
 		return err
 	}
@@ -71,38 +74,29 @@ func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.Acti
 		return errors.New("invalid activation code")
 	}
 
-	data, err := a.CustomerCache.GetCustomerRegistration(ctx, req.Email)
+	data, err := a.AuthCacheCustomer.GetRegistration(ctx, req.Email)
 	if err != nil {
 		return err
 	}
 
-	gender, err := strconv.Atoi(data.Gender)
-	if err != nil {
-		return err
+	customer := &customerModel.CreateReq{
+		Username:    data.Username,
+		Email:       data.Email,
+		PhoneNumber: data.PhoneNumber,
+		Password:    data.Password,
+		DateOfBirth: data.DateOfBirth,
+		// Balance:        float64(10000000),
+		// Status:         1,
+		// Gender:         gender,
+		// DateOfBirth:    sql.NullTime{Valid: true, Time: date},
+		// LastLogin:      sql.NullTime{Time: time.Now(), Valid: true},
+		// ProfilePicture: "",
+		// Base: template.Base{
+		// 	Created:   time.Now(),
+		// 	CreatedBy: "system",
+		// },
 	}
-
-	date, err := time.Parse(data.DateOfBirth, template.FormatDate)
-	if err != nil {
-		return err
-	}
-
-	customer := customerModel.TCustomers{
-		Username:       data.Username,
-		Email:          data.Email,
-		PhoneNumber:    data.PhoneNumber,
-		Password:       data.Password,
-		Balance:        float64(10000000),
-		Status:         1,
-		Gender:         gender,
-		DateOfBirth:    sql.NullTime{Valid: true, Time: date},
-		LastLogin:      sql.NullTime{Time: time.Now(), Valid: true},
-		ProfilePicture: "",
-		Base: template.Base{
-			Created:   time.Now(),
-			CreatedBy: "system",
-		},
-	}
-	customerID, err := a.CustomerRepo.Create(ctx, customer)
+	customerID, err := a.CustomerUsecase.Create(ctx, customer)
 	if err != nil {
 		return err
 	}
@@ -111,7 +105,7 @@ func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.Acti
 		CustomerID: int(customerID),
 		Status:     template.StatusActive,
 		Base: template.Base{
-			Created:   customer.Created,
+			Created:   time.Now(),
 			CreatedBy: "System",
 		},
 	}
@@ -124,9 +118,9 @@ func (a *AuthUseCaseImpl) ActivationCustomer(ctx context.Context, req model.Acti
 	return nil
 }
 
-func (a *AuthUseCaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq) error {
+func (a *AuthUsecaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq) error {
 
-	customer, err := a.CustomerRepo.FindByEmail(ctx, req.Email)
+	customer, err := a.CustomerUsecase.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return err
 	}
@@ -151,7 +145,7 @@ func (a *AuthUseCaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq)
 		return err
 	}
 
-	err = a.CustomerCache.SetTokenCustomer(ctx, customer.Email, jwtToken)
+	err = a.AuthCacheCustomer.SetToken(ctx, customer.Email, jwtToken)
 	if err != nil {
 		return err
 	}
@@ -159,9 +153,9 @@ func (a *AuthUseCaseImpl) LoginCustomer(ctx context.Context, req model.LoginReq)
 	return nil
 }
 
-func (a *AuthUseCaseImpl) RegistrationSeller(ctx context.Context, data model.SellerRegistrationReq) (*eModel.ActivationEmailReq, error) {
-	activationCode := GenerateActivationCode()
-	err := a.SellerCache.SetActivationSeller(ctx, data.Email, activationCode)
+func (a *AuthUsecaseImpl) RegistrationSeller(ctx context.Context, data model.SellerRegistrationReq) (*eModel.ActivationEmailReq, error) {
+	activationCode := generateActivationCode()
+	err := a.AuthCacheSeller.SetActivation(ctx, data.Email, activationCode)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +166,7 @@ func (a *AuthUseCaseImpl) RegistrationSeller(ctx context.Context, data model.Sel
 	}
 	data.Password = string(hashedPassword)
 
-	err = a.SellerCache.SetSellerRegistration(ctx, data)
+	err = a.AuthCacheSeller.SetRegistration(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -185,8 +179,8 @@ func (a *AuthUseCaseImpl) RegistrationSeller(ctx context.Context, data model.Sel
 
 	return &email, nil
 }
-func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.ActivationReq) error {
-	code, err := a.SellerCache.GetActivationSeller(ctx, req.Email)
+func (a *AuthUsecaseImpl) ActivationSeller(ctx context.Context, req model.ActivationReq) error {
+	code, err := a.AuthCacheSeller.GetActivation(ctx, req.Email)
 	if err != nil {
 		return err
 	}
@@ -195,7 +189,7 @@ func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.Activa
 		return errors.New("invalid activation code")
 	}
 
-	data, err := a.SellerCache.GetSellerRegistration(ctx, req.Email)
+	data, err := a.AuthCacheSeller.GetRegistration(ctx, req.Email)
 	if err != nil {
 		return err
 	}
@@ -223,7 +217,7 @@ func (a *AuthUseCaseImpl) ActivationSeller(ctx context.Context, req model.Activa
 
 	return nil
 }
-func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) error {
+func (a *AuthUsecaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) error {
 	seller, err := a.SellerRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return err
@@ -249,7 +243,7 @@ func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) e
 		return err
 	}
 
-	err = a.SellerCache.SetTokenSeller(ctx, seller.Email, jwtToken)
+	err = a.AuthCacheSeller.SetToken(ctx, seller.Email, jwtToken)
 	if err != nil {
 		return err
 	}
@@ -257,13 +251,13 @@ func (a *AuthUseCaseImpl) LoginSeller(ctx context.Context, req model.LoginReq) e
 	return nil
 }
 
-func (a *AuthUseCaseImpl) Logout(ctx context.Context, email string, role string) error {
+func (a *AuthUsecaseImpl) Logout(ctx context.Context, email string, role string) error {
 
 	switch role {
 	case template.RoleCustomer:
-		return a.CustomerCache.DeleteTokenCustomer(ctx, email)
+		return a.AuthCacheCustomer.DeleteToken(ctx, email)
 	case template.RoleSeller:
-		return a.SellerCache.DeleteTokenSeller(ctx, email)
+		return a.AuthCacheSeller.DeleteToken(ctx, email)
 	}
 
 	return nil
