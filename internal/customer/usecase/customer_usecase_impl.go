@@ -44,6 +44,9 @@ func (c *CustomerUsecaseImpl) Update(ctx context.Context, req *model.UpdateReq) 
 	if err != nil {
 		return err
 	}
+	if customerID <= 0 {
+		return errors.New("invalid parameter customer id")
+	}
 
 	data := req.ToUpdateData(dateOfBirth, customerID)
 
