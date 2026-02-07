@@ -44,6 +44,7 @@ func (c *CustomerUsecaseImpl) Update(ctx context.Context, req *model.UpdateReq) 
 	if err != nil {
 		return err
 	}
+
 	if customerID <= 0 {
 		return errors.New("invalid parameter customer id")
 	}
@@ -71,7 +72,10 @@ func (c *CustomerUsecaseImpl) FindByEmail(ctx context.Context, email string) (*m
 }
 
 func (c *CustomerUsecaseImpl) FindByID(ctx context.Context, customerID int64) (*model.CustomerRes, error) {
-	// validate id
+
+	if customerID <= 0 {
+		return nil, errors.New("invalid parameter customer id")
+	}
 	data, err := c.Repo.FindByID(ctx, customerID)
 	if err != nil {
 		return nil, err
