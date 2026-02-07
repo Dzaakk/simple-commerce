@@ -12,14 +12,14 @@ import (
 	"os"
 )
 
-type EmailUsecCaseImpl struct {
+type EmailUsecaseImpl struct {
 }
 
-func NewEmailUseCase() EmailUseCase {
-	return &EmailUsecCaseImpl{}
+func NewEmailUseCase() EmailUsecase {
+	return &EmailUsecaseImpl{}
 }
 
-func (e *EmailUsecCaseImpl) SendEmailActivation(ctx context.Context, data model.ActivationEmailReq) error {
+func (e *EmailUsecaseImpl) SendEmailActivation(ctx context.Context, data model.ActivationEmailReq) error {
 	apiKey := os.Getenv("EMAIL_API_KEY")
 	url := os.Getenv("EMAIL_API_URL")
 	if apiKey == "" {

@@ -5,6 +5,6 @@ import (
 	"context"
 )
 
-type EmailUseCase interface {
+type EmailUsecase interface {
 	SendEmailActivation(ctx context.Context, req model.ActivationEmailReq) error
 }
