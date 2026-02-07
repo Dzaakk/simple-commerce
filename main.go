@@ -5,7 +5,7 @@ import (
 	redis "Dzaakk/simple-commerce/package/db/redis"
 	"log"
 
-	auth "Dzaakk/simple-commerce/internal/auth/injector"
+	auth "Dzaakk/simple-commerce/internal/auth/route"
 	customer "Dzaakk/simple-commerce/internal/customer/route"
 	product "Dzaakk/simple-commerce/internal/product/injector"
 	seller "Dzaakk/simple-commerce/internal/seller/injector"
