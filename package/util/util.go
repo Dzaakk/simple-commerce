@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -24,4 +25,12 @@ func GeneratePlaceHolders(n int) string {
 	}
 
 	return strings.Join(holders, ", ")
+}
+
+func AuthorizedChecker(ctx *gin.Context, customerID string) bool {
+	currentID, exists := ctx.Get("customerId")
+	if !exists || currentID != customerID {
+		return false
+	}
+	return true
 }

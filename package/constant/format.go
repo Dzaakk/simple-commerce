@@ -1,5 +1,10 @@
 package constant
 
 const (
-	DateLayout = "02-01-2006"
+	StatusActive   = "A"
+	StatusInactive = "I"
+	StatusBlock    = "B"
+	RoleCustomer   = "CUSTOMER"
+	RoleSeller     = "SELLER"
+	DateLayout     = "02-01-2006"
 )
