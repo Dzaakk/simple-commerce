@@ -1,37 +1,30 @@
 package model
 
 import (
-	"Dzaakk/simple-commerce/package/template"
-	"database/sql"
-	"fmt"
+	"time"
 )
 
-type TCustomers struct {
-	ID             int64        `json:"id"`
-	Username       string       `json:"username"`
-	Email          string       `json:"email"`
-	PhoneNumber    string       `json:"phone_number"`
-	Password       string       `json:"password"`
-	Balance        float64      `json:"balance"`
-	Status         uint8        `json:"status"`
-	ProfilePicture string       `json:"profile_picture"`
-	Address        string       `json:"address"`
-	Gender         int          `json:"gender" validate:"number"`
-	DateOfBirth    sql.NullTime `json:"date_of_birth"`
-	LastLogin      sql.NullTime `json:"last_login"`
-	template.Base
+type Customers struct {
+	ID           string    `json:"id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"password_hash"`
+	FullName     string    `json:"full_name"`
+	Phone        string    `json:"phone"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-func (c *TCustomers) ToResponse() CustomerRes {
+func (c *Customers) ToResponse() CustomerRes {
 	return CustomerRes{
-		ID:          fmt.Sprintf("%d", c.ID),
-		Username:    c.Username,
-		Email:       c.Email,
-		PhoneNumber: c.PhoneNumber,
+		ID:       c.ID,
+		FullName: c.FullName,
+		Email:    c.Email,
+		Phone:    c.Phone,
 	}
 }
 
 type CustomerBalance struct {
-	CustomerID int64   `json:"customer_id"`
+	CustomerID string  `json:"customer_id"`
 	Balance    float64 `json:"balance"`
 }

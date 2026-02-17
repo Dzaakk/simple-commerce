@@ -1,66 +1,59 @@
 package model
 
 import (
-	"Dzaakk/simple-commerce/package/template"
-	"database/sql"
+	"fmt"
 	"time"
 )
 
 type CreateReq struct {
-	Username    string `json:"username" validate:"required"`
-	Password    string `json:"password" validate:"required"`
-	Email       string `json:"email" validate:"required,email"`
-	PhoneNumber string `json:"phone_number" validate:"required"`
-	DateOfBirth string `json:"date_of_birth" validate:"required,datetime=02-01-2006"`
-	Address     string `json:"address"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+	FullName string `json:"full_name" validate:"required"`
+	Phone    string `json:"phone"`
 }
 
-func (c *CreateReq) ToCreateData(dateOfBirth time.Time) *TCustomers {
-	return &TCustomers{
-		Username:    c.Username,
-		Email:       c.Email,
-		PhoneNumber: c.PhoneNumber,
-		Password:    c.Password,
-		Balance:     float64(10000000),
-		Status:      1,
-		// Gender:         gender,
-		DateOfBirth:    sql.NullTime{Valid: true, Time: dateOfBirth},
-		LastLogin:      sql.NullTime{Time: time.Now(), Valid: true},
-		ProfilePicture: "",
-		Base: template.Base{
-			Created:   time.Now(),
-			CreatedBy: "system",
-		},
+func (c *CreateReq) ToCreateData(_ time.Time) *Customers {
+	return &Customers{
+		Email:        c.Email,
+		PasswordHash: c.Password,
+		FullName:     c.FullName,
+		Phone:        c.Phone,
+		Status:       "pending",
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 }
 
 type UpdateReq struct {
-	CustomerID  string `json:"customer_id" validate:"required,min=1"`
-	Username    string `json:"username" validate:"required"`
-	Email       string `json:"email" validate:"required,email"`
-	PhoneNumber string `json:"phone_number" validate:"required"`
-	DateOfBirth string `json:"date_of_birth" validate:"required,datetime=02-01-2006"`
-	Address     string `json:"address"`
+	CustomerID string `json:"customer_id" validate:"required"`
+	Email      string `json:"email" validate:"required,email"`
+	FullName   string `json:"full_name" validate:"required"`
+	Phone      string `json:"phone"`
+	Status     string `json:"status"`
 }
 
-func (u *UpdateReq) ToUpdateData(dateOfBirth time.Time, customerID int64) *TCustomers {
-	return &TCustomers{
-		ID:          customerID,
-		Username:    u.Username,
-		Email:       u.Email,
-		PhoneNumber: u.PhoneNumber,
-		DateOfBirth: sql.NullTime{Time: dateOfBirth, Valid: true},
-		Address:     u.Address,
-		Base: template.Base{
-			UpdatedBy: sql.NullString{String: u.Username, Valid: true},
-		},
+func (u *UpdateReq) ToUpdateData(dateOfBirth time.Time, customerID int64) *Customers {
+	status := u.Status
+	if status == "" {
+		status = "pending"
+	}
+
+	return &Customers{
+		ID:        fmt.Sprintf("%d", customerID),
+		Email:     u.Email,
+		FullName:  u.FullName,
+		Phone:     u.Phone,
+		Status:    status,
+		UpdatedAt: dateOfBirth,
 	}
 }
 
 type CustomerRes struct {
-	ID          string `json:"id"`
-	Username    string `json:"username,omitempty"`
-	Email       string `json:"email,omitempty"`
-	PhoneNumber string `json:"phone_number,omitempty"`
-	Balance     string `json:"balance,omitempty"`
+	ID        string    `json:"id"`
+	Email     string    `json:"email,omitempty"`
+	FullName  string    `json:"full_name,omitempty"`
+	Phone     string    `json:"phone,omitempty"`
+	Status    string    `json:"status,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
