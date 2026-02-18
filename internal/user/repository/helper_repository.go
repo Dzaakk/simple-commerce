@@ -7,8 +7,8 @@ import (
 	"errors"
 )
 
-func scanCustomer(row *sql.Row) (*model.TCustomers, error) {
-	customer := &model.TCustomers{}
+func scanCustomer(row *sql.Row) (*model.Customers, error) {
+	customer := &model.Customers{}
 	var updated sql.NullTime
 
 	err := row.Scan(
@@ -32,11 +32,11 @@ func scanCustomer(row *sql.Row) (*model.TCustomers, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, response.Error("error scan", err)
+		return nil, response.Error("failed to scan customer", err)
 	}
 
 	if updated.Valid {
-		customer.Updated.Time = updated.Time
+		customer.Updated = updated
 	}
 
 	return customer, nil
