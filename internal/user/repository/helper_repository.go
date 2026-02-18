@@ -1,42 +1,30 @@
 package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/customer/model"
+	"Dzaakk/simple-commerce/internal/user/domain"
 	"Dzaakk/simple-commerce/package/response"
 	"database/sql"
 	"errors"
 )
 
-func scanCustomer(row *sql.Row) (*model.Customers, error) {
-	customer := &model.Customers{}
-	var updated sql.NullTime
+func scanCustomer(row *sql.Row) (*domain.Customer, error) {
+	customer := &domain.Customer{}
 
 	err := row.Scan(
 		&customer.ID,
-		&customer.Username,
 		&customer.Email,
-		&customer.Password,
-		&customer.Gender,
-		&customer.PhoneNumber,
-		&customer.Balance,
+		&customer.PasswordHash,
+		&customer.FullName,
+		&customer.Phone,
 		&customer.Status,
-		&customer.DateOfBirth,
-		&customer.ProfilePicture,
-		&customer.LastLogin,
-		&customer.Created,
-		&customer.CreatedBy,
-		&updated,
-		&customer.UpdatedBy,
+		&customer.CreatedAt,
+		&customer.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, response.Error("failed to scan customer", err)
-	}
-
-	if updated.Valid {
-		customer.Updated = updated
 	}
 
 	return customer, nil
