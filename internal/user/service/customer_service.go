@@ -12,17 +12,17 @@ type CustomerServiceImpl struct {
 	Repo CustomerRepository
 }
 
-func NewCustomerUseCase(repo CustomerRepository) CustomerService {
+func NewCustomerService(repo CustomerRepository) CustomerService {
 	return &CustomerServiceImpl{Repo: repo}
 }
 
-func (c *CustomerServiceImpl) Create(ctx context.Context, req *dto.CreateReq) (int64, error) {
+func (c *CustomerServiceImpl) Create(ctx context.Context, req *dto.CreateReq) (string, error) {
 
 	data := req.ToCreateData()
 
 	id, err := c.Repo.Create(ctx, data)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	return id, nil
@@ -62,11 +62,7 @@ func (c *CustomerServiceImpl) FindByEmail(ctx context.Context, email string) (*d
 	return data, nil
 }
 
-func (c *CustomerServiceImpl) FindByID(ctx context.Context, customerID int64) (*dto.CustomerRes, error) {
-
-	if customerID <= 0 {
-		return nil, errors.New("invalid parameter customer id")
-	}
+func (c *CustomerServiceImpl) FindByID(ctx context.Context, customerID string) (*dto.CustomerRes, error) {
 
 	data, err := c.Repo.FindByID(ctx, customerID)
 	if err != nil {

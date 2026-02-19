@@ -1,61 +1,56 @@
 package handler
 
 import (
-	"Dzaakk/simple-commerce/internal/customer/model"
-	"Dzaakk/simple-commerce/internal/customer/usecase"
+	"Dzaakk/simple-commerce/internal/user/dto"
+	"Dzaakk/simple-commerce/internal/user/service"
 	"Dzaakk/simple-commerce/package/response"
-	"Dzaakk/simple-commerce/package/template"
+	"Dzaakk/simple-commerce/package/util"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-type CustomerHandler struct {
-	Usecase usecase.CustomerUsecase
+type UserHandler struct {
+	Service service.CustomerService
 }
 
-func NewCustomerHandler(usecase usecase.CustomerUsecase) *CustomerHandler {
-	return &CustomerHandler{
-		Usecase: usecase,
+func NewUserHandler(service service.CustomerService) *UserHandler {
+	return &UserHandler{
+		Service: service,
 	}
 }
 
-func (h *CustomerHandler) FindCustomerByID(ctx *gin.Context) {
-	customerID, err := strconv.ParseInt(ctx.Query("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest(err.Error()))
-		return
-	}
+func (h *UserHandler) FindCustomerByID(ctx *gin.Context) {
 
-	if !template.AuthorizedChecker(ctx, ctx.Query("id")) {
+	customerID := ctx.Query("id")
+	if !util.AuthorizedChecker(ctx, ctx.Query("id")) {
 		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(""))
 		return
 	}
 
-	data, err := h.Usecase.FindByID(ctx, customerID)
+	data, err := h.Service.FindByID(ctx, customerID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 
 	if data == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("customer not found"))
+		ctx.JSON(http.StatusNotFound, response.NotFound("user not found"))
 		return
 	}
 
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
 
-func (h *CustomerHandler) Update(ctx *gin.Context) {
-	var req model.UpdateReq
+func (h *UserHandler) Update(ctx *gin.Context) {
+	var req dto.UpdateReq
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 
-	err := h.Usecase.Update(ctx, &req)
+	err := h.Service.Update(ctx, &req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
