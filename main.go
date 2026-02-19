@@ -6,11 +6,11 @@ import (
 	"log"
 
 	auth "Dzaakk/simple-commerce/internal/auth/route"
-	customer "Dzaakk/simple-commerce/internal/customer/route"
 	product "Dzaakk/simple-commerce/internal/product/injector"
 	seller "Dzaakk/simple-commerce/internal/seller/injector"
 	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/injector"
 	transaction "Dzaakk/simple-commerce/internal/transaction/injector"
+	user "Dzaakk/simple-commerce/internal/user/route"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +28,7 @@ func main() {
 	r := gin.Default()
 
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
-	customer.InitializedService(postgres, redis).Route(&r.RouterGroup)
+	user.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	product.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	seller.InitializedService(postgres).Route(&r.RouterGroup, redis)
 	shoppingCart.InitializedService(postgres, redis).Route(&r.RouterGroup)
