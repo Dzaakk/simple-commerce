@@ -1,12 +1,7 @@
 package domain
 
-import "time"
-
-type CustomerStatus string
-
-const (
-	CustomerStatusPending CustomerStatus = "pending"
-	CustomerStatusActive  CustomerStatus = "active"
+import (
+	"time"
 )
 
 type Customer struct {
@@ -15,7 +10,7 @@ type Customer struct {
 	PasswordHash string
 	FullName     string
 	Phone        string
-	Status       CustomerStatus
+	Status       string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

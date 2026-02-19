@@ -1,6 +1,7 @@
-package model
+package dto
 
 import (
+	"Dzaakk/simple-commerce/internal/user/domain"
 	"fmt"
 	"time"
 )
@@ -12,8 +13,8 @@ type CreateReq struct {
 	Phone    string `json:"phone"`
 }
 
-func (c *CreateReq) ToCreateData(_ time.Time) *Customers {
-	return &Customers{
+func (c *CreateReq) ToCreateData() *domain.Customer {
+	return &domain.Customer{
 		Email:        c.Email,
 		PasswordHash: c.Password,
 		FullName:     c.FullName,
@@ -32,19 +33,19 @@ type UpdateReq struct {
 	Status     string `json:"status"`
 }
 
-func (u *UpdateReq) ToUpdateData(dateOfBirth time.Time, customerID int64) *Customers {
+func (u *UpdateReq) ToUpdateData(customerID int64) *domain.Customer {
 	status := u.Status
 	if status == "" {
 		status = "pending"
 	}
 
-	return &Customers{
+	return &domain.Customer{
 		ID:        fmt.Sprintf("%d", customerID),
 		Email:     u.Email,
 		FullName:  u.FullName,
 		Phone:     u.Phone,
 		Status:    status,
-		UpdatedAt: dateOfBirth,
+		UpdatedAt: time.Now(),
 	}
 }
 
@@ -56,4 +57,16 @@ type CustomerRes struct {
 	Status    string    `json:"status,omitempty"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+}
+
+func ToCustomerRes(c *domain.Customer) CustomerRes {
+	return CustomerRes{
+		ID:        c.ID,
+		Email:     c.Email,
+		FullName:  c.FullName,
+		Phone:     c.Phone,
+		Status:    c.Status,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
+	}
 }
