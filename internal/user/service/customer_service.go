@@ -1,30 +1,24 @@
-package usecase
+package service
 
 import (
-	"Dzaakk/simple-commerce/internal/customer/model"
-	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/internal/user/domain"
+	"Dzaakk/simple-commerce/internal/user/dto"
 	"context"
 	"errors"
 	"strconv"
-	"time"
 )
 
-type CustomerUsecaseImpl struct {
+type CustomerServiceImpl struct {
 	Repo CustomerRepository
 }
 
-func NewCustomerUseCase(repo CustomerRepository) CustomerUsecase {
-	return &CustomerUsecaseImpl{Repo: repo}
+func NewCustomerUseCase(repo CustomerRepository) CustomerService {
+	return &CustomerServiceImpl{Repo: repo}
 }
 
-func (c *CustomerUsecaseImpl) Create(ctx context.Context, req *model.CreateReq) (int64, error) {
+func (c *CustomerServiceImpl) Create(ctx context.Context, req *dto.CreateReq) (int64, error) {
 
-	dateOfBirth, err := time.Parse(constant.DateLayout, req.DateOfBirth)
-	if err != nil {
-		return 0, err
-	}
-
-	data := req.ToCreateData(dateOfBirth)
+	data := req.ToCreateData()
 
 	id, err := c.Repo.Create(ctx, data)
 	if err != nil {
@@ -34,12 +28,8 @@ func (c *CustomerUsecaseImpl) Create(ctx context.Context, req *model.CreateReq) 
 	return id, nil
 }
 
-func (c *CustomerUsecaseImpl) Update(ctx context.Context, req *model.UpdateReq) error {
+func (c *CustomerServiceImpl) Update(ctx context.Context, req *dto.UpdateReq) error {
 
-	dateOfBirth, err := time.Parse(constant.DateLayout, req.DateOfBirth)
-	if err != nil {
-		return err
-	}
 	customerID, err := strconv.ParseInt(req.CustomerID, 0, 64)
 	if err != nil {
 		return err
@@ -49,7 +39,7 @@ func (c *CustomerUsecaseImpl) Update(ctx context.Context, req *model.UpdateReq) 
 		return errors.New("invalid parameter customer id")
 	}
 
-	data := req.ToUpdateData(dateOfBirth, customerID)
+	data := req.ToUpdateData(customerID)
 
 	rowsAffected, err := c.Repo.Update(ctx, data)
 	if err != nil {
@@ -62,7 +52,8 @@ func (c *CustomerUsecaseImpl) Update(ctx context.Context, req *model.UpdateReq) 
 	return nil
 }
 
-func (c *CustomerUsecaseImpl) FindByEmail(ctx context.Context, email string) (*model.TCustomers, error) {
+func (c *CustomerServiceImpl) FindByEmail(ctx context.Context, email string) (*domain.Customer, error) {
+
 	data, err := c.Repo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -71,11 +62,12 @@ func (c *CustomerUsecaseImpl) FindByEmail(ctx context.Context, email string) (*m
 	return data, nil
 }
 
-func (c *CustomerUsecaseImpl) FindByID(ctx context.Context, customerID int64) (*model.CustomerRes, error) {
+func (c *CustomerServiceImpl) FindByID(ctx context.Context, customerID int64) (*dto.CustomerRes, error) {
 
 	if customerID <= 0 {
 		return nil, errors.New("invalid parameter customer id")
 	}
+
 	data, err := c.Repo.FindByID(ctx, customerID)
 	if err != nil {
 		return nil, err
@@ -84,7 +76,7 @@ func (c *CustomerUsecaseImpl) FindByID(ctx context.Context, customerID int64) (*
 		return nil, nil
 	}
 
-	customer := data.ToResponse()
+	customer := dto.ToCustomerRes(data)
 
 	return &customer, nil
 }
