@@ -29,3 +29,26 @@ func scanCustomer(row *sql.Row) (*domain.Customer, error) {
 
 	return customer, nil
 }
+
+func scanSeller(row *sql.Row) (*domain.Seller, error) {
+	seller := &domain.Seller{}
+
+	err := row.Scan(
+		&seller.ID,
+		&seller.Email,
+		&seller.PasswordHash,
+		&seller.ShopName,
+		&seller.Phone,
+		&seller.Status,
+		&seller.CreatedAt,
+		&seller.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, response.Error("failed to scan seller", err)
+	}
+
+	return seller, nil
+}
