@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/user/domain"
+	"Dzaakk/simple-commerce/internal/user/model"
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -23,7 +23,7 @@ func NewCustomerRepository(db *sql.DB) *CustomerRepository {
 	return &CustomerRepository{DB: db}
 }
 
-func (r *CustomerRepository) Create(ctx context.Context, data *domain.Customer) (string, error) {
+func (r *CustomerRepository) Create(ctx context.Context, data *model.Customer) (string, error) {
 	var id string
 
 	err := r.DB.QueryRowContext(
@@ -44,7 +44,7 @@ func (r *CustomerRepository) Create(ctx context.Context, data *domain.Customer) 
 	return id, nil
 }
 
-func (r *CustomerRepository) Update(ctx context.Context, data *domain.Customer) (int64, error) {
+func (r *CustomerRepository) Update(ctx context.Context, data *model.Customer) (int64, error) {
 	result, err := r.DB.ExecContext(
 		ctx, queryUpdate,
 		data.Email,
@@ -70,13 +70,13 @@ func (r *CustomerRepository) Update(ctx context.Context, data *domain.Customer) 
 	return rowsAffected, nil
 }
 
-func (r *CustomerRepository) FindByID(ctx context.Context, customerID string) (*domain.Customer, error) {
+func (r *CustomerRepository) FindByID(ctx context.Context, customerID string) (*model.Customer, error) {
 	row := r.DB.QueryRowContext(ctx, queryFindByID, customerID)
 
 	return scanCustomer(row)
 }
 
-func (r *CustomerRepository) FindByEmail(ctx context.Context, email string) (*domain.Customer, error) {
+func (r *CustomerRepository) FindByEmail(ctx context.Context, email string) (*model.Customer, error) {
 	row := r.DB.QueryRowContext(ctx, queryFindByEmail, email)
 
 	return scanCustomer(row)

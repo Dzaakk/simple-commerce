@@ -1,14 +1,14 @@
 package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/user/domain"
+	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/response"
 	"database/sql"
 	"errors"
 )
 
-func scanCustomer(row *sql.Row) (*domain.Customer, error) {
-	customer := &domain.Customer{}
+func scanCustomer(row *sql.Row) (*model.Customer, error) {
+	customer := &model.Customer{}
 
 	err := row.Scan(
 		&customer.ID,
@@ -30,8 +30,8 @@ func scanCustomer(row *sql.Row) (*domain.Customer, error) {
 	return customer, nil
 }
 
-func scanSeller(row *sql.Row) (*domain.Seller, error) {
-	seller := &domain.Seller{}
+func scanSeller(row *sql.Row) (*model.Seller, error) {
+	seller := &model.Seller{}
 
 	err := row.Scan(
 		&seller.ID,

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"Dzaakk/simple-commerce/internal/user/domain"
 	"Dzaakk/simple-commerce/internal/user/dto"
+	"Dzaakk/simple-commerce/internal/user/model"
 	"context"
 	"errors"
 	"strconv"
@@ -50,7 +50,7 @@ func (s *SellerServiceImpl) Update(ctx context.Context, req *dto.SellerUpdateReq
 	return nil
 }
 
-func (s *SellerServiceImpl) FindByEmail(ctx context.Context, email string) (*domain.Seller, error) {
+func (s *SellerServiceImpl) FindByEmail(ctx context.Context, email string) (*model.Seller, error) {
 	data, err := s.Repo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
