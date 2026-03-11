@@ -8,3 +8,12 @@ const (
 	RoleSeller     = "SELLER"
 	DateLayout     = "02-01-2006"
 )
+
+const (
+	//auth
+
+	Customer          = "CUSTOMER"
+	Seller            = "SELLER"
+	EmailVerification = "EMAIL VERIFICATION"
+	ResetPassword     = "RESET PASSWORD"
+)
