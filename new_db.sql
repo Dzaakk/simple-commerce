@@ -58,6 +58,21 @@ CREATE TABLE activation_codes (
 );
 
 -- ============================================
+-- REFRESH TOKEN
+-- ============================================
+CREATE TABLE refresh_tokens (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     UUID NOT NULL,
+    user_type   VARCHAR(20) NOT NULL,
+    token_hash  VARCHAR(255) NOT NULL,
+    expires_at  TIMESTAMP NOT NULL,
+    revoked_at  TIMESTAMP,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uq_refresh_tokens_token UNIQUE (token_hash)
+);
+
+-- ============================================
 -- CATEGORY
 -- ============================================
 CREATE TABLE categories (
