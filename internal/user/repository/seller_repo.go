@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Dzaakk/simple-commerce/internal/user/model"
+	"Dzaakk/simple-commerce/package/constant"
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -13,6 +14,7 @@ const (
 	sellerQueryFindByID    = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE id=$1"
 	sellerQueryFindByEmail = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE email=$1"
 	sellerQueryUpdate      = "UPDATE public.sellers SET email=$1, shop_name=$2, phone=$3, status=$4, updated_at=$5 WHERE id=$6"
+	sellerQueryUpdateStatus = "UPDATE public.sellers SET status=$1, updated_at=NOW() WHERE id=$2"
 )
 
 type SellerRepository struct {
@@ -80,4 +82,21 @@ func (r *SellerRepository) FindByEmail(ctx context.Context, email string) (*mode
 	row := r.DB.QueryRowContext(ctx, sellerQueryFindByEmail, email)
 
 	return scanSeller(row)
+}
+
+func (r *SellerRepository) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {
+	result, err := r.DB.ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
+	if err != nil {
+		return response.ExecError("update seller status", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return response.Error("failed to get rows affected", err)
+	}
+	if rowsAffected == 0 {
+		return response.Error("no rows updated", sql.ErrNoRows)
+	}
+
+	return nil
 }

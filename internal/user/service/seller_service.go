@@ -3,6 +3,7 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/internal/user/model"
+	"Dzaakk/simple-commerce/package/constant"
 	"context"
 	"errors"
 	"strconv"
@@ -71,4 +72,8 @@ func (s *SellerServiceImpl) FindByID(ctx context.Context, sellerID string) (*dto
 	seller := dto.ToSellerRes(data)
 
 	return &seller, nil
+}
+
+func (s *SellerServiceImpl) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {
+	return s.Repo.UpdateStatus(ctx, sellerID, status)
 }
