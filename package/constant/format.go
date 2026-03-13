@@ -1,19 +1,25 @@
 package constant
 
+// UserType represents the type of user in the system.
+type UserType string
+
 const (
-	StatusActive   = "A"
-	StatusInactive = "I"
-	StatusBlock    = "B"
-	RoleCustomer   = "CUSTOMER"
-	RoleSeller     = "SELLER"
-	DateLayout     = "02-01-2006"
+	Customer UserType = "customer"
+	Seller   UserType = "seller"
 )
 
-const (
-	//auth
+// ActivationCodeType represents the type of activation code.
+type ActivationCodeType string
 
-	Customer          = "CUSTOMER"
-	Seller            = "SELLER"
-	EmailVerification = "EMAIL VERIFICATION"
-	ResetPassword     = "RESET PASSWORD"
+const (
+	EmailVerification ActivationCodeType = "email_verification"
+	ResetPassword     ActivationCodeType = "password_reset"
+)
+
+// UserStatus represents the status of a user account.
+type UserStatus string
+
+const (
+	StatusPending UserStatus = "pending"
+	StatusActive  UserStatus = "active"
 )
