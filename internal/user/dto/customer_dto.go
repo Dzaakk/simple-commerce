@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"Dzaakk/simple-commerce/internal/user/domain"
+	"Dzaakk/simple-commerce/internal/user/model"
 	"fmt"
 	"time"
 )
@@ -13,8 +13,8 @@ type CreateReq struct {
 	Phone    string `json:"phone"`
 }
 
-func (c *CreateReq) ToCreateData() *domain.Customer {
-	return &domain.Customer{
+func (c *CreateReq) ToCreateData() *model.Customer {
+	return &model.Customer{
 		Email:        c.Email,
 		PasswordHash: c.Password,
 		FullName:     c.FullName,
@@ -33,13 +33,13 @@ type UpdateReq struct {
 	Status     string `json:"status"`
 }
 
-func (u *UpdateReq) ToUpdateData(customerID int64) *domain.Customer {
+func (u *UpdateReq) ToUpdateData(customerID int64) *model.Customer {
 	status := u.Status
 	if status == "" {
 		status = "pending"
 	}
 
-	return &domain.Customer{
+	return &model.Customer{
 		ID:        fmt.Sprintf("%d", customerID),
 		Email:     u.Email,
 		FullName:  u.FullName,
@@ -59,7 +59,7 @@ type CustomerRes struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
-func ToCustomerRes(c *domain.Customer) CustomerRes {
+func ToCustomerRes(c *model.Customer) CustomerRes {
 	return CustomerRes{
 		ID:        c.ID,
 		Email:     c.Email,
