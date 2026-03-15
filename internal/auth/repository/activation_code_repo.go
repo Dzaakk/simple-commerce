@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	activationCodeSelectColumns           = "id, code, email, type, user_type, expires_at, used_at, created_at"
-	activationCodeQueryCreate             = "INSERT INTO public.activation_codes (code, email, type, user_type, expires_at, used_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
-	activationCodeQueryFindByEmailAndUT   = "SELECT " + activationCodeSelectColumns + " FROM public.activation_codes WHERE email=$1 AND user_type=$2 ORDER BY created_at DESC LIMIT 1"
-	activationCodeQueryFindByEmailAndCode = "SELECT " + activationCodeSelectColumns + " FROM public.activation_codes WHERE email=$1 AND code=$2 AND used_at IS NULL AND expires_at > NOW() LIMIT 1"
-	activationCodeQueryMarkAsUsed         = "UPDATE public.activation_codes SET used_at = NOW() WHERE id = $1"
-	activationCodeQueryDeleteExpired      = "DELETE FROM public.activation_codes WHERE expires_at < NOW()"
+	activationCodeSelectColumns         = "id, code, email, type, user_type, expires_at, used_at, created_at"
+	activationCodeQueryCreate           = "INSERT INTO public.activation_codes (code, email, type, user_type, expires_at, used_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+	activationCodeQueryFindByEmailAndUT = "SELECT " + activationCodeSelectColumns + " FROM public.activation_codes WHERE email=$1 AND user_type=$2 ORDER BY created_at DESC LIMIT 1"
+	activationCodeQueryFindByCode       = "SELECT " + activationCodeSelectColumns + " FROM public.activation_codes WHERE code=$1 AND used_at IS NULL AND expires_at > NOW() LIMIT 1"
+	activationCodeQueryMarkAsUsed       = "UPDATE public.activation_codes SET used_at = NOW() WHERE id = $1"
+	activationCodeQueryDeleteExpired    = "DELETE FROM public.activation_codes WHERE expires_at < NOW()"
 )
 
 type ActivationCodeRepository struct {
@@ -52,14 +52,14 @@ func (r *ActivationCodeRepository) FindByEmailAndUserType(ctx context.Context, e
 	return scanActivationCode(row)
 }
 
-func (r *ActivationCodeRepository) FindByEmailAndCode(ctx context.Context, email, code string) (*model.ActivationCode, error) {
-	row := r.DB.QueryRowContext(ctx, activationCodeQueryFindByEmailAndCode, email, code)
+func (r *ActivationCodeRepository) FindByCode(ctx context.Context, code string) (*model.ActivationCode, error) {
+	row := r.DB.QueryRowContext(ctx, activationCodeQueryFindByCode, code)
 
 	return scanActivationCode(row)
 }
 
-func (r *ActivationCodeRepository) MarkAsUsed(ctx context.Context, id int64) error {
-	_, err := r.DB.ExecContext(ctx, activationCodeQueryMarkAsUsed, id)
+func (r *ActivationCodeRepository) MarkAsUsedWithTx(ctx context.Context, tx *sql.Tx, id int64) error {
+	_, err := tx.ExecContext(ctx, activationCodeQueryMarkAsUsed, id)
 	if err != nil {
 		return response.Error("failed to mark activation code as used", err)
 	}
