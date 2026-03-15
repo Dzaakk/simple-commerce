@@ -6,10 +6,12 @@ import (
 	"Dzaakk/simple-commerce/package/constant"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
+	"database/sql"
 	"time"
 )
 
 type authService struct {
+	db             *sql.DB
 	customerSvc    customerService
 	sellerSvc      sellerService
 	activationRepo activationCodeRepository
@@ -17,12 +19,14 @@ type authService struct {
 }
 
 func NewAuthService(
+	db *sql.DB,
 	customerSvc customerService,
 	sellerSvc sellerService,
 	activationRepo activationCodeRepository,
 	refreshRepo refreshTokenRepository,
 ) AuthService {
 	return &authService{
+		db:             db,
 		customerSvc:    customerSvc,
 		sellerSvc:      sellerSvc,
 		activationRepo: activationRepo,
@@ -45,7 +49,6 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 	if err != nil {
 		return err
 	}
-
 	req.Password = hashedPassword
 
 	_, err = s.customerSvc.Create(ctx, req)
@@ -76,11 +79,101 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 }
 
 func (s *authService) RegisterSeller(ctx context.Context, req *dto.RegisterSellerRequest) error {
-	panic("unimplemented")
+
+	// check if email already exist
+	existingSeller, err := s.sellerSvc.FindByEmail(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+	if existingSeller != nil {
+		return response.ErrEmailAlreadyExist
+	}
+
+	hashedPassword, err := hashPassword(req.Password)
+	if err != nil {
+		return err
+	}
+	req.Password = hashedPassword
+
+	_, err = s.sellerSvc.Create(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	activationCode, err := generateActivationCode()
+	if err != nil {
+		return err
+	}
+
+	activationData := &model.ActivationCode{
+		Email:     req.Email,
+		Code:      activationCode,
+		UserType:  string(constant.Seller),
+		ExpiresAt: time.Now().Add(15 * time.Minute),
+	}
+
+	err = s.activationRepo.Create(ctx, activationData)
+	if err != nil {
+		return err
+	}
+
+	// send activation email
+
+	return nil
 }
 
-func (s *authService) VerifyEmail(ctx context.Context, email constant.UserType, code constant.UserType, userType constant.UserType) error {
-	panic("unimplemented")
+func (s *authService) VerifyEmail(ctx context.Context, activationCode string) error {
+	activationData, err := s.activationRepo.FindByCode(ctx, activationCode)
+	if err != nil {
+		return err
+	}
+	if activationData == nil {
+		return response.ErrInvalidActivationCode
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return response.Error("failed to begin transaction", err)
+	}
+	defer tx.Rollback()
+
+	switch activationData.UserType {
+	case string(constant.Customer):
+		customer, err := s.customerSvc.FindByEmail(ctx, activationData.Email)
+		if err != nil {
+			return err
+		}
+		if customer == nil {
+			return response.ErrUserNotFound
+		}
+
+		err = s.customerSvc.UpdateStatusWithTx(ctx, tx, customer.ID, constant.StatusActive)
+		if err != nil {
+			return err
+		}
+	case string(constant.Seller):
+		seller, err := s.sellerSvc.FindByEmail(ctx, activationData.Email)
+		if err != nil {
+			return err
+		}
+		if seller == nil {
+			return response.ErrUserNotFound
+		}
+
+		err = s.sellerSvc.UpdateStatusWithTx(ctx, tx, seller.ID, constant.StatusActive)
+		if err != nil {
+			return err
+		}
+	default:
+		return response.ErrInvalidActivationCode
+	}
+
+	err = s.activationRepo.MarkAsUsedWithTx(ctx, tx, activationData.ID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
