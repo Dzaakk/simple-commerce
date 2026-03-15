@@ -83,9 +83,25 @@ func (r *CustomerRepository) FindByEmail(ctx context.Context, email string) (*mo
 
 	return scanCustomer(row)
 }
-
 func (r *CustomerRepository) UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error {
 	result, err := r.DB.ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
+	if err != nil {
+		return response.ExecError("update customer status", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return response.Error("failed to get rows affected", err)
+	}
+	if rowsAffected == 0 {
+		return response.Error("no rows updated", sql.ErrNoRows)
+	}
+
+	return nil
+}
+
+func (r *CustomerRepository) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, customerID string, status constant.UserStatus) error {
+	result, err := tx.ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
 	if err != nil {
 		return response.ExecError("update customer status", err)
 	}

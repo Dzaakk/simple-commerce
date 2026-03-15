@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	sellerSelectColumns    = "id, email, password_hash, shop_name, phone, status, created_at, updated_at"
-	sellerQueryCreate      = "INSERT INTO public.sellers (id, email, password_hash, shop_name, phone, status, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7) RETURNING id"
-	sellerQueryFindByID    = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE id=$1"
-	sellerQueryFindByEmail = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE email=$1"
-	sellerQueryUpdate      = "UPDATE public.sellers SET email=$1, shop_name=$2, phone=$3, status=$4, updated_at=$5 WHERE id=$6"
+	sellerSelectColumns     = "id, email, password_hash, shop_name, phone, status, created_at, updated_at"
+	sellerQueryCreate       = "INSERT INTO public.sellers (id, email, password_hash, shop_name, phone, status, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7) RETURNING id"
+	sellerQueryFindByID     = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE id=$1"
+	sellerQueryFindByEmail  = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE email=$1"
+	sellerQueryUpdate       = "UPDATE public.sellers SET email=$1, shop_name=$2, phone=$3, status=$4, updated_at=$5 WHERE id=$6"
 	sellerQueryUpdateStatus = "UPDATE public.sellers SET status=$1, updated_at=NOW() WHERE id=$2"
 )
 
@@ -86,6 +86,23 @@ func (r *SellerRepository) FindByEmail(ctx context.Context, email string) (*mode
 
 func (r *SellerRepository) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {
 	result, err := r.DB.ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
+	if err != nil {
+		return response.ExecError("update seller status", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return response.Error("failed to get rows affected", err)
+	}
+	if rowsAffected == 0 {
+		return response.Error("no rows updated", sql.ErrNoRows)
+	}
+
+	return nil
+}
+
+func (r *SellerRepository) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error {
+	result, err := tx.ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
 	if err != nil {
 		return response.ExecError("update seller status", err)
 	}

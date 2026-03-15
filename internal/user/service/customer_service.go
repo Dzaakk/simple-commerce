@@ -5,6 +5,7 @@ import (
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
 	"context"
+	"database/sql"
 	"errors"
 	"strconv"
 )
@@ -80,4 +81,8 @@ func (c *CustomerServiceImpl) FindByID(ctx context.Context, customerID string) (
 
 func (c *CustomerServiceImpl) UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error {
 	return c.Repo.UpdateStatus(ctx, customerID, status)
+}
+
+func (c *CustomerServiceImpl) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, customerID string, status constant.UserStatus) error {
+	return c.Repo.UpdateStatusWithTx(ctx, tx, customerID, status)
 }
