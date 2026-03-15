@@ -5,58 +5,44 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
-	"sync"
 	"time"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-var (
-	db           *sql.DB
-	postgresOnce sync.Once
-	err          error
-)
+type Config struct {
+	Host     string
+	Port     string
+	DBName   string
+	User     string
+	Password string
+}
 
-func Init() (*sql.DB, error) {
-	postgresOnce.Do(func() {
-		err = godotenv.Load()
-		if err != nil {
-			return
+func Init(cfg Config) (*sql.DB, error) {
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName,
+	)
+
+	for range 5 {
+		db, err := sql.Open("postgres", dsn)
+		if err == nil && db.Ping() == nil {
+			db.SetMaxOpenConns(25)
+			db.SetMaxIdleConns(5)
+			db.SetConnMaxLifetime(5 * time.Minute)
+			db.SetConnMaxIdleTime(1 * time.Minute)
+
+			log.Print("Success connect to Postgres")
+			return db, nil
 		}
 
-		host := os.Getenv("POSTGRES_HOST")
-		port := os.Getenv("POSTGRES_PORT")
-		dbname := os.Getenv("POSTGRES_DB")
-		user := os.Getenv("POSTGRES_USER")
-		password := os.Getenv("POSTGRES_PASSWORD")
-
-		connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
-		for range 5 {
-			db, err = sql.Open("postgres", connectionString)
-			if err == nil && db.Ping() == nil {
-				db.SetMaxOpenConns(25)
-				db.SetMaxIdleConns(5)
-				db.SetConnMaxLifetime(5 * time.Minute)
-				db.SetConnMaxIdleTime(1 * time.Minute)
-
-				log.Print("Success connect to Postgres")
-				return
-			}
-
-			if db != nil {
-				db.Close()
-				db = nil
-			}
-
-			log.Print("Postgres is not ready, retrying...")
-			time.Sleep(5 * time.Second)
+		if db != nil {
+			db.Close()
 		}
 
-		err = errors.New("failed to connect to Postgres after multiple attempts")
+		log.Print("Postgres is not ready, retrying...")
+		time.Sleep(5 * time.Second)
+	}
 
-	})
-	return db, err
+	return nil, errors.New("failed to connect to Postgres after multiple attempts")
 }
