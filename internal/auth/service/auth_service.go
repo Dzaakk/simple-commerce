@@ -3,6 +3,7 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/auth/dto"
 	"Dzaakk/simple-commerce/internal/auth/model"
+	userdto "Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/package/constant"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
@@ -49,9 +50,15 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 	if err != nil {
 		return err
 	}
-	req.Password = hashedPassword
 
-	_, err = s.customerSvc.Create(ctx, req)
+	createReq := &userdto.RegisterCustomerRequest{
+		Email:    req.Email,
+		Password: hashedPassword,
+		FullName: req.FullName,
+		Phone:    req.Phone,
+	}
+
+	_, err = s.customerSvc.Create(ctx, createReq)
 	if err != nil {
 		return err
 	}
@@ -68,7 +75,7 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 		ExpiresAt: time.Now().Add(15 * time.Minute),
 	}
 
-	err = s.activationRepo.Create(ctx, activationData)
+	_, err = s.activationRepo.Create(ctx, activationData)
 	if err != nil {
 		return err
 	}
@@ -93,9 +100,16 @@ func (s *authService) RegisterSeller(ctx context.Context, req *dto.RegisterSelle
 	if err != nil {
 		return err
 	}
-	req.Password = hashedPassword
 
-	_, err = s.sellerSvc.Create(ctx, req)
+	createReq := &userdto.RegisterSellerRequest{
+		Email:    req.Email,
+		Password: hashedPassword,
+		FullName: req.FullName,
+		Phone:    req.Phone,
+		ShopName: req.ShopName,
+	}
+
+	_, err = s.sellerSvc.Create(ctx, createReq)
 	if err != nil {
 		return err
 	}
@@ -112,7 +126,7 @@ func (s *authService) RegisterSeller(ctx context.Context, req *dto.RegisterSelle
 		ExpiresAt: time.Now().Add(15 * time.Minute),
 	}
 
-	err = s.activationRepo.Create(ctx, activationData)
+	_, err = s.activationRepo.Create(ctx, activationData)
 	if err != nil {
 		return err
 	}
