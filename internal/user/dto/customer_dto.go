@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-type CreateReq struct {
+type RegisterCustomerRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 	FullName string `json:"full_name" validate:"required"`
 	Phone    string `json:"phone"`
 }
 
-func (c *CreateReq) ToCreateData() *model.Customer {
+func (c *RegisterCustomerRequest) ToCreateData() *model.Customer {
 	return &model.Customer{
 		Email:        c.Email,
 		PasswordHash: c.Password,

@@ -6,14 +6,15 @@ import (
 	"time"
 )
 
-type SellerCreateReq struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	ShopName string `json:"shop_name" validate:"required"`
-	Phone    string `json:"phone"`
+type RegisterSellerRequest struct {
+	Email    string
+	Password string
+	FullName string
+	Phone    string
+	ShopName string
 }
 
-func (s *SellerCreateReq) ToCreateData() *model.Seller {
+func (s *RegisterSellerRequest) ToCreateData() *model.Seller {
 	return &model.Seller{
 		Email:        s.Email,
 		PasswordHash: s.Password,

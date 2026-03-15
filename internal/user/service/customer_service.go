@@ -18,7 +18,7 @@ func NewCustomerService(repo CustomerRepository) CustomerService {
 	return &CustomerServiceImpl{Repo: repo}
 }
 
-func (c *CustomerServiceImpl) Create(ctx context.Context, req *dto.CreateReq) (string, error) {
+func (c *CustomerServiceImpl) Create(ctx context.Context, req *dto.RegisterCustomerRequest) (string, error) {
 
 	data := req.ToCreateData()
 

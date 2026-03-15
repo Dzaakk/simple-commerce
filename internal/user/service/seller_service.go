@@ -18,7 +18,7 @@ func NewSellerService(repo SellerRepository) SellerService {
 	return &SellerServiceImpl{Repo: repo}
 }
 
-func (s *SellerServiceImpl) Create(ctx context.Context, req *dto.SellerCreateReq) (string, error) {
+func (s *SellerServiceImpl) Create(ctx context.Context, req *dto.RegisterSellerRequest) (string, error) {
 	data := req.ToCreateData()
 
 	id, err := s.Repo.Create(ctx, data)

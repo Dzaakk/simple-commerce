@@ -9,7 +9,7 @@ import (
 )
 
 type CustomerService interface {
-	Create(ctx context.Context, req *dto.CreateReq) (string, error)
+	Create(ctx context.Context, req *dto.RegisterCustomerRequest) (string, error)
 	Update(ctx context.Context, req *dto.UpdateReq) error
 	FindByEmail(ctx context.Context, email string) (*model.Customer, error)
 	FindByID(ctx context.Context, customerID string) (*dto.CustomerRes, error)
@@ -27,7 +27,7 @@ type CustomerRepository interface {
 }
 
 type SellerService interface {
-	Create(ctx context.Context, req *dto.SellerCreateReq) (string, error)
+	Create(ctx context.Context, req *dto.RegisterSellerRequest) (string, error)
 	Update(ctx context.Context, req *dto.SellerUpdateReq) error
 	FindByEmail(ctx context.Context, email string) (*model.Seller, error)
 	FindByID(ctx context.Context, sellerID string) (*dto.SellerRes, error)
