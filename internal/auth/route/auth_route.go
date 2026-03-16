@@ -3,13 +3,9 @@ package route
 import (
 	"Dzaakk/simple-commerce/internal/auth/handler"
 	"Dzaakk/simple-commerce/internal/auth/repository"
-	"Dzaakk/simple-commerce/internal/auth/usecase"
-	customerRepo "Dzaakk/simple-commerce/internal/customer/repository"
-	customerUsecase "Dzaakk/simple-commerce/internal/customer/usecase"
-	emailUsecase "Dzaakk/simple-commerce/internal/email/usecase"
-	middleware "Dzaakk/simple-commerce/internal/middleware/jwt"
-	sellerRepo "Dzaakk/simple-commerce/internal/seller/repository"
-	shoppingCartRepo "Dzaakk/simple-commerce/internal/shopping_cart/repository"
+	"Dzaakk/simple-commerce/internal/auth/service"
+	userrepo "Dzaakk/simple-commerce/internal/user/repository"
+	userservice "Dzaakk/simple-commerce/internal/user/service"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
@@ -17,58 +13,43 @@ import (
 )
 
 type AuthRoutes struct {
-	Handler            *handler.AuthHandler
-	CustomerMiddleware *middleware.JWTCustomerMiddleware
-	SellerMiddleware   *middleware.JWTSellerMiddleware
+	Handler *handler.AuthHandler
 }
 
-func NewAuthRoutes(handler *handler.AuthHandler, customerMiddleware *middleware.JWTCustomerMiddleware, sellerMiddleware *middleware.JWTSellerMiddleware) *AuthRoutes {
+func NewAuthRoutes(handler *handler.AuthHandler) *AuthRoutes {
 	return &AuthRoutes{
-		Handler:            handler,
-		CustomerMiddleware: customerMiddleware,
-		SellerMiddleware:   sellerMiddleware,
+		Handler: handler,
 	}
 }
 
 func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
-	apiGroup := r.Group("/api/v1")
+	api := r.Group("/api/v1/auth")
 
-	customer := apiGroup.Group("/customer")
+	customer := api.Group("/customer")
 	{
-		customer.POST("/register", ar.Handler.RegistrationCustomer)
-		customer.POST("/activate", ar.Handler.ActivationCustomer)
-		customer.POST("/login", ar.Handler.LoginCustomer)
-		customer.POST("/logout", ar.CustomerMiddleware.ValidateToken(), ar.Handler.Logout)
+		customer.POST("/register", ar.Handler.RegisterCustomer)
 	}
 
-	seller := apiGroup.Group("/seller")
+	seller := api.Group("/seller")
 	{
-		seller.POST("/register", ar.Handler.RegistrationSeller)
-		seller.POST("/activate", ar.Handler.ActivationSeller)
-		seller.POST("/login", ar.Handler.LoginSeller)
-		seller.POST("/logout", ar.SellerMiddleware.ValidateToken(), ar.Handler.Logout)
+		seller.POST("/register", ar.Handler.RegisterSeller)
 	}
+
+	api.GET("/verify-email", ar.Handler.VerifyEmail)
 }
 
 func InitializedService(db *sql.DB, redis *redis.Client) *AuthRoutes {
-	customerRepository := customerRepo.NewCustomerRepository(db)
-	customerUsecase := customerUsecase.NewCustomerUseCase(customerRepository)
+	activationRepo := repository.NewActivationCodeRepository(db)
+	refreshRepo := repository.NewRefreshTokenRepository(db)
 
-	sellerRepository := sellerRepo.NewSellerRepository(db)
-	shoppingCartRepository := shoppingCartRepo.NewShoppingCartRepository(db)
+	sellerRepo := userrepo.NewSellerRepository(db)
+	customerRepo := userrepo.NewCustomerRepository(db)
 
-	authCacheCustomer := repository.NewAuthCacheCustomerRepository(redis)
-	authCacheSeller := repository.NewAuthCacheSellerRepository(redis)
+	customerService := userservice.NewCustomerService(customerRepo)
+	sellerService := userservice.NewSellerService(sellerRepo)
 
-	authUsecase := usecase.NewAuthUsecase(authCacheCustomer, authCacheSeller, customerUsecase, sellerRepository, shoppingCartRepository)
-	mailer := emailUsecase.NewEmailUseCase()
-	handler := handler.NewAtuhHandler(authUsecase, mailer)
+	service := service.NewAuthService(db, customerService, sellerService, activationRepo, refreshRepo)
 
-	authCustomerToken := usecase.NewAuthCustomerTokenUsecase(authCacheCustomer)
-	authSellerToken := usecase.NewAuthSellerTokenUsecase(authCacheSeller)
-
-	customerMiddleware := middleware.NewJWTCustomerMiddleware(authCustomerToken)
-	sellerMiddleware := middleware.NewJWTSellerMiddleware(authSellerToken)
-
-	return NewAuthRoutes(handler, customerMiddleware, sellerMiddleware)
+	hander := handler.NewAuthHandler(service)
+	return NewAuthRoutes(hander)
 }
