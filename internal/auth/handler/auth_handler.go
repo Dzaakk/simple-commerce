@@ -1,161 +1,70 @@
 package handler
 
 import (
-	"Dzaakk/simple-commerce/internal/auth/model"
-	"Dzaakk/simple-commerce/internal/auth/usecase"
-	emailUsecase "Dzaakk/simple-commerce/internal/email/usecase"
+	"Dzaakk/simple-commerce/internal/auth/dto"
+	"Dzaakk/simple-commerce/internal/auth/service"
 	"Dzaakk/simple-commerce/package/response"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
-	Usecase      usecase.AuthUsecase
-	EmailUsecase emailUsecase.EmailUsecase
+	service service.AuthService
 }
 
-func NewAtuhHandler(usecase usecase.AuthUsecase, emailUsecase emailUsecase.EmailUsecase) *AuthHandler {
+func NewAuthHandler(usecase service.AuthService) *AuthHandler {
 	return &AuthHandler{
-		Usecase:      usecase,
-		EmailUsecase: emailUsecase,
+		service: usecase,
 	}
 }
 
-func (h *AuthHandler) RegistrationCustomer(ctx *gin.Context) {
-	var data model.CustomerRegistrationReq
+func (h *AuthHandler) RegisterCustomer(ctx *gin.Context) {
+	var data dto.RegisterCustomerRequest
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 
-	dataEmail, err := h.Usecase.RegistrationCustomer(ctx, data)
+	err := h.service.RegisterCustomer(ctx, &data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 
-	err = h.EmailUsecase.SendEmailActivation(ctx, *dataEmail)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Success Create User"))
+	ctx.JSON(http.StatusCreated, response.Success("Success Create Customer"))
 }
 
-func (h *AuthHandler) ActivationCustomer(ctx *gin.Context) {
-	var data model.ActivationReq
+func (h *AuthHandler) RegisterSeller(ctx *gin.Context) {
+	var data dto.RegisterSellerRequest
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 
-	err := h.Usecase.ActivationCustomer(ctx, data)
+	err := h.service.RegisterSeller(ctx, &data)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response.Success("Success Activate User"))
+	ctx.JSON(http.StatusCreated, response.Success("Success Create Seller"))
 }
 
-func (h *AuthHandler) LoginCustomer(ctx *gin.Context) {
-	var reqData model.LoginReq
+func (h *AuthHandler) VerifyEmail(ctx *gin.Context) {
 
-	if err := ctx.ShouldBindJSON(&reqData); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
-		return
-	}
-
-	err := h.Usecase.LoginCustomer(ctx, reqData)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Login Success"))
-}
-func (h *AuthHandler) ForgotPasswordCustomer(ctx *gin.Context) {}
-
-func (h *AuthHandler) RegistrationSeller(ctx *gin.Context) {
-	var data model.SellerRegistrationReq
-
-	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		return
-	}
-
-	dataEmail, err := h.Usecase.RegistrationSeller(ctx, data)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		return
-	}
-
-	err = h.EmailUsecase.SendEmailActivation(ctx, *dataEmail)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Success Create Seller"))
-}
-
-func (h *AuthHandler) ActivationSeller(ctx *gin.Context) {
-
-	var data model.ActivationReq
-
-	if err := ctx.ShouldBindJSON(&data); err != nil {
+	activationCode := ctx.Query("code")
+	if activationCode == "" {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
-
-	err := h.Usecase.ActivationSeller(ctx, data)
+	err := h.service.VerifyEmail(ctx, activationCode)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response.Success("Success Activate User"))
-}
-
-func (h *AuthHandler) LoginSeller(ctx *gin.Context) {
-	var reqData model.LoginReq
-
-	if err := ctx.ShouldBindJSON(&reqData); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
-		return
-	}
-
-	err := h.Usecase.LoginSeller(ctx, reqData)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidEmailOrPassword())
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Login Success"))
-}
-func (h *AuthHandler) ForgotPasswordSeller(ctx *gin.Context) {}
-
-func (h *AuthHandler) Logout(ctx *gin.Context) {
-	roleRaw, roleExists := ctx.Get("role")
-	emailRaw, emailExists := ctx.Get("email")
-
-	role, okRole := roleRaw.(string)
-	email, okEmail := emailRaw.(string)
-
-	if !roleExists || !emailExists || !okRole || !okEmail {
-		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(""))
-		return
-	}
-
-	err := h.Usecase.Logout(ctx, role, email)
-	if err != nil {
-		log.Printf("[Logout] Failed to delete token for %s (%s): %v", role, email, err)
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Logged out successfully"))
+	ctx.JSON(http.StatusOK, response.Success("Email verified successfully"))
 }
