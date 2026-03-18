@@ -4,9 +4,9 @@ import "errors"
 
 var (
 	// Auth
-	ErrEmailAlreadyExist = errors.New("unable to complete registration. please try again or contact support")
-	// ErrInvalidCredentials = errors.New("email or password is incorrect")
-	// ErrAccountNotActive   = errors.New("account is not active, please verify your email")
+	ErrEmailAlreadyExist  = errors.New("unable to complete registration. please try again or contact support")
+	ErrInvalidCredentials = errors.New("email or password is incorrect")
+	ErrEmailNotVerified   = errors.New("email is not verified")
 
 	// Activation
 	ErrInvalidActivationCode = errors.New("activation code is invalid")
