@@ -15,8 +15,8 @@ type Recipient struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
-type ActivationEmailReq struct {
+type VerificationEmailReq struct {
 	Email          string
 	Username       string
-	ActivationCode string
+	ActivationLink string
 }

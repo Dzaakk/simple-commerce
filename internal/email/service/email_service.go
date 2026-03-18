@@ -1,4 +1,4 @@
-package usecase
+package service
 
 import (
 	"Dzaakk/simple-commerce/internal/email/model"
@@ -12,14 +12,13 @@ import (
 	"os"
 )
 
-type EmailUsecaseImpl struct {
+type emailService struct{}
+
+func NewEmailService() EmailService {
+	return &emailService{}
 }
 
-func NewEmailUseCase() EmailUsecase {
-	return &EmailUsecaseImpl{}
-}
-
-func (e *EmailUsecaseImpl) SendEmailActivation(ctx context.Context, data model.ActivationEmailReq) error {
+func (e *emailService) SendEmailVerification(ctx context.Context, data model.VerificationEmailReq) error {
 	apiKey := os.Getenv("EMAIL_API_KEY")
 	url := os.Getenv("EMAIL_API_URL")
 	if apiKey == "" {
@@ -42,20 +41,20 @@ func (e *EmailUsecaseImpl) SendEmailActivation(ctx context.Context, data model.A
 			Name:  data.Username,
 		},
 		},
-		Subject: "Activation Code",
+		Subject: "Verify your email for Simple Commerce Account",
 		HTMLContent: fmt.Sprintf(`
 			<html>
 				<body>
 					<h1>Welcome to Simple Commerce!</h1>
 					<p>Hello %s,</p>
-					<p>Thank you for signing up. Please use the following code to activate your account:</p>
+					<p>Thank you for signing up. Please use the following link to activate your account:</p>
 					<h2 style="background-color: #f0f0f0; padding: 10px; text-align: center; font-size: 24px;">%s</h2>
-					<p>This code will expire in 15 minutes.</p>
-					<p>If you didn't request this code, please ignore this email.</p>
+					<p>This link will expire in 15 minutes.</p>
+					<p>If you didn't request this link, please ignore this email.</p>
 					<p>Best regards,<br>Simple Commerce Team</p>
 				</body>
 			</html>
-		`, data.Username, data.ActivationCode),
+		`, data.Username, data.ActivationLink),
 	}
 
 	jsonData, err := json.Marshal(emailReq)
