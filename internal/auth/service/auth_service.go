@@ -3,11 +3,14 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/auth/dto"
 	"Dzaakk/simple-commerce/internal/auth/model"
+	emailmodel "Dzaakk/simple-commerce/internal/email/model"
 	userdto "Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/package/constant"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
+	"fmt"
+	"log"
 	"time"
 )
 
@@ -15,6 +18,7 @@ type authService struct {
 	db             *sql.DB
 	customerSvc    customerService
 	sellerSvc      sellerService
+	emailService   emailService
 	activationRepo activationCodeRepository
 	refreshRepo    refreshTokenRepository
 }
@@ -23,6 +27,7 @@ func NewAuthService(
 	db *sql.DB,
 	customerSvc customerService,
 	sellerSvc sellerService,
+	emailService emailService,
 	activationRepo activationCodeRepository,
 	refreshRepo refreshTokenRepository,
 ) AuthService {
@@ -30,6 +35,7 @@ func NewAuthService(
 		db:             db,
 		customerSvc:    customerSvc,
 		sellerSvc:      sellerSvc,
+		emailService:   emailService,
 		activationRepo: activationRepo,
 		refreshRepo:    refreshRepo,
 	}
@@ -81,6 +87,21 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 	}
 
 	// send activation email
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("recovered from panic in email goroutine: %v", r)
+			}
+		}()
+		err := s.emailService.SendEmailVerification(context.Background(), emailmodel.VerificationEmailReq{
+			Email:          req.Email,
+			Username:       req.FullName,
+			ActivationLink: fmt.Sprintf("http://localhost:8080/api/v1/auth/verify-email?code=%s", activationCode),
+		})
+		if err != nil {
+			log.Printf("failed to send email to %s: %v", req.Email, err)
+		}
+	}()
 
 	return nil
 }

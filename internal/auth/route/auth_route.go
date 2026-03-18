@@ -4,6 +4,7 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/handler"
 	"Dzaakk/simple-commerce/internal/auth/repository"
 	"Dzaakk/simple-commerce/internal/auth/service"
+	emailService "Dzaakk/simple-commerce/internal/email/service"
 	userrepo "Dzaakk/simple-commerce/internal/user/repository"
 	userservice "Dzaakk/simple-commerce/internal/user/service"
 	"database/sql"
@@ -47,8 +48,9 @@ func InitializedService(db *sql.DB, redis *redis.Client) *AuthRoutes {
 
 	customerService := userservice.NewCustomerService(customerRepo)
 	sellerService := userservice.NewSellerService(sellerRepo)
+	emailService := emailService.NewEmailService()
 
-	service := service.NewAuthService(db, customerService, sellerService, activationRepo, refreshRepo)
+	service := service.NewAuthService(db, customerService, sellerService, emailService, activationRepo, refreshRepo)
 
 	hander := handler.NewAuthHandler(service)
 	return NewAuthRoutes(hander)

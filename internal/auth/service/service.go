@@ -3,6 +3,7 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/auth/dto"
 	"Dzaakk/simple-commerce/internal/auth/model"
+	emailmodel "Dzaakk/simple-commerce/internal/email/model"
 	userdto "Dzaakk/simple-commerce/internal/user/dto"
 	usermodel "Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
@@ -31,6 +32,10 @@ type sellerService interface {
 	FindByEmail(ctx context.Context, email string) (*usermodel.Seller, error)
 	FindByID(ctx context.Context, sellerID string) (*userdto.SellerRes, error)
 	UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error
+}
+
+type emailService interface {
+	SendEmailVerification(ctx context.Context, req emailmodel.VerificationEmailReq) error
 }
 
 type activationCodeRepository interface {
