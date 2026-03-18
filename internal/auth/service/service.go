@@ -16,8 +16,8 @@ type AuthService interface {
 	RegisterSeller(ctx context.Context, req *dto.RegisterSellerRequest) error
 	VerifyEmail(ctx context.Context, activationCode string) error
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error)
-	RefreshToken(ctx context.Context, refreshToken string) (*dto.RefreshTokenResponse, error)
-	Logout(ctx context.Context, refreshToken string) error
+	RefreshToken(ctx context.Context, rawRefreshToken string) (*dto.RefreshTokenResponse, error)
+	Logout(ctx context.Context, rawRefreshToken string) error
 }
 
 type customerService interface {

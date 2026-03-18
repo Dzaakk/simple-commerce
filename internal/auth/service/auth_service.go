@@ -299,10 +299,60 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	}, nil
 }
 
-func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*dto.RefreshTokenResponse, error) {
-	panic("unimplemented")
+func (s *authService) RefreshToken(ctx context.Context, rawRefreshToken string) (*dto.RefreshTokenResponse, error) {
+
+	hashed := hashRefreshToken(rawRefreshToken)
+
+	stored, err := s.refreshRepo.FindByTokenHash(ctx, hashed)
+	if err != nil {
+		return nil, err
+	}
+	if stored == nil {
+		return nil, response.ErrInvalidRefreshToken
+	}
+
+	var (
+		email    string
+		userType = constant.UserType(stored.UserType)
+	)
+
+	switch userType {
+	case constant.Customer:
+		user, err := s.customerSvc.FindByID(ctx, stored.UserID)
+		if err != nil {
+			return nil, err
+		}
+		if user == nil {
+			return nil, response.ErrUserNotFound
+		}
+		email = user.Email
+
+	case constant.Seller:
+		user, err := s.sellerSvc.FindByID(ctx, stored.UserID)
+		if err != nil {
+			return nil, err
+		}
+		if user == nil {
+			return nil, response.ErrUserNotFound
+		}
+		email = user.Email
+
+	default:
+		return nil, response.ErrInvalidRefreshToken
+	}
+
+	accessToken, err := generateAccessToken(stored.UserID, string(stored.UserType), email)
+	if err != nil {
+		return nil, response.Error("failed to generate access token", err)
+	}
+
+	return &dto.RefreshTokenResponse{
+		AccessToken: accessToken,
+		ExpiresIn:   int(accessTokenDuration.Seconds()),
+	}, nil
 }
 
-func (s *authService) Logout(ctx context.Context, refreshToken string) error {
-	panic("unimplemented")
+func (s *authService) Logout(ctx context.Context, rawRefreshToken string) error {
+	hashed := hashRefreshToken(rawRefreshToken)
+	return s.refreshRepo.Revoke(ctx, hashed)
 }
