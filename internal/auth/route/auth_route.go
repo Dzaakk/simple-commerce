@@ -37,6 +37,9 @@ func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
 	}
 
 	api.GET("/verify-email", ar.Handler.VerifyEmail)
+	api.GET("/login", ar.Handler.Login)
+	api.POST("/refresh-token", ar.Handler.RefreshToken)
+	api.POST("/logout", ar.Handler.Logout)
 }
 
 func InitializedService(db *sql.DB, redis *redis.Client) *AuthRoutes {

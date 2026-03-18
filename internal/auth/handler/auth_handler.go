@@ -68,3 +68,67 @@ func (h *AuthHandler) VerifyEmail(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.Success("Email verified successfully"))
 }
+
+func (h *AuthHandler) Login(ctx *gin.Context) {
+	var body dto.LoginRequest
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		return
+	}
+
+	req := &dto.LoginRequest{
+		Email:    body.Email,
+		Password: body.Password,
+		UserType: body.UserType,
+	}
+
+	res, err := h.service.Login(ctx, req)
+	if err != nil {
+		switch err {
+		case response.ErrInvalidCredentials:
+			ctx.JSON(http.StatusUnauthorized, response.Unauthorized(err.Error()))
+		case response.ErrEmailNotVerified:
+			ctx.JSON(http.StatusForbidden, response.Forbidden(err.Error()))
+		default:
+			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.Success(res))
+}
+
+func (h *AuthHandler) RefreshToken(ctx *gin.Context) {
+	var body dto.RefreshTokenRequest
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		return
+	}
+
+	res, err := h.service.RefreshToken(ctx, body.RefreshToken)
+	if err != nil {
+		switch err {
+		case response.ErrInvalidRefreshToken:
+			ctx.JSON(http.StatusUnauthorized, response.Unauthorized(err.Error()))
+		default:
+			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.Success(res))
+}
+func (h *AuthHandler) Logout(ctx *gin.Context) {
+	var body dto.RefreshTokenRequest
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		return
+	}
+
+	if err := h.service.Logout(ctx, body.RefreshToken); err != nil {
+		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.Success("Logged out successfully"))
+}
