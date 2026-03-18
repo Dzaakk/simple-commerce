@@ -11,7 +11,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type authService struct {
@@ -86,6 +89,7 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 		return err
 	}
 
+	baseLink := os.Getenv("BASE_URL")
 	// send activation email
 	go func() {
 		defer func() {
@@ -96,7 +100,7 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 		err := s.emailService.SendEmailVerification(context.Background(), emailmodel.VerificationEmailReq{
 			Email:          req.Email,
 			Username:       req.FullName,
-			ActivationLink: fmt.Sprintf("http://localhost:8080/api/v1/auth/verify-email?code=%s", activationCode),
+			ActivationLink: fmt.Sprintf("%s/api/v1/auth/verify-email?code=%s", baseLink, activationCode),
 		})
 		if err != nil {
 			log.Printf("failed to send email to %s: %v", req.Email, err)
@@ -212,7 +216,87 @@ func (s *authService) VerifyEmail(ctx context.Context, activationCode string) er
 }
 
 func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
-	panic("unimplemented")
+
+	var (
+		userID       string
+		passwordHash string
+		status       string
+		email        string
+	)
+
+	// fetch user by email and user type
+	switch req.UserType {
+	case constant.Customer:
+		user, err := s.customerSvc.FindByEmail(ctx, req.Email)
+		if err != nil {
+			return nil, err
+		}
+		if user == nil {
+			return nil, response.ErrInvalidCredentials
+		}
+		userID = user.ID
+		passwordHash = user.PasswordHash
+		status = user.Status
+		email = user.Email
+
+	case constant.Seller:
+		user, err := s.sellerSvc.FindByEmail(ctx, req.Email)
+		if err != nil {
+			return nil, err
+		}
+		if user == nil {
+			return nil, response.ErrInvalidCredentials
+		}
+		userID = user.ID
+		passwordHash = user.PasswordHash
+		status = user.Status
+		email = user.Email
+
+	default:
+		return nil, response.ErrInvalidCredentials
+	}
+
+	// check account status
+	if status == string(constant.StatusPending) {
+		return nil, response.ErrEmailNotVerified
+	}
+	if status != string(constant.StatusActive) {
+		return nil, response.ErrInvalidCredentials
+	}
+
+	// compare password
+	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)); err != nil {
+		return nil, response.ErrInvalidCredentials
+	}
+
+	//generate access and refresh token
+	accessToken, err := generateAccessToken(userID, string(req.UserType), email)
+	if err != nil {
+		return nil, response.Error("failed to generate access token", err)
+	}
+
+	rawRefresh, hashedRefresh, err := generateRefreshToken()
+	if err != nil {
+		return nil, response.Error("failed to generate refresh token", err)
+	}
+
+	refreshData := &model.RefreshToken{
+		UserID:    userID,
+		UserType:  req.UserType,
+		TokenHash: hashedRefresh,
+		ExpiresAt: time.Now().Add(refreshTokenDuration),
+		CreatedAt: time.Now(),
+	}
+
+	if _, err = s.refreshRepo.Create(ctx, refreshData); err != nil {
+		return nil, response.Error("failed to save refresh token", err)
+	}
+
+	return &dto.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: rawRefresh,
+		ExpiresIn:    int(accessTokenDuration.Seconds()), // 900
+	}, nil
 }
 
 func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*dto.RefreshTokenResponse, error) {
