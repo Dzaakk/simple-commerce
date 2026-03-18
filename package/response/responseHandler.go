@@ -62,3 +62,10 @@ func InvalidRequestData() ApiResponse {
 func InvalidEmailOrPassword() ApiResponse {
 	return Response(http.StatusBadRequest, "Invalid Email or Password", nil)
 }
+
+func Forbidden(message string) ApiResponse {
+	if message != "" {
+		return Response(http.StatusForbidden, "Forbidden", message)
+	}
+	return Response(http.StatusForbidden, "Forbidden", nil)
+}

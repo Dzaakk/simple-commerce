@@ -4,25 +4,17 @@ import "errors"
 
 var (
 	// Auth
-	ErrEmailAlreadyExist  = errors.New("unable to complete registration. please try again or contact support")
+	ErrEmailAlreadyExist  = errors.New("email already exists")
 	ErrInvalidCredentials = errors.New("email or password is incorrect")
-	ErrEmailNotVerified   = errors.New("email is not verified")
+	ErrEmailNotVerified   = errors.New("email not verified, please check your inbox")
 
 	// Activation
-	ErrInvalidActivationCode = errors.New("activation code is invalid")
-	// ErrExpiredCode     = errors.New("activation code has expired")
-	// ErrCodeAlreadyUsed = errors.New("activation code has already been used")
+	ErrInvalidActivationCode = errors.New("invalid or expired activation code")
 
 	// Token
-	// ErrInvalidToken = errors.New("token is invalid")
-	// ErrExpiredToken = errors.New("token has expired")
-	// ErrRevokedToken = errors.New("token has been revoked")
+	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
 )
 
 var (
-	// ErrInternalServer = errors.New("internal server error")
-	// ErrBadRequest     = errors.New("bad request")
-	// ErrUnauthorized   = errors.New("unauthorized")
-	// ErrForbidden      = errors.New("forbidden")
 	ErrUserNotFound = errors.New("user not found")
 )
