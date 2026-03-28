@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/internal/user/service"
 	"Dzaakk/simple-commerce/package/response"
 	"Dzaakk/simple-commerce/package/util"
@@ -11,12 +10,14 @@ import (
 )
 
 type UserHandler struct {
-	Service service.CustomerService
+	CustomerService service.CustomerService
+	SellerService   service.SellerService
 }
 
-func NewUserHandler(service service.CustomerService) *UserHandler {
+func NewUserHandler(customerService service.CustomerService, sellerService service.SellerService) *UserHandler {
 	return &UserHandler{
-		Service: service,
+		CustomerService: customerService,
+		SellerService:   sellerService,
 	}
 }
 
@@ -28,7 +29,7 @@ func (h *UserHandler) FindCustomerByID(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.Service.FindByID(ctx, customerID)
+	data, err := h.CustomerService.FindByID(ctx, customerID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
@@ -42,19 +43,23 @@ func (h *UserHandler) FindCustomerByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
 
-func (h *UserHandler) Update(ctx *gin.Context) {
-	var req dto.UpdateReq
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+func (h *UserHandler) FindCustomerByEmail(ctx *gin.Context) {
+	email := ctx.Query("email")
+	if email == "" {
 		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
 		return
 	}
 
-	err := h.Service.Update(ctx, &req)
+	data, err := h.CustomerService.FindByEmail(ctx, email)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response.Success("Success Update!"))
+	if data == nil {
+		ctx.JSON(http.StatusNotFound, response.NotFound("user not found"))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.Success(data))
 }
