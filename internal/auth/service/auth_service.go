@@ -224,8 +224,9 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		email        string
 	)
 
+	userType := constant.UserType(req.UserType)
 	// fetch user by email and user type
-	switch req.UserType {
+	switch userType {
 	case constant.Customer:
 		user, err := s.customerSvc.FindByEmail(ctx, req.Email)
 		if err != nil {
@@ -282,7 +283,7 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 
 	refreshData := &model.RefreshToken{
 		UserID:    userID,
-		UserType:  req.UserType,
+		UserType:  userType,
 		TokenHash: hashedRefresh,
 		ExpiresAt: time.Now().Add(refreshTokenDuration),
 		CreatedAt: time.Now(),
