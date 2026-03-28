@@ -1,46 +1,44 @@
 package route
 
 import (
-	authRepo "Dzaakk/simple-commerce/internal/auth/repository"
-	authUsecase "Dzaakk/simple-commerce/internal/auth/usecase"
-	middleware "Dzaakk/simple-commerce/internal/middleware/jwt"
 	"Dzaakk/simple-commerce/internal/user/handler"
 	"Dzaakk/simple-commerce/internal/user/repository"
 	"Dzaakk/simple-commerce/internal/user/service"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type UserRoutes struct {
-	Handler       *handler.UserHandler
-	JWTMiddleware *middleware.JWTCustomerMiddleware
+	Handler *handler.UserHandler
 }
 
-func NewuserRoutes(handler *handler.UserHandler, jwtMiddleware *middleware.JWTCustomerMiddleware) *UserRoutes {
+func NewuserRoutes(handler *handler.UserHandler) *UserRoutes {
 	return &UserRoutes{
-		Handler:       handler,
-		JWTMiddleware: jwtMiddleware,
+		Handler: handler,
 	}
 }
 
 func (ur *UserRoutes) Route(r *gin.RouterGroup) {
 	userHandler := r.Group("/api/v1/customer")
-	userHandler.Use(ur.JWTMiddleware.ValidateToken())
+	userHandler.Use()
 	{
-		userHandler.GET("/:id", ur.Handler.FindCustomerByID)
+		userHandler.GET("/by-email", ur.Handler.FindCustomerByEmail)
+		userHandler.GET("/by-id", ur.Handler.FindCustomerByID)
+	}
+
+	sellerHandler := r.Group("/api/v1/seller")
+	{
+		sellerHandler.GET("/by-name", ur.Handler.FindSellerByName)
 	}
 }
 
-func InitializedService(db *sql.DB, redis *redis.Client) *UserRoutes {
-	repo := repository.NewCustomerRepository(db)
-	service := service.NewCustomerService(repo)
-	handler := handler.NewUserHandler(service)
+func InitializedService(db *sql.DB) *UserRoutes {
+	customerRepo := repository.NewCustomerRepository(db)
+	customerService := service.NewCustomerService(customerRepo)
+	sellerRepo := repository.NewSellerRepository(db)
+	sellerService := service.NewSellerService(sellerRepo)
+	handler := handler.NewUserHandler(customerService, sellerService)
 
-	authCacheCustomer := authRepo.NewAuthCacheCustomerRepository(redis)
-	authCustomerToken := authUsecase.NewAuthCustomerTokenUsecase(authCacheCustomer)
-	jwtMiddleware := middleware.NewJWTCustomerMiddleware(authCustomerToken)
-
-	return NewuserRoutes(handler, jwtMiddleware)
+	return NewuserRoutes(handler)
 }
