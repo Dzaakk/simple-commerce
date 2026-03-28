@@ -37,7 +37,7 @@ func main() {
 	r := gin.Default()
 
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
-	user.InitializedService(postgres, redis).Route(&r.RouterGroup)
+	user.InitializedService(postgres).Route(&r.RouterGroup)
 	shoppingCart.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	transaction.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	r.Run()
