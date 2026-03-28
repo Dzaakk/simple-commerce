@@ -13,6 +13,7 @@ const (
 	sellerQueryCreate       = "INSERT INTO public.sellers (id, email, password_hash, shop_name, phone, status, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7) RETURNING id"
 	sellerQueryFindByID     = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE id=$1"
 	sellerQueryFindByEmail  = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE email=$1"
+	sellerQueryFindByName   = "SELECT " + sellerSelectColumns + " FROM public.sellers WHERE shop_name ILIKE $1"
 	sellerQueryUpdate       = "UPDATE public.sellers SET email=$1, shop_name=$2, phone=$3, status=$4, updated_at=$5 WHERE id=$6"
 	sellerQueryUpdateStatus = "UPDATE public.sellers SET status=$1, updated_at=NOW() WHERE id=$2"
 )
@@ -82,6 +83,37 @@ func (r *SellerRepository) FindByEmail(ctx context.Context, email string) (*mode
 	row := r.DB.QueryRowContext(ctx, sellerQueryFindByEmail, email)
 
 	return scanSeller(row)
+}
+
+func (r *SellerRepository) FindByShopName(ctx context.Context, name string) ([]*model.Seller, error) {
+	rows, err := r.DB.QueryContext(ctx, sellerQueryFindByName, "%"+name+"%")
+	if err != nil {
+		return nil, response.Error("failed to query sellers by shop name", err)
+	}
+	defer rows.Close()
+
+	var sellers []*model.Seller
+	for rows.Next() {
+		seller := &model.Seller{}
+		if err := rows.Scan(
+			&seller.ID,
+			&seller.Email,
+			&seller.PasswordHash,
+			&seller.ShopName,
+			&seller.Phone,
+			&seller.Status,
+			&seller.CreatedAt,
+			&seller.UpdatedAt,
+		); err != nil {
+			return nil, response.Error("failed to scan seller", err)
+		}
+		sellers = append(sellers, seller)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, response.Error("failed to read sellers", err)
+	}
+
+	return sellers, nil
 }
 
 func (r *SellerRepository) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {

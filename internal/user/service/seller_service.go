@@ -75,6 +75,27 @@ func (s *SellerServiceImpl) FindByID(ctx context.Context, sellerID string) (*dto
 	return &seller, nil
 }
 
+func (s *SellerServiceImpl) FindByShopName(ctx context.Context, name string) ([]dto.SellerRes, error) {
+	data, err := s.Repo.FindByShopName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) == 0 {
+		return []dto.SellerRes{}, nil
+	}
+
+	result := make([]dto.SellerRes, 0, len(data))
+	for _, seller := range data {
+		if seller == nil {
+			continue
+		}
+		res := dto.ToSellerRes(seller)
+		result = append(result, res)
+	}
+
+	return result, nil
+}
+
 func (s *SellerServiceImpl) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {
 	return s.Repo.UpdateStatus(ctx, sellerID, status)
 }

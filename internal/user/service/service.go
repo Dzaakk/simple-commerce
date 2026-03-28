@@ -31,6 +31,7 @@ type SellerService interface {
 	Update(ctx context.Context, req *dto.SellerUpdateReq) error
 	FindByEmail(ctx context.Context, email string) (*model.Seller, error)
 	FindByID(ctx context.Context, sellerID string) (*dto.SellerRes, error)
+	FindByShopName(ctx context.Context, name string) ([]dto.SellerRes, error)
 	UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error
 }
 
@@ -39,6 +40,7 @@ type SellerRepository interface {
 	Update(ctx context.Context, data *model.Seller) (int64, error)
 	FindByID(ctx context.Context, sellerID string) (*model.Seller, error)
 	FindByEmail(ctx context.Context, email string) (*model.Seller, error)
+	FindByShopName(ctx context.Context, name string) ([]*model.Seller, error)
 	UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error
 	UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error
 }
