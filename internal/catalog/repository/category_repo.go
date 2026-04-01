@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"Dzaakk/simple-commerce/internal/catalog/dto"
 	"Dzaakk/simple-commerce/internal/catalog/model"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
@@ -10,10 +11,22 @@ import (
 const (
 	categorySelectColumns = "id, parent_id, name, slug, is_active, created_at, updated_at"
 	categoryQueryCreate   = "INSERT INTO public.categories (parent_id, name, slug, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-	categoryQueryUpdate   = "UPDATE public.categories SET parent_id=$1, name=$2, slug=$3, is_active=$4, updated_at=$5 WHERE id=$6"
 	categoryQueryFindByID = "SELECT " + categorySelectColumns + " FROM public.categories WHERE id=$1"
-	categoryQueryFindAll  = "SELECT " + categorySelectColumns + " FROM public.categories"
-	categoryQueryDelete   = "DELETE FROM public.categories WHERE id=$1"
+	categoryQueryFindAll  = `
+	WITH RECURSIVE category_tree AS (
+	    SELECT id, parent_id, name, slug, is_active, 0 AS depth
+	    FROM categories
+	    WHERE parent_id IS NULL AND is_active = true
+	
+	    UNION ALL
+	
+	    SELECT c.id, c.parent_id, c.name, c.slug, c.is_active, ct.depth + 1
+	    FROM categories c
+	    JOIN category_tree ct ON c.parent_id = ct.id
+	    WHERE c.is_active = true
+	)
+	SELECT id, parent_id, name, slug, depth FROM category_tree ORDER BY depth, id
+	`
 )
 
 type CategoryRepository struct {
@@ -45,59 +58,29 @@ func (r *CategoryRepository) Create(ctx context.Context, data *model.Category) (
 	return id, nil
 }
 
-func (r *CategoryRepository) Update(ctx context.Context, data *model.Category) (int64, error) {
-	result, err := r.DB.ExecContext(
-		ctx,
-		categoryQueryUpdate,
-		data.ParentID,
-		data.Name,
-		data.Slug,
-		data.IsActive,
-		data.UpdatedAt,
-		data.ID,
-	)
-
-	if err != nil {
-		return 0, response.ExecError("update category", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, response.Error("failed to get rows affected", err)
-	}
-
-	if rowsAffected == 0 {
-		return 0, response.Error("no rows updated", sql.ErrNoRows)
-	}
-
-	return rowsAffected, nil
-}
-
 func (r *CategoryRepository) FindByID(ctx context.Context, id int64) (*model.Category, error) {
 	row := r.DB.QueryRowContext(ctx, categoryQueryFindByID, id)
 
 	return scanCategory(row)
 }
 
-func (r *CategoryRepository) FindAll(ctx context.Context) ([]*model.Category, error) {
+func (r *CategoryRepository) FindAll(ctx context.Context) ([]*dto.CategoryTree, error) {
 	rows, err := r.DB.QueryContext(ctx, categoryQueryFindAll)
 	if err != nil {
 		return nil, response.Error("failed to query categories", err)
 	}
 	defer rows.Close()
 
-	var categories []*model.Category
+	var categories []*dto.CategoryTree
 
 	for rows.Next() {
-		var c model.Category
+		var c dto.CategoryTree
 		err := rows.Scan(
 			&c.ID,
 			&c.ParentID,
 			&c.Name,
 			&c.Slug,
-			&c.IsActive,
-			&c.CreatedAt,
-			&c.UpdatedAt,
+			&c.Depth,
 		)
 		if err != nil {
 			return nil, response.Error("failed to scan category", err)
@@ -107,22 +90,4 @@ func (r *CategoryRepository) FindAll(ctx context.Context) ([]*model.Category, er
 	}
 
 	return categories, nil
-}
-
-func (r *CategoryRepository) Delete(ctx context.Context, id int64) error {
-	result, err := r.DB.ExecContext(ctx, categoryQueryDelete, id)
-	if err != nil {
-		return response.ExecError("delete category", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return response.Error("failed to get rows affected", err)
-	}
-
-	if rowsAffected == 0 {
-		return response.Error("no rows deleted", sql.ErrNoRows)
-	}
-
-	return nil
 }
