@@ -28,3 +28,30 @@ func scanCategory(row *sql.Row) (*model.Category, error) {
 
 	return &c, nil
 }
+
+func scanProduct(row *sql.Row) (*model.Product, error) {
+	var p model.Product
+
+	err := row.Scan(
+		&p.ID,
+		&p.SellerID,
+		&p.CategoryID,
+		&p.Name,
+		&p.SKU,
+		&p.Description,
+		&p.Price,
+		&p.ImageURL,
+		&p.IsActive,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, response.Error("product not found", err)
+		}
+		return nil, response.Error("failed to scan product", err)
+	}
+
+	return &p, nil
+}
