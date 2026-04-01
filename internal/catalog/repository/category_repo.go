@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/catalog/dto"
 	"Dzaakk/simple-commerce/internal/catalog/model"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
@@ -12,21 +11,7 @@ const (
 	categorySelectColumns = "id, parent_id, name, slug, is_active, created_at, updated_at"
 	categoryQueryCreate   = "INSERT INTO public.categories (parent_id, name, slug, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
 	categoryQueryFindByID = "SELECT " + categorySelectColumns + " FROM public.categories WHERE id=$1"
-	categoryQueryFindAll  = `
-	WITH RECURSIVE category_tree AS (
-	    SELECT id, parent_id, name, slug, is_active, 0 AS depth
-	    FROM categories
-	    WHERE parent_id IS NULL AND is_active = true
-	
-	    UNION ALL
-	
-	    SELECT c.id, c.parent_id, c.name, c.slug, c.is_active, ct.depth + 1
-	    FROM categories c
-	    JOIN category_tree ct ON c.parent_id = ct.id
-	    WHERE c.is_active = true
-	)
-	SELECT id, parent_id, name, slug, depth FROM category_tree ORDER BY depth, id
-	`
+	categoryQueryFindAll  = "SELECT " + categorySelectColumns + " FROM public.categories WHERE is_active = true ORDER BY id ASC"
 )
 
 type CategoryRepository struct {
@@ -64,23 +49,25 @@ func (r *CategoryRepository) FindByID(ctx context.Context, id int64) (*model.Cat
 	return scanCategory(row)
 }
 
-func (r *CategoryRepository) FindAll(ctx context.Context) ([]*dto.CategoryTree, error) {
+func (r *CategoryRepository) FindAll(ctx context.Context) ([]*model.Category, error) {
 	rows, err := r.DB.QueryContext(ctx, categoryQueryFindAll)
 	if err != nil {
 		return nil, response.Error("failed to query categories", err)
 	}
 	defer rows.Close()
 
-	var categories []*dto.CategoryTree
+	var categories []*model.Category
 
 	for rows.Next() {
-		var c dto.CategoryTree
+		var c model.Category
 		err := rows.Scan(
 			&c.ID,
 			&c.ParentID,
 			&c.Name,
 			&c.Slug,
-			&c.Depth,
+			&c.IsActive,
+			&c.CreatedAt,
+			&c.UpdatedAt,
 		)
 		if err != nil {
 			return nil, response.Error("failed to scan category", err)
