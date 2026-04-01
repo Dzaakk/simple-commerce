@@ -126,6 +126,20 @@ func (p *ProductServiceImpl) FindAll(ctx context.Context, req dto.ProductQueryRe
 	return res, nil
 }
 
+func (p *ProductServiceImpl) UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error {
+	if productID == "" {
+		return errors.New("invalid parameter product id")
+	}
+	if sellerID == "" {
+		return errors.New("invalid parameter seller id")
+	}
+	if quantity < 0 {
+		return errors.New("invalid parameter quantity")
+	}
+
+	return p.Repo.UpdateStock(ctx, productID, sellerID, quantity)
+}
+
 func buildProductCursor(sortBy string, p dto.ProductRes) string {
 	switch sortBy {
 	case "price_asc", "price_desc":

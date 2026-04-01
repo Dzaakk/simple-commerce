@@ -18,6 +18,12 @@ const (
 	productQuerySoftDelete   = "UPDATE public.products SET is_active=false, updated_at=$1 WHERE id=$2"
 	productQueryFindByID     = "SELECT " + productSelectColumns + " FROM public.products WHERE id=$1"
 	productQueryFindBySeller = "SELECT " + productSelectColumns + " FROM public.products WHERE seller_id=$1 AND is_active=true"
+	productQueryUpdateStock  = `
+	UPDATE public.inventories i
+	SET stock_quantity = $1, updated_at = $2, version = version + 1
+	FROM public.products p
+	WHERE i.product_id = p.id AND p.id = $3 AND p.seller_id = $4
+	`
 )
 
 type ProductFilter struct {
@@ -188,6 +194,31 @@ func (r *ProductRepository) FindAll(ctx context.Context, filter ProductFilter) (
 	}
 
 	return products, nil
+}
+
+func (r *ProductRepository) UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error {
+	result, err := r.DB.ExecContext(
+		ctx,
+		productQueryUpdateStock,
+		quantity,
+		time.Now(),
+		productID,
+		sellerID,
+	)
+	if err != nil {
+		return response.ExecError("update product stock", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return response.Error("failed to get rows affected", err)
+	}
+
+	if rowsAffected == 0 {
+		return response.Error("no rows updated", sql.ErrNoRows)
+	}
+
+	return nil
 }
 
 func buildProductQuery(f ProductFilter) (string, []any) {

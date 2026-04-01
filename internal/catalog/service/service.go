@@ -14,6 +14,7 @@ type ProductService interface {
 	SoftDelete(ctx context.Context, productID string, sellerID string) error
 	FindByID(ctx context.Context, productID string) (*dto.ProductRes, error)
 	FindAll(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error)
+	UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error
 }
 
 type ProductRepository interface {
@@ -23,6 +24,7 @@ type ProductRepository interface {
 	FindByID(ctx context.Context, productID string) (*model.Product, error)
 	FindBySellerID(ctx context.Context, sellerID string) ([]*model.Product, error)
 	FindAll(ctx context.Context, filter repo.ProductFilter) ([]*model.Product, error)
+	UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error
 }
 
 type CategoryService interface {
