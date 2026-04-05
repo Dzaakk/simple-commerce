@@ -7,8 +7,7 @@ import (
 	"os"
 
 	auth "Dzaakk/simple-commerce/internal/auth/route"
-	shoppingCart "Dzaakk/simple-commerce/internal/shopping_cart/injector"
-	transaction "Dzaakk/simple-commerce/internal/transaction/injector"
+	catalog "Dzaakk/simple-commerce/internal/catalog/route"
 	user "Dzaakk/simple-commerce/internal/user/route"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +37,9 @@ func main() {
 
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
-	shoppingCart.InitializedService(postgres, redis).Route(&r.RouterGroup)
-	transaction.InitializedService(postgres, redis).Route(&r.RouterGroup)
+	catalog.InitializedService(postgres).Route(&r.RouterGroup)
+
+	// shoppingCart.InitializedService(postgres, redis).Route(&r.RouterGroup)
+	// transaction.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	r.Run()
 }
