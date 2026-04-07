@@ -38,3 +38,11 @@ type CategoryRepository interface {
 	FindByID(ctx context.Context, id int64) (*model.Category, error)
 	FindAll(ctx context.Context) ([]*model.Category, error)
 }
+
+type InventoryService interface {
+	FindByProductID(ctx context.Context, productID string) (*model.Inventory, error)
+}
+
+type InventoryRepository interface {
+	FindByProductID(ctx context.Context, productID string) (*model.Inventory, error)
+}
