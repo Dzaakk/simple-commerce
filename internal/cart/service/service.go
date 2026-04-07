@@ -3,6 +3,7 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/cart/dto"
 	cartModel "Dzaakk/simple-commerce/internal/cart/model"
+	catalogDto "Dzaakk/simple-commerce/internal/catalog/dto"
 	catalogModel "Dzaakk/simple-commerce/internal/catalog/model"
 	"context"
 )
@@ -27,10 +28,10 @@ type CartItemRepository interface {
 	ClearItems(ctx context.Context, cartID string) error
 }
 
-type ProductRepository interface {
-	FindByID(ctx context.Context, productID string) (*catalogModel.Product, error)
+type ProductService interface {
+	FindByID(ctx context.Context, productID string) (*catalogDto.ProductRes, error)
 }
 
-type InventoryRepository interface {
+type InventoryService interface {
 	FindByProductID(ctx context.Context, productID string) (*catalogModel.Inventory, error)
 }

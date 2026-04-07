@@ -10,16 +10,16 @@ import (
 type CartServiceImpl struct {
 	CartRepo      CartRepository
 	CartItemRepo  CartItemRepository
-	ProductRepo   ProductRepository
-	InventoryRepo InventoryRepository
+	ProductSvc    ProductService
+	InventorySvc  InventoryService
 }
 
-func NewCartService(cartRepo CartRepository, cartItemRepo CartItemRepository, productRepo ProductRepository, inventoryRepo InventoryRepository) CartService {
+func NewCartService(cartRepo CartRepository, cartItemRepo CartItemRepository, productSvc ProductService, inventorySvc InventoryService) CartService {
 	return &CartServiceImpl{
-		CartRepo:      cartRepo,
-		CartItemRepo:  cartItemRepo,
-		ProductRepo:   productRepo,
-		InventoryRepo: inventoryRepo,
+		CartRepo:     cartRepo,
+		CartItemRepo: cartItemRepo,
+		ProductSvc:   productSvc,
+		InventorySvc: inventorySvc,
 	}
 }
 
@@ -80,7 +80,7 @@ func (s *CartServiceImpl) AddItem(ctx context.Context, customerID string, produc
 	}
 
 	if !hasSnapshot {
-		product, err := s.ProductRepo.FindByID(ctx, productID)
+		product, err := s.ProductSvc.FindByID(ctx, productID)
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +183,7 @@ func (s *CartServiceImpl) ClearItems(ctx context.Context, customerID string) err
 }
 
 func (s *CartServiceImpl) ensureStock(ctx context.Context, productID string, quantity int) error {
-	inventory, err := s.InventoryRepo.FindByProductID(ctx, productID)
+	inventory, err := s.InventorySvc.FindByProductID(ctx, productID)
 	if err != nil {
 		return err
 	}
