@@ -7,6 +7,7 @@ import (
 	"os"
 
 	auth "Dzaakk/simple-commerce/internal/auth/route"
+	cart "Dzaakk/simple-commerce/internal/cart/route"
 	catalog "Dzaakk/simple-commerce/internal/catalog/route"
 	user "Dzaakk/simple-commerce/internal/user/route"
 
@@ -38,8 +39,8 @@ func main() {
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
 	catalog.InitializedService(postgres).Route(&r.RouterGroup)
+	cart.InitializedService(postgres).Route(&r.RouterGroup)
 
-	// shoppingCart.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	// transaction.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	r.Run()
 }
