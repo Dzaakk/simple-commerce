@@ -5,6 +5,7 @@ import (
 	"Dzaakk/simple-commerce/internal/catalog/model"
 	repo "Dzaakk/simple-commerce/internal/catalog/repository"
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -41,8 +42,12 @@ type CategoryRepository interface {
 
 type InventoryService interface {
 	FindByProductID(ctx context.Context, productID string) (*model.Inventory, error)
+	ReserveStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error
+	ReleaseStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error
 }
 
 type InventoryRepository interface {
 	FindByProductID(ctx context.Context, productID string) (*model.Inventory, error)
+	ReserveStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error
+	ReleaseStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error
 }
