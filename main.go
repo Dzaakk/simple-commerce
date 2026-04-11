@@ -10,6 +10,7 @@ import (
 	cart "Dzaakk/simple-commerce/internal/cart/route"
 	catalog "Dzaakk/simple-commerce/internal/catalog/route"
 	order "Dzaakk/simple-commerce/internal/order/route"
+	transaction "Dzaakk/simple-commerce/internal/transaction/route"
 	user "Dzaakk/simple-commerce/internal/user/route"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,7 @@ func main() {
 	catalog.InitializedService(postgres).Route(&r.RouterGroup)
 	cart.InitializedService(postgres).Route(&r.RouterGroup)
 	order.InitializedService(postgres).Route(&r.RouterGroup)
+	transaction.InitializedService(postgres).Route(&r.RouterGroup)
 
-	// transaction.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	r.Run()
 }
