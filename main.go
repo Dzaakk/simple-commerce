@@ -12,6 +12,7 @@ import (
 	order "Dzaakk/simple-commerce/internal/order/route"
 	transaction "Dzaakk/simple-commerce/internal/transaction/route"
 	user "Dzaakk/simple-commerce/internal/user/route"
+	"Dzaakk/simple-commerce/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -37,6 +38,7 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(middleware.ErrorHandler())
 
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
