@@ -10,18 +10,18 @@ import (
 func (h *UserHandler) FindSellerByName(ctx *gin.Context) {
 	name := ctx.Query("name")
 	if name == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	data, err := h.SellerService.FindByShopName(ctx, name)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
 	if len(data) == 0 {
-		ctx.JSON(http.StatusNotFound, response.NotFound("seller not found"))
+		ctx.Error(response.NewAppError(http.StatusNotFound, "seller not found"))
 		return
 	}
 

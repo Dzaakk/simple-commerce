@@ -25,13 +25,13 @@ func NewCatalogHandler(productService service.ProductService, categoryService se
 func (h *CatalogHandler) CreateProduct(ctx *gin.Context) {
 	var req dto.CreateProductReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	id, err := h.ProductService.Create(ctx, &req)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -41,24 +41,24 @@ func (h *CatalogHandler) CreateProduct(ctx *gin.Context) {
 func (h *CatalogHandler) UpdateProduct(ctx *gin.Context) {
 	productID := ctx.Param("id")
 	if productID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	sellerID := ctx.Query("seller_id")
 	if sellerID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	var req dto.UpdateProductReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	if err := h.ProductService.Update(ctx, productID, sellerID, &req); err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -68,18 +68,18 @@ func (h *CatalogHandler) UpdateProduct(ctx *gin.Context) {
 func (h *CatalogHandler) DeleteProduct(ctx *gin.Context) {
 	productID := ctx.Param("id")
 	if productID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	sellerID := ctx.Query("seller_id")
 	if sellerID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	if err := h.ProductService.SoftDelete(ctx, productID, sellerID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -89,17 +89,17 @@ func (h *CatalogHandler) DeleteProduct(ctx *gin.Context) {
 func (h *CatalogHandler) FindProductByID(ctx *gin.Context) {
 	productID := ctx.Param("id")
 	if productID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	data, err := h.ProductService.FindByID(ctx, productID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 	if data == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("product not found"))
+		ctx.Error(response.NewAppError(http.StatusNotFound, "product not found"))
 		return
 	}
 
@@ -112,7 +112,7 @@ func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
 	if val := ctx.Query("category_id"); val != "" {
 		id, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 			return
 		}
 		req.CategoryID = &id
@@ -123,7 +123,7 @@ func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
 	if val := ctx.Query("min_price"); val != "" {
 		minPrice, err := strconv.ParseFloat(val, 64)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 			return
 		}
 		req.MinPrice = &minPrice
@@ -131,7 +131,7 @@ func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
 	if val := ctx.Query("max_price"); val != "" {
 		maxPrice, err := strconv.ParseFloat(val, 64)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 			return
 		}
 		req.MaxPrice = &maxPrice
@@ -145,7 +145,7 @@ func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
 	if val := ctx.Query("limit"); val != "" {
 		limit, err := strconv.Atoi(val)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 			return
 		}
 		req.Limit = limit
@@ -154,7 +154,7 @@ func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
 
 	data, err := h.ProductService.FindAll(ctx, req)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -168,24 +168,24 @@ type updateStockReq struct {
 func (h *CatalogHandler) UpdateProductStock(ctx *gin.Context) {
 	productID := ctx.Param("id")
 	if productID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	sellerID := ctx.Query("seller_id")
 	if sellerID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	var req updateStockReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	if err := h.ProductService.UpdateStock(ctx, productID, sellerID, req.Quantity); err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -195,13 +195,13 @@ func (h *CatalogHandler) UpdateProductStock(ctx *gin.Context) {
 func (h *CatalogHandler) CreateCategory(ctx *gin.Context) {
 	var req dto.CreateCategoryReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	id, err := h.CategoryService.Create(ctx, &req)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (h *CatalogHandler) CreateCategory(ctx *gin.Context) {
 func (h *CatalogHandler) FindAllCategories(ctx *gin.Context) {
 	data, err := h.CategoryService.FindAll(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -221,23 +221,23 @@ func (h *CatalogHandler) FindAllCategories(ctx *gin.Context) {
 func (h *CatalogHandler) FindCategoryByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	if idStr == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	data, err := h.CategoryService.FindByID(ctx, id)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 	if data == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("category not found"))
+		ctx.Error(response.NewAppError(http.StatusNotFound, "category not found"))
 		return
 	}
 

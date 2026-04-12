@@ -25,18 +25,18 @@ func (h *UserHandler) FindCustomerByID(ctx *gin.Context) {
 
 	customerID := ctx.Query("id")
 	if !util.AuthorizedChecker(ctx, ctx.Query("id")) {
-		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(""))
+		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
 		return
 	}
 
 	data, err := h.CustomerService.FindByID(ctx, customerID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
 	if data == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("user not found"))
+		ctx.Error(response.NewAppError(http.StatusNotFound, "user not found"))
 		return
 	}
 
@@ -46,18 +46,18 @@ func (h *UserHandler) FindCustomerByID(ctx *gin.Context) {
 func (h *UserHandler) FindCustomerByEmail(ctx *gin.Context) {
 	email := ctx.Query("email")
 	if email == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	data, err := h.CustomerService.FindByEmail(ctx, email)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
 	if data == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("user not found"))
+		ctx.Error(response.NewAppError(http.StatusNotFound, "user not found"))
 		return
 	}
 

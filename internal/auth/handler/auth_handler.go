@@ -23,13 +23,13 @@ func (h *AuthHandler) RegisterCustomer(ctx *gin.Context) {
 	var data dto.RegisterCustomerRequest
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	err := h.service.RegisterCustomer(ctx, &data)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -40,13 +40,13 @@ func (h *AuthHandler) RegisterSeller(ctx *gin.Context) {
 	var data dto.RegisterSellerRequest
 
 	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	err := h.service.RegisterSeller(ctx, &data)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -57,12 +57,12 @@ func (h *AuthHandler) VerifyEmail(ctx *gin.Context) {
 
 	activationCode := ctx.Query("code")
 	if activationCode == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 	err := h.service.VerifyEmail(ctx, activationCode)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h *AuthHandler) VerifyEmail(ctx *gin.Context) {
 func (h *AuthHandler) Login(ctx *gin.Context) {
 	var body dto.LoginRequest
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
@@ -84,14 +84,7 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 
 	res, err := h.service.Login(ctx, req)
 	if err != nil {
-		switch err {
-		case response.ErrInvalidCredentials:
-			ctx.JSON(http.StatusUnauthorized, response.Unauthorized(err.Error()))
-		case response.ErrEmailNotVerified:
-			ctx.JSON(http.StatusForbidden, response.Forbidden(err.Error()))
-		default:
-			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		}
+		ctx.Error(err)
 		return
 	}
 
@@ -101,18 +94,13 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 func (h *AuthHandler) RefreshToken(ctx *gin.Context) {
 	var body dto.RefreshTokenRequest
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	res, err := h.service.RefreshToken(ctx, body.RefreshToken)
 	if err != nil {
-		switch err {
-		case response.ErrInvalidRefreshToken:
-			ctx.JSON(http.StatusUnauthorized, response.Unauthorized(err.Error()))
-		default:
-			ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
-		}
+		ctx.Error(err)
 		return
 	}
 
@@ -121,12 +109,12 @@ func (h *AuthHandler) RefreshToken(ctx *gin.Context) {
 func (h *AuthHandler) Logout(ctx *gin.Context) {
 	var body dto.RefreshTokenRequest
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	if err := h.service.Logout(ctx, body.RefreshToken); err != nil {
-		ctx.JSON(http.StatusInternalServerError, response.InternalServerError(err.Error()))
+		ctx.Error(err)
 		return
 	}
 

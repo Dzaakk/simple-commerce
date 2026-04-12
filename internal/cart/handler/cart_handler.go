@@ -4,7 +4,6 @@ import (
 	"Dzaakk/simple-commerce/internal/cart/service"
 	"Dzaakk/simple-commerce/package/response"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,13 +25,13 @@ type cartItemReq struct {
 func (h *CartHandler) GetCart(ctx *gin.Context) {
 	customerID, ok := getCustomerID(ctx, "")
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	data, err := h.Service.GetCartItems(ctx, customerID)
 	if err != nil {
-		writeError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -42,19 +41,19 @@ func (h *CartHandler) GetCart(ctx *gin.Context) {
 func (h *CartHandler) AddItem(ctx *gin.Context) {
 	var req cartItemReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	customerID, ok := getCustomerID(ctx, req.CustomerID)
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(""))
+		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
 		return
 	}
 
 	data, err := h.Service.AddItem(ctx, customerID, req.ProductID, req.Quantity)
 	if err != nil {
-		writeError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -64,19 +63,19 @@ func (h *CartHandler) AddItem(ctx *gin.Context) {
 func (h *CartHandler) UpdateItem(ctx *gin.Context) {
 	var req cartItemReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	customerID, ok := getCustomerID(ctx, req.CustomerID)
 	if !ok {
-		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(""))
+		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
 		return
 	}
 
 	data, err := h.Service.UpdateItem(ctx, customerID, req.ProductID, req.Quantity)
 	if err != nil {
-		writeError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -86,18 +85,18 @@ func (h *CartHandler) UpdateItem(ctx *gin.Context) {
 func (h *CartHandler) DeleteItem(ctx *gin.Context) {
 	productID := ctx.Param("product_id")
 	if productID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	customerID, ok := getCustomerID(ctx, "")
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	if err := h.Service.DeleteItem(ctx, customerID, productID); err != nil {
-		writeError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -107,12 +106,12 @@ func (h *CartHandler) DeleteItem(ctx *gin.Context) {
 func (h *CartHandler) ClearItems(ctx *gin.Context) {
 	customerID, ok := getCustomerID(ctx, "")
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	if err := h.Service.ClearItems(ctx, customerID); err != nil {
-		writeError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -140,18 +139,4 @@ func getCustomerID(ctx *gin.Context, bodyCustomerID string) (string, bool) {
 	}
 
 	return "", false
-}
-
-func writeError(ctx *gin.Context, err error) {
-	msg := err.Error()
-	if strings.HasPrefix(msg, "invalid parameter") || strings.Contains(msg, "stock") {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest(msg))
-		return
-	}
-	if strings.Contains(msg, "not found") {
-		ctx.JSON(http.StatusNotFound, response.NotFound(msg))
-		return
-	}
-
-	ctx.JSON(http.StatusInternalServerError, response.InternalServerError(msg))
 }

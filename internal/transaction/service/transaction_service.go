@@ -5,9 +5,10 @@ import (
 	"Dzaakk/simple-commerce/internal/transaction/dto"
 	txModel "Dzaakk/simple-commerce/internal/transaction/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
+	"net/http"
 	"time"
 )
 
@@ -33,16 +34,16 @@ func NewTransactionService(db *sql.DB, txRepo TransactionRepository, orderRepo O
 
 func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto.CreateTransactionReq) (*dto.TransactionRes, error) {
 	if req == nil {
-		return nil, errors.New("invalid request")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid request")
 	}
 	if req.CustomerID == "" {
-		return nil, errors.New("invalid parameter customer id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 	if req.OrderID == "" {
-		return nil, errors.New("invalid parameter order id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter order id")
 	}
 	if req.PaymentMethod == "" {
-		return nil, errors.New("invalid parameter payment method")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter payment method")
 	}
 
 	order, err := s.OrderRepo.FindByID(ctx, req.OrderID)
@@ -50,13 +51,13 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 		return nil, err
 	}
 	if order == nil {
-		return nil, errors.New("order not found")
+		return nil, response.NewAppError(http.StatusNotFound, "order not found")
 	}
 	if order.CustomerID != req.CustomerID {
-		return nil, errors.New("unauthorized")
+		return nil, response.NewAppError(http.StatusUnauthorized, "unauthorized")
 	}
 	if order.Status != string(constant.OrderPending) {
-		return nil, errors.New("order status is not pending")
+		return nil, response.NewAppError(http.StatusConflict, "order status is not pending")
 	}
 
 	existing, err := s.TxRepo.FindByOrderID(ctx, req.OrderID)
@@ -64,7 +65,7 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 		return nil, err
 	}
 	if existing != nil {
-		return nil, errors.New("transaction already exists")
+		return nil, response.NewAppError(http.StatusConflict, "transaction already exists")
 	}
 
 	txNumber, err := s.TxRepo.GenerateTransactionNumber(ctx)
@@ -104,7 +105,7 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 
 func (s *TransactionServiceImpl) GetTransactionByID(ctx context.Context, customerID, transactionID string) (*dto.TransactionRes, error) {
 	if customerID == "" || transactionID == "" {
-		return nil, errors.New("invalid parameter")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter")
 	}
 
 	txData, err := s.TxRepo.FindByID(ctx, transactionID)
@@ -112,7 +113,7 @@ func (s *TransactionServiceImpl) GetTransactionByID(ctx context.Context, custome
 		return nil, err
 	}
 	if txData == nil {
-		return nil, errors.New("transaction not found")
+		return nil, response.NewAppError(http.StatusNotFound, "transaction not found")
 	}
 
 	order, err := s.OrderRepo.FindByID(ctx, txData.OrderID)
@@ -120,10 +121,10 @@ func (s *TransactionServiceImpl) GetTransactionByID(ctx context.Context, custome
 		return nil, err
 	}
 	if order == nil {
-		return nil, errors.New("order not found")
+		return nil, response.NewAppError(http.StatusNotFound, "order not found")
 	}
 	if order.CustomerID != customerID {
-		return nil, errors.New("unauthorized")
+		return nil, response.NewAppError(http.StatusUnauthorized, "unauthorized")
 	}
 
 	return toTransactionRes(txData), nil
@@ -131,7 +132,7 @@ func (s *TransactionServiceImpl) GetTransactionByID(ctx context.Context, custome
 
 func (s *TransactionServiceImpl) GetTransactionByOrderID(ctx context.Context, customerID, orderID string) (*dto.TransactionRes, error) {
 	if customerID == "" || orderID == "" {
-		return nil, errors.New("invalid parameter")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter")
 	}
 
 	order, err := s.OrderRepo.FindByID(ctx, orderID)
@@ -139,10 +140,10 @@ func (s *TransactionServiceImpl) GetTransactionByOrderID(ctx context.Context, cu
 		return nil, err
 	}
 	if order == nil {
-		return nil, errors.New("order not found")
+		return nil, response.NewAppError(http.StatusNotFound, "order not found")
 	}
 	if order.CustomerID != customerID {
-		return nil, errors.New("unauthorized")
+		return nil, response.NewAppError(http.StatusUnauthorized, "unauthorized")
 	}
 
 	txData, err := s.TxRepo.FindByOrderID(ctx, orderID)
@@ -150,7 +151,7 @@ func (s *TransactionServiceImpl) GetTransactionByOrderID(ctx context.Context, cu
 		return nil, err
 	}
 	if txData == nil {
-		return nil, errors.New("transaction not found")
+		return nil, response.NewAppError(http.StatusNotFound, "transaction not found")
 	}
 
 	return toTransactionRes(txData), nil
@@ -158,17 +159,17 @@ func (s *TransactionServiceImpl) GetTransactionByOrderID(ctx context.Context, cu
 
 func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req *dto.PaymentCallbackReq) error {
 	if req == nil {
-		return errors.New("invalid request")
+		return response.NewAppError(http.StatusBadRequest, "invalid request")
 	}
 	if req.TransactionNumber == "" {
-		return errors.New("invalid parameter transaction number")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter transaction number")
 	}
 	if req.Signature == "" {
-		return errors.New("invalid signature")
+		return response.NewAppError(http.StatusBadRequest, "invalid signature")
 	}
 
 	if !verifySignature(req) {
-		return errors.New("invalid signature")
+		return response.NewAppError(http.StatusBadRequest, "invalid signature")
 	}
 
 	txData, err := s.TxRepo.FindByTransactionNumber(ctx, req.TransactionNumber)
@@ -176,7 +177,7 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 		return err
 	}
 	if txData == nil {
-		return errors.New("transaction not found")
+		return response.NewAppError(http.StatusNotFound, "transaction not found")
 	}
 
 	currentStatus := constant.TransactionStatus(txData.Status)
@@ -186,7 +187,7 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 
 	newStatus := req.Status
 	if newStatus == "" {
-		return errors.New("invalid parameter status")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter status")
 	}
 
 	order, err := s.OrderRepo.FindByID(ctx, txData.OrderID)
@@ -194,7 +195,7 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 		return err
 	}
 	if order == nil {
-		return errors.New("order not found")
+		return response.NewAppError(http.StatusNotFound, "order not found")
 	}
 
 	items, err := s.OrderItemRepo.FindByOrderID(ctx, order.ID)
@@ -246,7 +247,7 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 
 func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transactionID string) error {
 	if transactionID == "" {
-		return errors.New("invalid parameter transaction id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter transaction id")
 	}
 
 	txData, err := s.TxRepo.FindByID(ctx, transactionID)
@@ -254,7 +255,7 @@ func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transact
 		return err
 	}
 	if txData == nil {
-		return errors.New("transaction not found")
+		return response.NewAppError(http.StatusNotFound, "transaction not found")
 	}
 
 	currentStatus := constant.TransactionStatus(txData.Status)
@@ -267,7 +268,7 @@ func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transact
 		return err
 	}
 	if order == nil {
-		return errors.New("order not found")
+		return response.NewAppError(http.StatusNotFound, "order not found")
 	}
 
 	items, err := s.OrderItemRepo.FindByOrderID(ctx, order.ID)

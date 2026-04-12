@@ -20,7 +20,7 @@ func NewTransactionHandler(service service.TransactionService) *TransactionHandl
 func (h *TransactionHandler) CreateTransaction(ctx *gin.Context) {
 	var req dto.CreateTransactionReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
@@ -44,23 +44,19 @@ func (h *TransactionHandler) CreateTransaction(ctx *gin.Context) {
 func (h *TransactionHandler) GetTransactionByID(ctx *gin.Context) {
 	transactionID := ctx.Param("id")
 	if transactionID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	customerID, ok := getCustomerID(ctx)
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	res, err := h.Service.GetTransactionByID(ctx, customerID, transactionID)
 	if err != nil {
 		ctx.Error(err)
-		return
-	}
-	if res == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("transaction not found"))
 		return
 	}
 
@@ -70,23 +66,19 @@ func (h *TransactionHandler) GetTransactionByID(ctx *gin.Context) {
 func (h *TransactionHandler) GetTransactionByOrderID(ctx *gin.Context) {
 	orderID := ctx.Param("order_id")
 	if orderID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	customerID, ok := getCustomerID(ctx)
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	res, err := h.Service.GetTransactionByOrderID(ctx, customerID, orderID)
 	if err != nil {
 		ctx.Error(err)
-		return
-	}
-	if res == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("transaction not found"))
 		return
 	}
 
@@ -96,7 +88,7 @@ func (h *TransactionHandler) GetTransactionByOrderID(ctx *gin.Context) {
 func (h *TransactionHandler) PaymentCallback(ctx *gin.Context) {
 	var req dto.PaymentCallbackReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
@@ -111,7 +103,7 @@ func (h *TransactionHandler) PaymentCallback(ctx *gin.Context) {
 func (h *TransactionHandler) ExpireTransaction(ctx *gin.Context) {
 	transactionID := ctx.Param("id")
 	if transactionID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 

@@ -7,7 +7,6 @@ import (
 	"Dzaakk/simple-commerce/package/response"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,7 +22,7 @@ func NewOrderHandler(service service.OrderService) *OrderHandler {
 func (h *OrderHandler) CreateOrder(ctx *gin.Context) {
 	var req dto.CreateOrderReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
@@ -37,7 +36,7 @@ func (h *OrderHandler) CreateOrder(ctx *gin.Context) {
 
 	res, err := h.Service.CreateOrder(ctx, &req)
 	if err != nil {
-		writeOrderError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -47,19 +46,19 @@ func (h *OrderHandler) CreateOrder(ctx *gin.Context) {
 func (h *OrderHandler) GetOrders(ctx *gin.Context) {
 	customerID, ok := getCustomerID(ctx)
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	filter, err := parseOrderFilter(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	data, err := h.Service.GetOrdersByCustomer(ctx, customerID, filter)
 	if err != nil {
-		writeOrderError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -69,23 +68,19 @@ func (h *OrderHandler) GetOrders(ctx *gin.Context) {
 func (h *OrderHandler) GetOrderDetail(ctx *gin.Context) {
 	customerID, ok := getCustomerID(ctx)
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	orderID := ctx.Param("id")
 	if orderID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	data, err := h.Service.GetOrderByID(ctx, customerID, orderID)
 	if err != nil {
-		writeOrderError(ctx, err)
-		return
-	}
-	if data == nil {
-		ctx.JSON(http.StatusNotFound, response.NotFound("order not found"))
+		ctx.Error(err)
 		return
 	}
 
@@ -95,18 +90,18 @@ func (h *OrderHandler) GetOrderDetail(ctx *gin.Context) {
 func (h *OrderHandler) CancelOrder(ctx *gin.Context) {
 	customerID, ok := getCustomerID(ctx)
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	orderID := ctx.Param("id")
 	if orderID == "" {
-		ctx.JSON(http.StatusBadRequest, response.InvalidRequestData())
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
 	if err := h.Service.CancelOrder(ctx, customerID, orderID); err != nil {
-		writeOrderError(ctx, err)
+		ctx.Error(err)
 		return
 	}
 
@@ -155,26 +150,4 @@ func parseOrderFilter(ctx *gin.Context) (dto.OrderFilter, error) {
 	}
 
 	return filter, nil
-}
-
-func writeOrderError(ctx *gin.Context, err error) {
-	msg := err.Error()
-	if strings.Contains(msg, "invalid") {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest(msg))
-		return
-	}
-	if strings.Contains(msg, "unauthorized") {
-		ctx.JSON(http.StatusUnauthorized, response.Unauthorized(msg))
-		return
-	}
-	if strings.Contains(msg, "not found") {
-		ctx.JSON(http.StatusNotFound, response.NotFound(msg))
-		return
-	}
-	if strings.Contains(msg, "stock") {
-		ctx.JSON(http.StatusBadRequest, response.BadRequest(msg))
-		return
-	}
-
-	ctx.JSON(http.StatusInternalServerError, response.InternalServerError(msg))
 }
