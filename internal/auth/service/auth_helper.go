@@ -4,11 +4,13 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"Dzaakk/simple-commerce/package/response"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -39,7 +41,7 @@ func generateActivationCode() (string, error) {
 func hashPassword(plain string) (string, error) {
 	plain = strings.TrimSpace(plain)
 	if plain == "" {
-		return "", errors.New("password is required")
+		return "", response.NewAppError(http.StatusBadRequest, "password is required")
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)

@@ -4,9 +4,10 @@ import (
 	"Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
+	"net/http"
 	"strconv"
 )
 
@@ -34,11 +35,11 @@ func (c *CustomerServiceImpl) Update(ctx context.Context, req *dto.UpdateReq) er
 
 	customerID, err := strconv.ParseInt(req.CustomerID, 0, 64)
 	if err != nil {
-		return err
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 
 	if customerID <= 0 {
-		return errors.New("invalid parameter customer id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 
 	data := req.ToUpdateData(customerID)
@@ -48,7 +49,7 @@ func (c *CustomerServiceImpl) Update(ctx context.Context, req *dto.UpdateReq) er
 		return err
 	}
 	if rowsAffected == 0 {
-		return errors.New("no rows updated")
+		return response.NewAppError(http.StatusNotFound, "customer not found")
 	}
 
 	return nil

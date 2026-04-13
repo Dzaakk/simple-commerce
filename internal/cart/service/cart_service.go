@@ -3,8 +3,9 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/cart/dto"
 	cartModel "Dzaakk/simple-commerce/internal/cart/model"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"errors"
+	"net/http"
 )
 
 type CartServiceImpl struct {
@@ -25,7 +26,7 @@ func NewCartService(cartRepo CartRepository, cartItemRepo CartItemRepository, pr
 
 func (s *CartServiceImpl) GetCartItems(ctx context.Context, customerID string) (*dto.CartRes, error) {
 	if customerID == "" {
-		return nil, errors.New("invalid parameter customer id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 
 	cart, err := s.CartRepo.GetCartByCustomerID(ctx, customerID)
@@ -46,13 +47,13 @@ func (s *CartServiceImpl) GetCartItems(ctx context.Context, customerID string) (
 
 func (s *CartServiceImpl) AddItem(ctx context.Context, customerID string, productID string, quantity int) (*dto.CartRes, error) {
 	if customerID == "" {
-		return nil, errors.New("invalid parameter customer id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 	if productID == "" {
-		return nil, errors.New("invalid parameter product id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 	if quantity <= 0 {
-		return nil, errors.New("invalid parameter quantity")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter quantity")
 	}
 
 	cart, err := s.CartRepo.GetOrCreateCart(ctx, customerID)
@@ -85,7 +86,7 @@ func (s *CartServiceImpl) AddItem(ctx context.Context, customerID string, produc
 			return nil, err
 		}
 		if product == nil {
-			return nil, errors.New("product not found")
+			return nil, response.NewAppError(http.StatusNotFound, "product not found")
 		}
 		priceSnapshot = product.Price
 	}
@@ -104,13 +105,13 @@ func (s *CartServiceImpl) AddItem(ctx context.Context, customerID string, produc
 
 func (s *CartServiceImpl) UpdateItem(ctx context.Context, customerID string, productID string, quantity int) (*dto.CartRes, error) {
 	if customerID == "" {
-		return nil, errors.New("invalid parameter customer id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 	if productID == "" {
-		return nil, errors.New("invalid parameter product id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 	if quantity <= 0 {
-		return nil, errors.New("invalid parameter quantity")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter quantity")
 	}
 
 	cart, err := s.CartRepo.GetCartByCustomerID(ctx, customerID)
@@ -118,7 +119,7 @@ func (s *CartServiceImpl) UpdateItem(ctx context.Context, customerID string, pro
 		return nil, err
 	}
 	if cart == nil {
-		return nil, errors.New("cart not found")
+		return nil, response.NewAppError(http.StatusNotFound, "cart not found")
 	}
 
 	items, err := s.CartItemRepo.GetCartItems(ctx, cart.ID)
@@ -128,7 +129,7 @@ func (s *CartServiceImpl) UpdateItem(ctx context.Context, customerID string, pro
 
 	existingItem := findCartItem(items, productID)
 	if existingItem == nil {
-		return nil, errors.New("cart item not found")
+		return nil, response.NewAppError(http.StatusNotFound, "cart item not found")
 	}
 
 	if err := s.ensureStock(ctx, productID, quantity); err != nil {
@@ -149,10 +150,10 @@ func (s *CartServiceImpl) UpdateItem(ctx context.Context, customerID string, pro
 
 func (s *CartServiceImpl) DeleteItem(ctx context.Context, customerID string, productID string) error {
 	if customerID == "" {
-		return errors.New("invalid parameter customer id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 	if productID == "" {
-		return errors.New("invalid parameter product id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 
 	cart, err := s.CartRepo.GetCartByCustomerID(ctx, customerID)
@@ -160,7 +161,7 @@ func (s *CartServiceImpl) DeleteItem(ctx context.Context, customerID string, pro
 		return err
 	}
 	if cart == nil {
-		return errors.New("cart not found")
+		return response.NewAppError(http.StatusNotFound, "cart not found")
 	}
 
 	return s.CartItemRepo.DeleteItem(ctx, cart.ID, productID)
@@ -168,7 +169,7 @@ func (s *CartServiceImpl) DeleteItem(ctx context.Context, customerID string, pro
 
 func (s *CartServiceImpl) ClearItems(ctx context.Context, customerID string) error {
 	if customerID == "" {
-		return errors.New("invalid parameter customer id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 
 	cart, err := s.CartRepo.GetCartByCustomerID(ctx, customerID)
@@ -176,7 +177,7 @@ func (s *CartServiceImpl) ClearItems(ctx context.Context, customerID string) err
 		return err
 	}
 	if cart == nil {
-		return errors.New("cart not found")
+		return response.NewAppError(http.StatusNotFound, "cart not found")
 	}
 
 	return s.CartItemRepo.ClearItems(ctx, cart.ID)
@@ -188,12 +189,12 @@ func (s *CartServiceImpl) ensureStock(ctx context.Context, productID string, qua
 		return err
 	}
 	if inventory == nil {
-		return errors.New("inventory not found")
+		return response.NewAppError(http.StatusNotFound, "inventory not found")
 	}
 
 	available := inventory.StockQuantity - inventory.ReservedQuantity
 	if available < quantity {
-		return errors.New("stock product is less than quantity")
+		return response.NewAppError(http.StatusConflict, "stock product is less than quantity")
 	}
 
 	return nil

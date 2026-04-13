@@ -2,9 +2,10 @@ package service
 
 import (
 	"Dzaakk/simple-commerce/internal/catalog/model"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
+	"net/http"
 )
 
 type InventoryServiceImpl struct {
@@ -17,7 +18,7 @@ func NewInventoryService(repo InventoryRepository) InventoryService {
 
 func (s *InventoryServiceImpl) FindByProductID(ctx context.Context, productID string) (*model.Inventory, error) {
 	if productID == "" {
-		return nil, errors.New("invalid parameter product id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 
 	return s.Repo.FindByProductID(ctx, productID)
@@ -25,13 +26,13 @@ func (s *InventoryServiceImpl) FindByProductID(ctx context.Context, productID st
 
 func (s *InventoryServiceImpl) ReserveStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error {
 	if productID == "" {
-		return errors.New("invalid parameter product id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 	if qty <= 0 {
-		return errors.New("invalid parameter quantity")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter quantity")
 	}
 	if tx == nil {
-		return errors.New("transaction is required")
+		return response.NewAppError(http.StatusInternalServerError, "internal server error")
 	}
 
 	return s.Repo.ReserveStock(ctx, tx, productID, qty)
@@ -39,13 +40,13 @@ func (s *InventoryServiceImpl) ReserveStock(ctx context.Context, tx *sql.Tx, pro
 
 func (s *InventoryServiceImpl) ReleaseStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error {
 	if productID == "" {
-		return errors.New("invalid parameter product id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 	if qty <= 0 {
-		return errors.New("invalid parameter quantity")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter quantity")
 	}
 	if tx == nil {
-		return errors.New("transaction is required")
+		return response.NewAppError(http.StatusInternalServerError, "internal server error")
 	}
 
 	return s.Repo.ReleaseStock(ctx, tx, productID, qty)

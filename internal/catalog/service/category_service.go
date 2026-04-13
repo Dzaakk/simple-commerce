@@ -3,8 +3,9 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/catalog/dto"
 	"Dzaakk/simple-commerce/internal/catalog/model"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"errors"
+	"net/http"
 	"sort"
 )
 
@@ -38,7 +39,7 @@ func (c *CategoryServiceImpl) FindAll(ctx context.Context) ([]*dto.CategoryTree,
 
 func (c *CategoryServiceImpl) FindByID(ctx context.Context, categoryID int64) (*dto.CategoryTree, error) {
 	if categoryID <= 0 {
-		return nil, errors.New("invalid parameter category id")
+		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter category id")
 	}
 
 	data, err := c.Repo.FindByID(ctx, categoryID)
@@ -46,7 +47,7 @@ func (c *CategoryServiceImpl) FindByID(ctx context.Context, categoryID int64) (*
 		return nil, err
 	}
 	if data == nil {
-		return nil, nil
+		return nil, response.NewAppError(http.StatusNotFound, "category not found")
 	}
 
 	category := dto.CategoryTree{
@@ -89,7 +90,7 @@ func buildCategoryTrees(categories []*model.Category) ([]*dto.CategoryTree, erro
 			return nil
 		}
 		if onStack[node.ID] {
-			return errors.New("category tree has a cycle")
+			return response.NewAppError(http.StatusBadRequest, "category tree has a cycle")
 		}
 		if visited[node.ID] {
 			return nil

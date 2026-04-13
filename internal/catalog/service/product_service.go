@@ -3,8 +3,9 @@ package service
 import (
 	"Dzaakk/simple-commerce/internal/catalog/dto"
 	repo "Dzaakk/simple-commerce/internal/catalog/repository"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"errors"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -30,10 +31,10 @@ func (p *ProductServiceImpl) Create(ctx context.Context, req *dto.CreateProductR
 
 func (p *ProductServiceImpl) Update(ctx context.Context, productID string, sellerID string, req *dto.UpdateProductReq) error {
 	if productID == "" {
-		return errors.New("invalid parameter product id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 	if sellerID == "" {
-		return errors.New("invalid parameter seller id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
 	}
 
 	data := req.ToUpdateData(productID, sellerID)
@@ -43,7 +44,7 @@ func (p *ProductServiceImpl) Update(ctx context.Context, productID string, selle
 		return err
 	}
 	if rowsAffected == 0 {
-		return errors.New("no rows updated")
+		return response.NewAppError(http.StatusNotFound, "product not found")
 	}
 
 	return nil
@@ -51,10 +52,10 @@ func (p *ProductServiceImpl) Update(ctx context.Context, productID string, selle
 
 func (p *ProductServiceImpl) SoftDelete(ctx context.Context, productID string, sellerID string) error {
 	if productID == "" {
-		return errors.New("invalid parameter product id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 	if sellerID == "" {
-		return errors.New("invalid parameter seller id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
 	}
 
 	rowsAffected, err := p.Repo.SoftDelete(ctx, productID, time.Now())
@@ -62,7 +63,7 @@ func (p *ProductServiceImpl) SoftDelete(ctx context.Context, productID string, s
 		return err
 	}
 	if rowsAffected == 0 {
-		return errors.New("no rows updated")
+		return response.NewAppError(http.StatusNotFound, "product not found")
 	}
 
 	return nil
@@ -74,7 +75,7 @@ func (p *ProductServiceImpl) FindByID(ctx context.Context, productID string) (*d
 		return nil, err
 	}
 	if data == nil {
-		return nil, nil
+		return nil, response.NewAppError(http.StatusNotFound, "product not found")
 	}
 
 	product := dto.ToProductRes(data)
@@ -128,13 +129,13 @@ func (p *ProductServiceImpl) FindAll(ctx context.Context, req dto.ProductQueryRe
 
 func (p *ProductServiceImpl) UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error {
 	if productID == "" {
-		return errors.New("invalid parameter product id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 	if sellerID == "" {
-		return errors.New("invalid parameter seller id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
 	}
 	if quantity < 0 {
-		return errors.New("invalid parameter quantity")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter quantity")
 	}
 
 	return p.Repo.UpdateStock(ctx, productID, sellerID, quantity)

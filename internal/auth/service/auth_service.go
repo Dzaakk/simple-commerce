@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -172,7 +173,7 @@ func (s *authService) VerifyEmail(ctx context.Context, activationCode string) er
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return response.Error("failed to begin transaction", err)
+		return response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
 	}
 	defer tx.Rollback()
 
@@ -273,12 +274,12 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	//generate access and refresh token
 	accessToken, err := generateAccessToken(userID, string(req.UserType), email)
 	if err != nil {
-		return nil, response.Error("failed to generate access token", err)
+		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
 	}
 
 	rawRefresh, hashedRefresh, err := generateRefreshToken()
 	if err != nil {
-		return nil, response.Error("failed to generate refresh token", err)
+		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
 	}
 
 	refreshData := &model.RefreshToken{
@@ -290,7 +291,7 @@ func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	}
 
 	if _, err = s.refreshRepo.Create(ctx, refreshData); err != nil {
-		return nil, response.Error("failed to save refresh token", err)
+		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
 	}
 
 	return &dto.LoginResponse{
@@ -344,7 +345,7 @@ func (s *authService) RefreshToken(ctx context.Context, rawRefreshToken string) 
 
 	accessToken, err := generateAccessToken(stored.UserID, string(stored.UserType), email)
 	if err != nil {
-		return nil, response.Error("failed to generate access token", err)
+		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
 	}
 
 	return &dto.RefreshTokenResponse{

@@ -4,9 +4,10 @@ import (
 	"Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
+	"net/http"
 	"strconv"
 )
 
@@ -32,11 +33,11 @@ func (s *SellerServiceImpl) Create(ctx context.Context, req *dto.RegisterSellerR
 func (s *SellerServiceImpl) Update(ctx context.Context, req *dto.SellerUpdateReq) error {
 	sellerID, err := strconv.ParseInt(req.SellerID, 0, 64)
 	if err != nil {
-		return err
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
 	}
 
 	if sellerID <= 0 {
-		return errors.New("invalid parameter seller id")
+		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
 	}
 
 	data := req.ToUpdateData(sellerID)
@@ -46,7 +47,7 @@ func (s *SellerServiceImpl) Update(ctx context.Context, req *dto.SellerUpdateReq
 		return err
 	}
 	if rowsAffected == 0 {
-		return errors.New("no rows updated")
+		return response.NewAppError(http.StatusNotFound, "seller not found")
 	}
 
 	return nil
