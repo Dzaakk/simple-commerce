@@ -9,10 +9,13 @@ import (
 	auth "Dzaakk/simple-commerce/internal/auth/route"
 	cart "Dzaakk/simple-commerce/internal/cart/route"
 	catalog "Dzaakk/simple-commerce/internal/catalog/route"
+	logMiddleware "Dzaakk/simple-commerce/internal/middleware/logging"
 	order "Dzaakk/simple-commerce/internal/order/route"
+	requestid "Dzaakk/simple-commerce/internal/middleware/requestid"
 	transaction "Dzaakk/simple-commerce/internal/transaction/route"
 	user "Dzaakk/simple-commerce/internal/user/route"
 	"Dzaakk/simple-commerce/internal/middleware"
+	"Dzaakk/simple-commerce/package/logging"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -39,6 +42,8 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.ErrorHandler())
+	r.Use(requestid.RequestID())
+	r.Use(logMiddleware.RequestLogger(logging.NewLokiClientFromEnv()))
 
 	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
