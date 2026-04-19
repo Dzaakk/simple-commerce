@@ -4,9 +4,11 @@ import (
 	"Dzaakk/simple-commerce/internal/auth/handler"
 	"Dzaakk/simple-commerce/internal/auth/repository"
 	"Dzaakk/simple-commerce/internal/auth/service"
+	emailQueue "Dzaakk/simple-commerce/internal/email/queue"
 	emailService "Dzaakk/simple-commerce/internal/email/service"
 	userrepo "Dzaakk/simple-commerce/internal/user/repository"
 	userservice "Dzaakk/simple-commerce/internal/user/service"
+	"Dzaakk/simple-commerce/package/rabbitmq"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +44,7 @@ func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
 	api.POST("/logout", ar.Handler.Logout)
 }
 
-func InitializedService(db *sql.DB, redis *redis.Client) *AuthRoutes {
+func InitializedService(db *sql.DB, redis *redis.Client, rabbit *rabbitmq.Client) *AuthRoutes {
 	activationRepo := repository.NewActivationCodeRepository(db)
 	refreshRepo := repository.NewRefreshTokenRepository(db)
 
@@ -52,8 +54,9 @@ func InitializedService(db *sql.DB, redis *redis.Client) *AuthRoutes {
 	customerService := userservice.NewCustomerService(customerRepo)
 	sellerService := userservice.NewSellerService(sellerRepo)
 	emailService := emailService.NewEmailService()
+	emailPublisher := emailQueue.NewRabbitPublisher(rabbit)
 
-	service := service.NewAuthService(db, customerService, sellerService, emailService, activationRepo, refreshRepo)
+	service := service.NewAuthService(db, customerService, sellerService, emailService, emailPublisher, activationRepo, refreshRepo)
 
 	hander := handler.NewAuthHandler(service)
 	return NewAuthRoutes(hander)

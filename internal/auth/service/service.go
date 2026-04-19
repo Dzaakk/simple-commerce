@@ -38,6 +38,10 @@ type emailService interface {
 	SendEmailVerification(ctx context.Context, req emailmodel.VerificationEmailReq) error
 }
 
+type activationEmailPublisher interface {
+	PublishVerificationEmail(ctx context.Context, req emailmodel.VerificationEmailReq) error
+}
+
 type activationCodeRepository interface {
 	Create(ctx context.Context, data *model.ActivationCode) (int64, error)
 	FindByCode(ctx context.Context, code string) (*model.ActivationCode, error)

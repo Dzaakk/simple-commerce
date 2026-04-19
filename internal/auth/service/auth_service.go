@@ -6,6 +6,7 @@ import (
 	emailmodel "Dzaakk/simple-commerce/internal/email/model"
 	userdto "Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/logging"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -23,8 +24,10 @@ type authService struct {
 	customerSvc    customerService
 	sellerSvc      sellerService
 	emailService   emailService
+	emailPublisher activationEmailPublisher
 	activationRepo activationCodeRepository
 	refreshRepo    refreshTokenRepository
+	logger         *logging.Logger
 }
 
 func NewAuthService(
@@ -32,6 +35,7 @@ func NewAuthService(
 	customerSvc customerService,
 	sellerSvc sellerService,
 	emailService emailService,
+	emailPublisher activationEmailPublisher,
 	activationRepo activationCodeRepository,
 	refreshRepo refreshTokenRepository,
 ) AuthService {
@@ -40,8 +44,10 @@ func NewAuthService(
 		customerSvc:    customerSvc,
 		sellerSvc:      sellerSvc,
 		emailService:   emailService,
+		emailPublisher: emailPublisher,
 		activationRepo: activationRepo,
 		refreshRepo:    refreshRepo,
+		logger:         logging.NewLogger("auth", "auth_service"),
 	}
 }
 
@@ -91,22 +97,11 @@ func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCus
 	}
 
 	baseLink := os.Getenv("BASE_URL")
-	// send activation email
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("recovered from panic in email goroutine: %v", r)
-			}
-		}()
-		err := s.emailService.SendEmailVerification(context.Background(), emailmodel.VerificationEmailReq{
-			Email:          req.Email,
-			Username:       req.FullName,
-			ActivationLink: fmt.Sprintf("%s/api/v1/auth/verify-email?code=%s", baseLink, activationCode),
-		})
-		if err != nil {
-			log.Printf("failed to send email to %s: %v", req.Email, err)
-		}
-	}()
+	s.dispatchActivationEmail(ctx, emailmodel.VerificationEmailReq{
+		Email:          req.Email,
+		Username:       req.FullName,
+		ActivationLink: fmt.Sprintf("%s/api/v1/auth/verify-email?code=%s", baseLink, activationCode),
+	})
 
 	return nil
 }
@@ -157,7 +152,12 @@ func (s *authService) RegisterSeller(ctx context.Context, req *dto.RegisterSelle
 		return err
 	}
 
-	// send activation email
+	baseLink := os.Getenv("BASE_URL")
+	s.dispatchActivationEmail(ctx, emailmodel.VerificationEmailReq{
+		Email:          req.Email,
+		Username:       req.FullName,
+		ActivationLink: fmt.Sprintf("%s/api/v1/auth/verify-email?code=%s", baseLink, activationCode),
+	})
 
 	return nil
 }
@@ -357,4 +357,40 @@ func (s *authService) RefreshToken(ctx context.Context, rawRefreshToken string) 
 func (s *authService) Logout(ctx context.Context, rawRefreshToken string) error {
 	hashed := hashRefreshToken(rawRefreshToken)
 	return s.refreshRepo.Revoke(ctx, hashed)
+}
+
+func (s *authService) dispatchActivationEmail(ctx context.Context, req emailmodel.VerificationEmailReq) {
+	if s.emailPublisher != nil {
+		if err := s.emailPublisher.PublishVerificationEmail(ctx, req); err == nil {
+			s.logger.Info(ctx, "activation_email_queued", map[string]interface{}{
+				"target": "verification_email",
+			})
+			return
+		}
+
+		s.logger.Warn(ctx, "activation_email_queue_fallback", map[string]interface{}{
+			"target": "verification_email",
+		})
+	}
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("recovered from panic in email goroutine: %v", r)
+			}
+		}()
+
+		err := s.emailService.SendEmailVerification(context.Background(), req)
+		if err != nil {
+			s.logger.Error(context.Background(), "activation_email_send_failed", map[string]interface{}{
+				"target": "verification_email",
+			})
+			log.Printf("failed to send email to %s: %v", req.Email, err)
+			return
+		}
+
+		s.logger.Info(context.Background(), "activation_email_sent_direct", map[string]interface{}{
+			"target": "verification_email",
+		})
+	}()
 }
