@@ -1,6 +1,8 @@
 package main
 
 import (
+	emailQueue "Dzaakk/simple-commerce/internal/email/queue"
+	emailService "Dzaakk/simple-commerce/internal/email/service"
 	postgres "Dzaakk/simple-commerce/package/db/postgres"
 	redis "Dzaakk/simple-commerce/package/db/redis"
 	"log"
@@ -16,6 +18,7 @@ import (
 	user "Dzaakk/simple-commerce/internal/user/route"
 	"Dzaakk/simple-commerce/internal/middleware"
 	"Dzaakk/simple-commerce/package/logging"
+	"Dzaakk/simple-commerce/package/rabbitmq"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -40,12 +43,27 @@ func main() {
 		log.Fatalf("error connect to redis : %v", err)
 	}
 
+	var rabbitClient *rabbitmq.Client
+	rabbitURL := os.Getenv("RABBITMQ_URL")
+	if rabbitURL != "" {
+		rabbitClient, err = rabbitmq.Init(rabbitURL)
+		if err != nil {
+			log.Printf("rabbitmq queue disabled: %v", err)
+		} else {
+			defer rabbitClient.Close()
+
+			if err := emailQueue.StartActivationEmailConsumer(rabbitClient, emailService.NewEmailService()); err != nil {
+				log.Printf("failed to start activation email consumer: %v", err)
+			}
+		}
+	}
+
 	r := gin.Default()
 	r.Use(middleware.ErrorHandler())
 	r.Use(requestid.RequestID())
 	r.Use(logMiddleware.RequestLogger(logging.NewLokiClientFromEnv()))
 
-	auth.InitializedService(postgres, redis).Route(&r.RouterGroup)
+	auth.InitializedService(postgres, redis, rabbitClient).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
 	catalog.InitializedService(postgres).Route(&r.RouterGroup)
 	cart.InitializedService(postgres).Route(&r.RouterGroup)
