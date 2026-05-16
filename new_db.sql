@@ -3,11 +3,14 @@
 -- PostgreSQL
 -- ============================================
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- ============================================
 -- CUSTOMER
 -- ============================================
 CREATE TABLE customers (
-    id          UUID PRIMARY KEY,
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email       VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name   VARCHAR(255) NOT NULL,
@@ -26,7 +29,7 @@ CREATE TABLE customers (
 -- SELLER
 -- ============================================
 CREATE TABLE sellers (
-    id            UUID PRIMARY KEY,
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email         VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     shop_name     VARCHAR(255) NOT NULL,
@@ -54,7 +57,13 @@ CREATE TABLE activation_codes (
     used_at     TIMESTAMP,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT uq_activation_code UNIQUE (email, code)
+    CONSTRAINT uq_activation_code UNIQUE (email, code),
+    CONSTRAINT chk_activation_codes_type CHECK (
+        type IN ('email_verification', 'password_reset')
+    ),
+    CONSTRAINT chk_activation_codes_user_type CHECK (
+        user_type IN ('customer', 'seller')
+    )
 );
 
 -- ============================================
@@ -69,7 +78,10 @@ CREATE TABLE refresh_tokens (
     revoked_at  TIMESTAMP,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT uq_refresh_tokens_token UNIQUE (token_hash)
+    CONSTRAINT uq_refresh_tokens_token UNIQUE (token_hash),
+    CONSTRAINT chk_refresh_tokens_user_type CHECK (
+        user_type IN ('customer', 'seller')
+    )
 );
 
 -- ============================================
@@ -122,6 +134,36 @@ CREATE TABLE inventories (
     CONSTRAINT uq_inventories_product_id UNIQUE (product_id),
     CONSTRAINT chk_reserved_lte_stock CHECK (reserved_quantity <= stock_quantity)
 );
+
+CREATE OR REPLACE FUNCTION create_inventory_for_product()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO inventories (
+        product_id,
+        stock_quantity,
+        reserved_quantity,
+        version,
+        created_at,
+        updated_at
+    )
+    VALUES (
+        NEW.id,
+        0,
+        0,
+        1,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+    ON CONFLICT (product_id) DO NOTHING;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_create_inventory_after_product_insert
+AFTER INSERT ON products
+FOR EACH ROW
+EXECUTE FUNCTION create_inventory_for_product();
 
 -- ============================================
 -- SHOPPING CART
@@ -236,44 +278,46 @@ CREATE TABLE email_queues (
 -- INDEXES
 -- ============================================
 
--- -- customers
--- CREATE INDEX idx_customers_email ON customers(email);
+-- sellers
+CREATE INDEX idx_sellers_shop_name_trgm ON sellers USING gin (shop_name gin_trgm_ops);
 
--- -- sellers
--- CREATE INDEX idx_sellers_email ON sellers(email);
+-- activation_codes
+CREATE INDEX idx_activation_codes_email_user_type_created_at ON activation_codes(email, user_type, created_at DESC);
+CREATE INDEX idx_activation_codes_code_active ON activation_codes(code, expires_at) WHERE used_at IS NULL;
+CREATE INDEX idx_activation_codes_expires_at ON activation_codes(expires_at);
 
--- -- activation_codes
--- CREATE INDEX idx_activation_codes_email ON activation_codes(email);
--- CREATE INDEX idx_activation_codes_expires_at ON activation_codes(expires_at);
+-- refresh_tokens
+CREATE INDEX idx_refresh_tokens_user_id_created_at ON refresh_tokens(user_id, created_at DESC);
+CREATE INDEX idx_refresh_tokens_active_token_hash ON refresh_tokens(token_hash) WHERE revoked_at IS NULL;
 
--- -- categories
--- CREATE INDEX idx_categories_parent_id ON categories(parent_id);
--- CREATE INDEX idx_categories_slug ON categories(slug);
+-- categories
+CREATE INDEX idx_categories_parent_id ON categories(parent_id);
+CREATE INDEX idx_categories_is_active ON categories(is_active);
 
--- -- products
--- CREATE INDEX idx_products_seller_id ON products(seller_id);
--- CREATE INDEX idx_products_category_id ON products(category_id);
--- CREATE INDEX idx_products_is_active ON products(is_active);
+-- products
+CREATE INDEX idx_products_seller_id ON products(seller_id);
+CREATE INDEX idx_products_category_id ON products(category_id);
+CREATE INDEX idx_products_is_active ON products(is_active);
+CREATE INDEX idx_products_active_created_at_id ON products(created_at DESC, id DESC) WHERE is_active = TRUE;
+CREATE INDEX idx_products_active_price_id ON products(price, id) WHERE is_active = TRUE;
+CREATE INDEX idx_products_active_name ON products USING gin (name gin_trgm_ops) WHERE is_active = TRUE;
 
--- -- inventories
--- CREATE INDEX idx_inventories_product_id ON inventories(product_id);
+-- cart_items
+CREATE INDEX idx_cart_items_cart_id ON cart_items(cart_id);
+CREATE INDEX idx_cart_items_product_id ON cart_items(product_id);
 
--- -- cart_items
--- CREATE INDEX idx_cart_items_cart_id ON cart_items(cart_id);
--- CREATE INDEX idx_cart_items_product_id ON cart_items(product_id);
+-- orders
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+CREATE INDEX idx_orders_customer_status_created_at ON orders(customer_id, status, created_at DESC);
+CREATE INDEX idx_orders_created_at ON orders(created_at);
 
--- -- orders
--- CREATE INDEX idx_orders_customer_id ON orders(customer_id);
--- CREATE INDEX idx_orders_status ON orders(status);
--- CREATE INDEX idx_orders_created_at ON orders(created_at);
+-- order_items
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX idx_order_items_seller_id ON order_items(seller_id);
 
--- -- order_items
--- CREATE INDEX idx_order_items_order_id ON order_items(order_id);
--- CREATE INDEX idx_order_items_seller_id ON order_items(seller_id);
+-- transactions
+CREATE INDEX idx_transactions_status ON transactions(status);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 
--- -- transactions
--- CREATE INDEX idx_transactions_order_id ON transactions(order_id);
--- CREATE INDEX idx_transactions_status ON transactions(status);
-
--- -- email_queues
--- CREATE INDEX idx_email_queues_status_scheduled ON email_queues(status, scheduled_at);
+-- email_queues
+CREATE INDEX idx_email_queues_status_scheduled ON email_queues(status, scheduled_at);
