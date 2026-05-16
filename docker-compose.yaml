@@ -17,8 +17,13 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - LOKI_URL=http://loki:3100
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      - JWT_SECRET=${JWT_SECRET}
+      - APP_BASE_URL=${APP_BASE_URL}
 
   postgres:
     image: "postgres:14-alpine"
@@ -33,7 +38,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./db-data/postgres/:/var/lib/postgresql/data/
-      - ./db.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - ./new_db.sql:/docker-entrypoint-initdb.d/create_tables.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
