@@ -321,3 +321,216 @@ CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 
 -- email_queues
 CREATE INDEX idx_email_queues_status_scheduled ON email_queues(status, scheduled_at);
+
+-- ============================================
+-- SEED DATA
+-- Demo password for seeded customer and sellers: password123
+-- ============================================
+
+INSERT INTO customers (
+    id,
+    email,
+    password_hash,
+    full_name,
+    phone,
+    status,
+    created_at,
+    updated_at
+)
+VALUES (
+    '11111111-1111-4111-8111-111111111111',
+    'customer.demo@simple-commerce.test',
+    '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e',
+    'Demo Customer',
+    '+6281200000001',
+    'active',
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT (email) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    phone = EXCLUDED.phone,
+    status = EXCLUDED.status,
+    updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO sellers (
+    id,
+    email,
+    password_hash,
+    shop_name,
+    phone,
+    status,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '22222222-2222-4222-8222-222222222222',
+        'tech.seller@simple-commerce.test',
+        '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e',
+        'Tech Corner',
+        '+6281200000002',
+        'active',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    ),
+    (
+        '33333333-3333-4333-8333-333333333333',
+        'lifestyle.seller@simple-commerce.test',
+        '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e',
+        'Lifestyle Market',
+        '+6281200000003',
+        'active',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+ON CONFLICT (email) DO UPDATE SET
+    shop_name = EXCLUDED.shop_name,
+    phone = EXCLUDED.phone,
+    status = EXCLUDED.status,
+    updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO categories (
+    id,
+    parent_id,
+    name,
+    slug,
+    is_active,
+    created_at,
+    updated_at
+)
+VALUES
+    (1, NULL, 'Electronics', 'electronics', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2, NULL, 'Fashion', 'fashion', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (3, NULL, 'Books', 'books', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (4, NULL, 'Home & Kitchen', 'home-kitchen', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (5, NULL, 'Sports', 'sports', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (slug) DO UPDATE SET
+    parent_id = EXCLUDED.parent_id,
+    name = EXCLUDED.name,
+    is_active = EXCLUDED.is_active,
+    updated_at = CURRENT_TIMESTAMP;
+
+SELECT setval(
+    pg_get_serial_sequence('categories', 'id'),
+    COALESCE((SELECT MAX(id) FROM categories), 1)
+);
+
+INSERT INTO products (
+    id,
+    seller_id,
+    category_id,
+    name,
+    sku,
+    description,
+    price,
+    image_url,
+    is_active,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '44444444-4444-4444-8444-444444444401',
+        '22222222-2222-4222-8222-222222222222',
+        1,
+        'Laptop Pro 14',
+        'TECH-LAPTOP-PRO-14',
+        'Portable laptop for development, office work, and content creation.',
+        15000000.00,
+        'https://example.com/images/laptop-pro-14.jpg',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    ),
+    (
+        '44444444-4444-4444-8444-444444444402',
+        '22222222-2222-4222-8222-222222222222',
+        1,
+        'Wireless Headphones',
+        'TECH-HEADPHONES-WIRELESS',
+        'Noise-isolating wireless headphones for daily use.',
+        850000.00,
+        'https://example.com/images/wireless-headphones.jpg',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    ),
+    (
+        '44444444-4444-4444-8444-444444444403',
+        '22222222-2222-4222-8222-222222222222',
+        1,
+        'Mechanical Keyboard',
+        'TECH-KEYBOARD-MECHANICAL',
+        'Compact mechanical keyboard with tactile switches.',
+        1200000.00,
+        'https://example.com/images/mechanical-keyboard.jpg',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    ),
+    (
+        '44444444-4444-4444-8444-444444444404',
+        '33333333-3333-4333-8333-333333333333',
+        2,
+        'Everyday T-Shirt',
+        'FASHION-TSHIRT-EVERYDAY',
+        'Soft cotton t-shirt for casual everyday wear.',
+        180000.00,
+        'https://example.com/images/everyday-tshirt.jpg',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    ),
+    (
+        '44444444-4444-4444-8444-444444444405',
+        '33333333-3333-4333-8333-333333333333',
+        3,
+        'Practical Go Backend',
+        'BOOK-GO-BACKEND',
+        'Backend engineering book covering API design, data access, and reliability.',
+        250000.00,
+        'https://example.com/images/practical-go-backend.jpg',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    ),
+    (
+        '44444444-4444-4444-8444-444444444406',
+        '33333333-3333-4333-8333-333333333333',
+        4,
+        'Coffee Maker',
+        'HOME-COFFEE-MAKER',
+        'Automatic coffee maker for home kitchens.',
+        650000.00,
+        'https://example.com/images/coffee-maker.jpg',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+ON CONFLICT (sku) DO UPDATE SET
+    seller_id = EXCLUDED.seller_id,
+    category_id = EXCLUDED.category_id,
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    price = EXCLUDED.price,
+    image_url = EXCLUDED.image_url,
+    is_active = EXCLUDED.is_active,
+    updated_at = CURRENT_TIMESTAMP;
+
+UPDATE inventories
+SET
+    stock_quantity = seed.stock_quantity,
+    reserved_quantity = 0,
+    version = version + 1,
+    updated_at = CURRENT_TIMESTAMP
+FROM (
+    VALUES
+        ('44444444-4444-4444-8444-444444444401'::UUID, 15),
+        ('44444444-4444-4444-8444-444444444402'::UUID, 40),
+        ('44444444-4444-4444-8444-444444444403'::UUID, 25),
+        ('44444444-4444-4444-8444-444444444404'::UUID, 100),
+        ('44444444-4444-4444-8444-444444444405'::UUID, 60),
+        ('44444444-4444-4444-8444-444444444406'::UUID, 20)
+) AS seed(product_id, stock_quantity)
+WHERE inventories.product_id = seed.product_id;
