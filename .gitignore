@@ -1,3 +1,4 @@
+*.gitignore
 .env
 postgres.yaml
 db.yaml
@@ -6,3 +7,4 @@ db-data
 *.sum
 *.air.toml
 /tmp
+agent
