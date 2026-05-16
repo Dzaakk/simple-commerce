@@ -194,6 +194,39 @@ air
 
 Keep PostgreSQL, Redis, and RabbitMQ running through Docker Compose, or provide equivalent local services through your own setup.
 
+## Makefile Commands
+
+Common project commands are available through `make`:
+
+```bash
+make help
+make run
+make dev
+make build
+make test
+make tidy
+make docker-up
+make docker-down
+make docker-logs
+```
+
+Useful targets:
+
+| Command | Purpose |
+| --- | --- |
+| `make run` | Run the API with `go run .` |
+| `make dev` | Run the API with Air hot reload |
+| `make build` | Build the local binary into `bin/` |
+| `make build-linux` | Build a Linux amd64 binary |
+| `make build-windows` | Build a Windows amd64 binary |
+| `make test` | Run all Go tests |
+| `make fmt` | Format Go packages |
+| `make vet` | Run `go vet` |
+| `make tidy` | Clean up Go module dependencies |
+| `make docker-up` | Start app and infrastructure with Docker Compose |
+| `make docker-up-d` | Start Docker Compose services in detached mode |
+| `make docker-down` | Stop Docker Compose services |
+
 ## Testing The API
 
 Recommended manual test flow:
