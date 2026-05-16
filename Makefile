@@ -27,10 +27,7 @@ help:
 	@echo "  make tidy             Run go mod tidy"
 	@echo "  make fmt              Format Go files"
 	@echo "  make vet              Run go vet"
-	@echo "  make deps             Download Go dependencies"
-	@echo "  make docker-build     Build Docker Compose services"
 	@echo "  make docker-up        Start services with rebuild"
-	@echo "  make docker-up-d      Start services in detached mode"
 	@echo "  make docker-down      Stop services"
 	@echo "  make docker-logs      Follow service logs"
 	@echo "  make docker-ps        Show service status"
@@ -66,16 +63,7 @@ fmt:
 vet:
 	$(GO) vet ./...
 
-deps:
-	$(GO) mod download
-
-docker-build:
-	$(DOCKER_COMPOSE) build
-
 docker-up:
-	$(DOCKER_COMPOSE) up --build
-
-docker-up-d:
 	$(DOCKER_COMPOSE) up --build -d
 
 docker-down:
