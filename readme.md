@@ -99,7 +99,15 @@ Registration creates activation codes and publishes verification email jobs thro
 
 ### Observability Foundation
 
-The app attaches request IDs and sends request metadata to Loki. Docker Compose includes Loki and Promtail so the project can evolve toward production-style log aggregation.
+The app attaches request IDs, sends request metadata to Loki, and exposes Prometheus metrics through `GET /metrics`. Docker Compose includes Loki and Promtail so the project can evolve toward production-style log aggregation.
+
+The Prometheus middleware records:
+
+- `http_requests_total`
+- `http_request_duration_seconds`
+- `http_requests_in_flight`
+
+Metrics use low-cardinality labels for `method`, `route`, and `status`. Route labels are based on Gin route patterns, such as `/api/v1/product/:id`, instead of raw URL paths.
 
 ## Database Model
 
@@ -163,6 +171,16 @@ Supporting services:
 - RabbitMQ AMQP: `localhost:5672`
 - RabbitMQ Management UI: `http://localhost:15672`
 - Loki: `http://localhost:3100`
+
+## Observability
+
+Prometheus metrics are exposed at:
+
+```text
+GET http://localhost:8080/metrics
+```
+
+The endpoint includes request count, request duration, and in-flight request metrics grouped by HTTP method, Gin route pattern, and status code.
 
 ## Run Locally With Air
 
