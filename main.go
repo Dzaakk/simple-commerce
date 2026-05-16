@@ -11,17 +11,19 @@ import (
 	auth "Dzaakk/simple-commerce/internal/auth/route"
 	cart "Dzaakk/simple-commerce/internal/cart/route"
 	catalog "Dzaakk/simple-commerce/internal/catalog/route"
+	"Dzaakk/simple-commerce/internal/middleware"
 	logMiddleware "Dzaakk/simple-commerce/internal/middleware/logging"
-	order "Dzaakk/simple-commerce/internal/order/route"
+	metricsMiddleware "Dzaakk/simple-commerce/internal/middleware/metrics"
 	requestid "Dzaakk/simple-commerce/internal/middleware/requestid"
+	order "Dzaakk/simple-commerce/internal/order/route"
 	transaction "Dzaakk/simple-commerce/internal/transaction/route"
 	user "Dzaakk/simple-commerce/internal/user/route"
-	"Dzaakk/simple-commerce/internal/middleware"
 	"Dzaakk/simple-commerce/package/logging"
 	"Dzaakk/simple-commerce/package/rabbitmq"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -59,9 +61,12 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.Use(middleware.ErrorHandler())
 	r.Use(requestid.RequestID())
+	r.Use(metricsMiddleware.HTTPMiddleware())
 	r.Use(logMiddleware.RequestLogger(logging.NewLokiClientFromEnv()))
+	r.Use(middleware.ErrorHandler())
+
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	auth.InitializedService(postgres, redis, rabbitClient).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
