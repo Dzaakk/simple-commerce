@@ -14,6 +14,11 @@ import (
 // It avoids logging request/response bodies to keep payloads safe.
 func RequestLogger(client *appLogging.LokiClient) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		if ctx.Request.URL.Path == "/metrics" {
+			ctx.Next()
+			return
+		}
+
 		start := time.Now()
 		path := ctx.Request.URL.Path
 		method := ctx.Request.Method

@@ -184,6 +184,8 @@ GET http://localhost:8080/metrics
 
 The endpoint includes request count, request duration, and in-flight request metrics grouped by HTTP method, Gin route pattern, and status code.
 
+Prometheus scrapes `/metrics` periodically, but the application HTTP metrics and Loki request logger intentionally skip `/metrics` itself. This keeps dashboard traffic, latency, and endpoint breakdown panels focused on user/API requests instead of Prometheus scrape traffic.
+
 Docker Compose also runs Prometheus and Grafana for local performance investigation:
 
 ```text
