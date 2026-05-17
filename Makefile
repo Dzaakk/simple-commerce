@@ -14,7 +14,7 @@ else
 	CLEAN_BIN := rm -rf $(BIN_DIR)
 endif
 
-.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up docker-up-d docker-down docker-logs docker-ps clean
+.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up docker-up-d docker-down docker-logs docker-ps k6-smoke clean
 
 help:
 	@echo "Available commands:"
@@ -31,6 +31,7 @@ help:
 	@echo "  make docker-down      Stop services"
 	@echo "  make docker-logs      Follow service logs"
 	@echo "  make docker-ps        Show service status"
+	@echo "  make k6-smoke         Run k6 smoke test"
 	@echo "  make clean            Remove build artifacts"
 
 run:
@@ -74,6 +75,9 @@ docker-logs:
 
 docker-ps:
 	$(DOCKER_COMPOSE) ps
+
+k6-smoke:
+	k6 run tests/k6/smoke.js
 
 clean:
 	$(CLEAN_BIN)

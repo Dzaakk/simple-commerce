@@ -278,6 +278,7 @@ make tidy
 make docker-up
 make docker-down
 make docker-logs
+make k6-smoke
 ```
 
 Useful targets:
@@ -296,6 +297,7 @@ Useful targets:
 | `make docker-up` | Start app and infrastructure with Docker Compose |
 | `make docker-up-d` | Start Docker Compose services in detached mode |
 | `make docker-down` | Stop Docker Compose services |
+| `make k6-smoke` | Run lightweight k6 smoke test |
 
 ## Testing The API
 
@@ -309,6 +311,43 @@ Recommended manual test flow:
 6. Create an order from cart items.
 7. Create a transaction for the order.
 8. Send a payment callback and verify order, transaction, and inventory state changes.
+
+## k6 Smoke Test
+
+The smoke test is a lightweight pre-flight check before running heavier load, stress, or spike tests. It validates service health, readiness, critical read endpoints, a safe write/error contract, and the Prometheus metrics endpoint.
+
+Run smoke test:
+
+```bash
+k6 run tests/k6/smoke.js
+```
+
+Or through Make:
+
+```bash
+make k6-smoke
+```
+
+With custom base URL:
+
+```bash
+k6 run -e BASE_URL=http://localhost:8080 tests/k6/smoke.js
+```
+
+Coverage:
+
+- `GET /healthz`
+- `GET /readyz`
+- `GET /api/v1/product?limit=5`
+- `GET /api/v1/category`
+- `POST /api/v1/auth/refresh-token` with an intentionally invalid payload
+- `GET /metrics`
+
+Purpose:
+
+- Validate service health and dependency readiness.
+- Validate critical endpoint behavior.
+- Confirm the system is ready before load testing.
 
 ## Observability And Load Testing Roadmap
 
