@@ -164,6 +164,11 @@ The API runs on:
 http://localhost:8080
 ```
 
+Health endpoints:
+
+- `GET /healthz`: liveness check for the HTTP process
+- `GET /readyz`: readiness check for PostgreSQL and Redis connectivity
+
 Supporting services:
 
 - PostgreSQL: `localhost:5432`
@@ -184,7 +189,7 @@ GET http://localhost:8080/metrics
 
 The endpoint includes request count, request duration, and in-flight request metrics grouped by HTTP method, Gin route pattern, and status code.
 
-Prometheus scrapes `/metrics` periodically, but the application HTTP metrics and Loki request logger intentionally skip `/metrics` itself. This keeps dashboard traffic, latency, and endpoint breakdown panels focused on user/API requests instead of Prometheus scrape traffic.
+Prometheus scrapes `/metrics` periodically, and Docker can call health endpoints periodically. The application HTTP metrics and Loki request logger intentionally skip `/metrics`, `/healthz`, and `/readyz`. This keeps dashboard traffic, latency, and endpoint breakdown panels focused on user/API requests instead of operational probe traffic.
 
 Docker Compose also runs Prometheus and Grafana for local performance investigation:
 

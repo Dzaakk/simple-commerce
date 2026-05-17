@@ -14,7 +14,7 @@ import (
 // It avoids logging request/response bodies to keep payloads safe.
 func RequestLogger(client *appLogging.LokiClient) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if ctx.Request.URL.Path == "/metrics" {
+		if isTelemetryEndpoint(ctx.Request.URL.Path) {
 			ctx.Next()
 			return
 		}
@@ -66,5 +66,14 @@ func RequestLogger(client *appLogging.LokiClient) gin.HandlerFunc {
 		if err := client.Push(pushCtx, level, "http_request", fields); err != nil {
 			log.Printf("loki push failed: %v", err)
 		}
+	}
+}
+
+func isTelemetryEndpoint(path string) bool {
+	switch path {
+	case "/metrics", "/healthz", "/readyz":
+		return true
+	default:
+		return false
 	}
 }

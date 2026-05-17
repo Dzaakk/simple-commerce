@@ -46,7 +46,7 @@ func init() {
 // HTTPMiddleware records low-cardinality HTTP metrics for Gin routes.
 func HTTPMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if ctx.Request.URL.Path == "/metrics" {
+		if isTelemetryEndpoint(ctx.Request.URL.Path) {
 			ctx.Next()
 			return
 		}
@@ -75,4 +75,13 @@ func routePattern(ctx *gin.Context) string {
 	}
 
 	return "unmatched"
+}
+
+func isTelemetryEndpoint(path string) bool {
+	switch path {
+	case "/metrics", "/healthz", "/readyz":
+		return true
+	default:
+		return false
+	}
 }

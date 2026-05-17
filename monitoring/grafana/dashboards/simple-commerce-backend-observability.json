@@ -95,7 +95,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[1m]))",
+          "expr": "sum(rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[1m]))",
           "legendFormat": "RPS",
           "refId": "A"
         }
@@ -155,7 +155,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"})",
+          "expr": "sum(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"})",
           "legendFormat": "requests",
           "refId": "A"
         }
@@ -219,7 +219,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m]))",
+          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m]))",
           "legendFormat": "last 5m",
           "refId": "A"
         }
@@ -287,7 +287,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_requests_in_flight{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\"})",
+          "expr": "sum(http_requests_in_flight{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\"})",
           "legendFormat": "in flight",
           "refId": "A"
         }
@@ -353,7 +353,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (method, route, status) (rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[1m]))",
+          "expr": "sum by (method, route, status) (rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[1m]))",
           "legendFormat": "{{method}} {{route}} {{status}}",
           "refId": "A"
         }
@@ -431,7 +431,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
           "legendFormat": "p50",
           "refId": "A"
         }
@@ -496,7 +496,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -561,7 +561,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
           "legendFormat": "p99",
           "refId": "A"
         }
@@ -626,7 +626,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_request_duration_seconds_sum{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])) / clamp_min(sum(rate(http_request_duration_seconds_count{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])), 0.001)",
+          "expr": "sum(rate(http_request_duration_seconds_sum{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])) / clamp_min(sum(rate(http_request_duration_seconds_count{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])), 0.001)",
           "legendFormat": "avg",
           "refId": "A"
         }
@@ -692,7 +692,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -701,7 +701,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
           "legendFormat": "p95",
           "refId": "B"
         },
@@ -710,7 +710,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -788,7 +788,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * sum(rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"4..|5..\"}[1m])) / clamp_min(sum(rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\"}[1m])), 0.001)",
+          "expr": "100 * sum(rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"4..|5..\"}[1m])) / clamp_min(sum(rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\"}[1m])), 0.001)",
           "legendFormat": "error %",
           "refId": "A"
         }
@@ -849,7 +849,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"4..\"}[5m]))",
+          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"4..\"}[5m]))",
           "legendFormat": "4xx",
           "refId": "A"
         }
@@ -910,7 +910,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"5..\"}[5m]))",
+          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"5..\"}[5m]))",
           "legendFormat": "5xx",
           "refId": "A"
         }
@@ -971,7 +971,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"4..|5..\"}[5m]))",
+          "expr": "sum(increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"4..|5..\"}[5m]))",
           "legendFormat": "failed",
           "refId": "A"
         }
@@ -1037,7 +1037,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (status) (rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"4..|5..\"}[1m]))",
+          "expr": "sum by (status) (rate(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"4..|5..\"}[1m]))",
           "legendFormat": "{{status}}",
           "refId": "A"
         }
@@ -1921,7 +1921,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, sum by (method, route) (increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
+          "expr": "topk(10, sum by (method, route) (increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m])))",
           "instant": true,
           "legendFormat": "{{method}} {{route}}",
           "refId": "A"
@@ -1990,7 +1990,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, histogram_quantile(0.95, sum by (method, route, le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"$status\"}[5m]))))",
+          "expr": "topk(10, histogram_quantile(0.95, sum by (method, route, le) (rate(http_request_duration_seconds_bucket{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"$status\"}[5m]))))",
           "instant": true,
           "legendFormat": "{{method}} {{route}}",
           "refId": "A"
@@ -2055,7 +2055,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, sum by (method, route) (increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\", status=~\"4..|5..\"}[5m])))",
+          "expr": "topk(10, sum by (method, route) (increase(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\", status=~\"4..|5..\"}[5m])))",
           "instant": true,
           "legendFormat": "{{method}} {{route}}",
           "refId": "A"
@@ -2137,14 +2137,14 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\"}, route)",
+        "definition": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\"}, route)",
         "hide": 0,
         "includeAll": true,
         "label": "Endpoint",
         "multi": true,
         "name": "endpoint",
         "options": [],
-        "query": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\"}, route)",
+        "query": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\"}, route)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -2162,14 +2162,14 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\"}, status)",
+        "definition": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\"}, status)",
         "hide": 0,
         "includeAll": true,
         "label": "Status",
         "multi": true,
         "name": "status",
         "options": [],
-        "query": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!=\"/metrics\", route=~\"$endpoint\"}, status)",
+        "query": "label_values(http_requests_total{environment=~\"$environment\", instance=~\"$instance\", route!~\"/(metrics|healthz|readyz)\", route=~\"$endpoint\"}, status)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,

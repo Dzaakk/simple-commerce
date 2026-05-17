@@ -11,6 +11,7 @@ import (
 	auth "Dzaakk/simple-commerce/internal/auth/route"
 	cart "Dzaakk/simple-commerce/internal/cart/route"
 	catalog "Dzaakk/simple-commerce/internal/catalog/route"
+	"Dzaakk/simple-commerce/internal/health"
 	"Dzaakk/simple-commerce/internal/middleware"
 	logMiddleware "Dzaakk/simple-commerce/internal/middleware/logging"
 	metricsMiddleware "Dzaakk/simple-commerce/internal/middleware/metrics"
@@ -67,6 +68,7 @@ func main() {
 	r.Use(middleware.ErrorHandler())
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	health.NewHandler(postgres, redis).Route(r)
 
 	auth.InitializedService(postgres, redis, rabbitClient).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
