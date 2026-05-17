@@ -171,6 +171,8 @@ Supporting services:
 - RabbitMQ AMQP: `localhost:5672`
 - RabbitMQ Management UI: `http://localhost:15672`
 - Loki: `http://localhost:3100`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 
 ## Observability
 
@@ -181,6 +183,67 @@ GET http://localhost:8080/metrics
 ```
 
 The endpoint includes request count, request duration, and in-flight request metrics grouped by HTTP method, Gin route pattern, and status code.
+
+Docker Compose also runs Prometheus and Grafana for local performance investigation:
+
+```text
+Gin API /metrics -> Prometheus -> Grafana dashboard
+```
+
+Prometheus scrapes the API through `monitoring/prometheus/prometheus.yml`. Grafana is provisioned automatically from `monitoring/grafana/provisioning`, so the Prometheus datasource and the dashboard are available without clicking through the UI.
+
+Access:
+
+- Grafana: `http://localhost:3000`
+- Login: `admin` / `admin`
+- Dashboard: `Simple Commerce / Simple Commerce Backend Observability`
+- Prometheus: `http://localhost:9090`
+
+Dashboard coverage:
+
+- Request throughput, total requests, and in-flight requests
+- P50, P95, P99, and average response time
+- Error rate, 4xx, 5xx, and failed request trends
+- Go runtime metrics: goroutines, memory, heap, GC, and CPU
+- Process metrics: RSS memory, open file descriptors, uptime, and CPU
+- Endpoint breakdown by volume, latency, and errors
+
+Dashboard filters:
+
+- Environment
+- Instance
+- Endpoint route
+- HTTP status code
+
+Dashboard preview:
+
+```text
+docs/images/grafana-dashboard-preview.png
+```
+
+To validate the monitoring stack:
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+Open Prometheus targets at `http://localhost:9090/targets` and confirm `simple-commerce-api` is `UP`. Generate a few requests against the API, for example:
+
+```bash
+curl http://localhost:8080/metrics
+curl http://localhost:8080/api/v1/product
+```
+
+Then open Grafana at `http://localhost:3000`. The dashboard should auto-load and start showing traffic, latency, runtime, and process panels after Prometheus has scraped at least once.
+
+Important PromQL patterns used by the dashboard:
+
+- `rate(http_requests_total[1m])` shows current request throughput per second.
+- `increase(http_requests_total[5m])` shows recent request volume for load-test windows.
+- `histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))` calculates latency percentiles from the request duration histogram.
+- `100 * errors / total` calculates error percentage from 4xx and 5xx responses.
+- `rate(process_cpu_seconds_total[5m])` estimates app CPU consumption from exported process metrics.
 
 ## Run Locally With Air
 
