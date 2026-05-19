@@ -14,7 +14,7 @@ else
 	CLEAN_BIN := rm -rf $(BIN_DIR)
 endif
 
-.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up docker-up-d docker-down docker-logs docker-ps k6-smoke k6-load k6-stress k6-spike clean
+.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up docker-up-d docker-down docker-logs docker-ps k6-smoke k6-load-100 k6-load-300 k6-load-500 k6-load-1000 k6-stress k6-spike clean
 
 help:
 	@echo "Available commands:"
@@ -32,7 +32,10 @@ help:
 	@echo "  make docker-logs      Follow service logs"
 	@echo "  make docker-ps        Show service status"
 	@echo "  make k6-smoke         Run k6 smoke test"
-	@echo "  make k6-load          Run k6 load test"
+	@echo "  make k6-load-100      Run k6 load test with 100 VUs"
+	@echo "  make k6-load-300      Run k6 load test with 300 VUs"
+	@echo "  make k6-load-500      Run k6 load test with 500 VUs"
+	@echo "  make k6-load-1000     Run k6 load test with 1000 VUs"
 	@echo "  make k6-stress        Run k6 stress test"
 	@echo "  make k6-spike         Run k6 spike test"
 	@echo "  make clean            Remove build artifacts"
@@ -82,8 +85,17 @@ docker-ps:
 k6-smoke:
 	k6 run tests/k6/smoke.js
 
-k6-load:
-	k6 run tests/k6/load.js
+k6-load-100:
+	k6 run -e LOAD_PROFILE=100 tests/k6/load.js
+
+k6-load-300:
+	k6 run -e LOAD_PROFILE=300 tests/k6/load.js
+
+k6-load-500:
+	k6 run -e LOAD_PROFILE=500 tests/k6/load.js
+
+k6-load-1000:
+	k6 run -e LOAD_PROFILE=1000 tests/k6/load.js
 
 k6-stress:
 	k6 run tests/k6/stress.js

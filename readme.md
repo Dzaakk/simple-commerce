@@ -279,7 +279,10 @@ make docker-up
 make docker-down
 make docker-logs
 make k6-smoke
-make k6-load
+make k6-load-100
+make k6-load-300
+make k6-load-500
+make k6-load-1000
 make k6-stress
 make k6-spike
 ```
@@ -301,7 +304,10 @@ Useful targets:
 | `make docker-up-d` | Start Docker Compose services in detached mode |
 | `make docker-down` | Stop Docker Compose services |
 | `make k6-smoke` | Run lightweight k6 smoke test |
-| `make k6-load` | Run k6 load test |
+| `make k6-load-100` | Run k6 load test with the 100 VU profile |
+| `make k6-load-300` | Run k6 load test with the 300 VU profile |
+| `make k6-load-500` | Run k6 load test with the 500 VU profile |
+| `make k6-load-1000` | Run k6 load test with the 1000 VU profile |
 | `make k6-stress` | Run k6 stress test |
 | `make k6-spike` | Run k6 spike test |
 
@@ -389,18 +395,27 @@ k6 run tests/k6/spike.js
 Or through Make:
 
 ```bash
-make k6-load
+make k6-load-100
+make k6-load-300
+make k6-load-500
+make k6-load-1000
 make k6-stress
 make k6-spike
 ```
 
-Useful VU overrides:
+Load profiles:
 
 ```bash
-k6 run -e TARGET_VUS=100 tests/k6/load.js
-k6 run -e TARGET_VUS=300 tests/k6/load.js
-k6 run -e TARGET_VUS=500 tests/k6/load.js
-k6 run -e TARGET_VUS=1000 tests/k6/load.js
+k6 run -e LOAD_PROFILE=100 tests/k6/load.js
+k6 run -e LOAD_PROFILE=300 tests/k6/load.js
+k6 run -e LOAD_PROFILE=500 tests/k6/load.js
+k6 run -e LOAD_PROFILE=1000 tests/k6/load.js
+```
+
+Manual load overrides still work when you need a custom run:
+
+```bash
+k6 run -e TARGET_VUS=750 -e RAMP_UP=4m -e STEADY_STATE=8m -e RAMP_DOWN=4m tests/k6/load.js
 ```
 
 Stress and spike overrides:
@@ -413,14 +428,14 @@ k6 run -e SPIKE_VUS=1000 tests/k6/spike.js
 With custom base URL:
 
 ```bash
-k6 run -e BASE_URL=http://localhost:8080 -e TARGET_VUS=100 tests/k6/load.js
+k6 run -e BASE_URL=http://localhost:8080 -e LOAD_PROFILE=100 tests/k6/load.js
 ```
 
 Default profiles:
 
 | Script | Default profile | Purpose |
 | --- | --- | --- |
-| `tests/k6/load.js` | Ramp to 100 VUs, hold steady, ramp down | Check normal sustained load |
+| `tests/k6/load.js` | Default 100 VU profile, with 100/300/500/1000 VU profiles available | Check normal sustained load |
 | `tests/k6/stress.js` | Step up to 300 VUs, hold each step, ramp down | Find degradation point |
 | `tests/k6/spike.js` | Jump from 10 to 500 VUs, recover, ramp down | Observe sudden traffic burst behavior |
 

@@ -1,23 +1,26 @@
 import { sleep } from 'k6';
 
+import { resolveLoadProfile } from './config/load-profiles.js';
 import { thinkTime } from './lib/common.js';
 import { catalogBrowsingFlow, metricsProbe, setupCommerceData } from './lib/flows.js';
 
-const TARGET_VUS = Number(__ENV.TARGET_VUS || 100);
-const RAMP_UP = __ENV.RAMP_UP || '1m';
-const STEADY_STATE = __ENV.STEADY_STATE || '5m';
-const RAMP_DOWN = __ENV.RAMP_DOWN || '1m';
+const LOAD_PROFILE = resolveLoadProfile(__ENV);
 
 export const options = {
   scenarios: {
     steady_catalog_browse: {
       executor: 'ramping-vus',
       stages: [
-        { duration: RAMP_UP, target: TARGET_VUS },
-        { duration: STEADY_STATE, target: TARGET_VUS },
-        { duration: RAMP_DOWN, target: 0 },
+        { duration: LOAD_PROFILE.rampUp, target: LOAD_PROFILE.targetVus },
+        { duration: LOAD_PROFILE.steadyState, target: LOAD_PROFILE.targetVus },
+        { duration: LOAD_PROFILE.rampDown, target: 0 },
       ],
-      gracefulRampDown: '30s',
+      gracefulRampDown: LOAD_PROFILE.gracefulRampDown,
+      tags: {
+        test_type: 'load',
+        load_profile: LOAD_PROFILE.name,
+        target_vus: String(LOAD_PROFILE.targetVus),
+      },
     },
   },
   thresholds: {
