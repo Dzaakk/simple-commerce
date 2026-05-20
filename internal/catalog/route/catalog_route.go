@@ -7,6 +7,7 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type CatalogRoutes struct {
@@ -38,16 +39,29 @@ func (cr *CatalogRoutes) Route(r *gin.RouterGroup) {
 		category.GET("", cr.Handler.FindAllCategories)
 		category.GET("/:id", cr.Handler.FindCategoryByID)
 	}
+
+	apiV2 := r.Group("/api/v2")
+
+	productV2 := apiV2.Group("/product")
+	{
+		productV2.GET("", cr.Handler.FindAllProductsV2)
+		productV2.GET("/:id", cr.Handler.FindProductByIDV2)
+	}
+
+	categoryV2 := apiV2.Group("/category")
+	{
+		categoryV2.GET("", cr.Handler.FindAllCategoriesV2)
+	}
 }
 
-func InitializedService(db *sql.DB) *CatalogRoutes {
+func InitializedService(db *sql.DB, redis *redis.Client) *CatalogRoutes {
 	productRepo := repository.NewProductRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 
 	productService := service.NewProductService(productRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
 
-	catalogHandler := handler.NewCatalogHandler(productService, categoryService)
+	catalogHandler := handler.NewCatalogHandler(productService, categoryService, redis)
 
 	return NewCatalogRoutes(catalogHandler)
 }
