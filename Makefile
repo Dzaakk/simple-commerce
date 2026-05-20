@@ -4,6 +4,14 @@ GO := go
 AIR := air
 DOCKER_COMPOSE := docker compose
 
+ifneq ($(filter v2,$(MAKECMDGOALS)),)
+	CATALOG_API_VERSION := v2
+else
+	CATALOG_API_VERSION ?= v1
+endif
+
+K6_CATALOG_ENV := -e CATALOG_API_VERSION=$(CATALOG_API_VERSION)
+
 ifeq ($(OS),Windows_NT)
 	BINARY := $(BIN_DIR)/$(APP_NAME).exe
 	MKDIR_BIN := powershell -NoProfile -Command "New-Item -ItemType Directory -Force -Path '$(BIN_DIR)' | Out-Null"
@@ -14,7 +22,7 @@ else
 	CLEAN_BIN := rm -rf $(BIN_DIR)
 endif
 
-.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up docker-up-d docker-down docker-logs docker-ps k6-smoke k6-load-100 k6-load-300 k6-load-500 k6-load-1000 k6-stress k6-spike clean
+.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up-d docker-up docker-down docker-logs docker-ps k6-smoke k6-load k6-load-100 k6-load-300 k6-load-500 k6-load-1000 k6-stress k6-spike v1 v2 clean
 
 help:
 	@echo "Available commands:"
@@ -32,12 +40,14 @@ help:
 	@echo "  make docker-logs      Follow service logs"
 	@echo "  make docker-ps        Show service status"
 	@echo "  make k6-smoke         Run k6 smoke test"
+	@echo "  make k6-load          Run k6 load test with default profile"
 	@echo "  make k6-load-100      Run k6 load test with 100 VUs"
 	@echo "  make k6-load-300      Run k6 load test with 300 VUs"
 	@echo "  make k6-load-500      Run k6 load test with 500 VUs"
 	@echo "  make k6-load-1000     Run k6 load test with 1000 VUs"
 	@echo "  make k6-stress        Run k6 stress test"
 	@echo "  make k6-spike         Run k6 spike test"
+	@echo "  Add v2 after a k6 target to run against catalog API v2"
 	@echo "  make clean            Remove build artifacts"
 
 run:
@@ -85,23 +95,29 @@ docker-ps:
 k6-smoke:
 	k6 run tests/k6/smoke.js
 
+k6-load:
+	k6 run $(K6_CATALOG_ENV) tests/k6/load.js
+
 k6-load-100:
-	k6 run -e LOAD_PROFILE=100 tests/k6/load.js
+	k6 run $(K6_CATALOG_ENV) -e LOAD_PROFILE=100 tests/k6/load.js
 
 k6-load-300:
-	k6 run -e LOAD_PROFILE=300 tests/k6/load.js
+	k6 run $(K6_CATALOG_ENV) -e LOAD_PROFILE=300 tests/k6/load.js
 
 k6-load-500:
-	k6 run -e LOAD_PROFILE=500 tests/k6/load.js
+	k6 run $(K6_CATALOG_ENV) -e LOAD_PROFILE=500 tests/k6/load.js
 
 k6-load-1000:
-	k6 run -e LOAD_PROFILE=1000 tests/k6/load.js
+	k6 run $(K6_CATALOG_ENV) -e LOAD_PROFILE=1000 tests/k6/load.js
 
 k6-stress:
-	k6 run tests/k6/stress.js
+	k6 run $(K6_CATALOG_ENV) tests/k6/stress.js
 
 k6-spike:
-	k6 run tests/k6/spike.js
+	k6 run $(K6_CATALOG_ENV) tests/k6/spike.js
+
+v1 v2:
+	@:
 
 clean:
 	$(CLEAN_BIN)

@@ -11,81 +11,127 @@ import {
   url,
 } from './common.js';
 
-export function setupCommerceData() {
-  assertReady();
+const DEFAULT_CATALOG_API_VERSION = 'v1';
+const SETUP_PRODUCT_LIMIT = 20;
+const BROWSE_PRODUCT_LIMIT = 10;
 
-  const productsRes = http.get(url('/api/v1/product?limit=20&sort_by=newest'));
-  const productsBody = parseJson(productsRes);
+export const CATALOG_API_VERSION = resolveCatalogApiVersion(__ENV);
 
-  check(productsRes, {
-    'setup product list status is 200': (r) => r.status === 200,
-    'setup product list has success envelope': () => hasSuccessEnvelope(productsBody),
-  });
+function resolveCatalogApiVersion(env) {
+  return normalizeCatalogApiVersion(env.CATALOG_API_VERSION || env.API_VERSION);
+}
 
-  const categoriesRes = http.get(url('/api/v1/category'));
-  const categoriesBody = parseJson(categoriesRes);
+function normalizeCatalogApiVersion(version) {
+  const normalized = String(version || DEFAULT_CATALOG_API_VERSION).toLowerCase();
 
-  check(categoriesRes, {
-    'setup category list status is 200': (r) => r.status === 200,
-    'setup category list has success envelope': () => hasSuccessEnvelope(categoriesBody),
-  });
+  if (normalized === '2' || normalized === 'v2') {
+    return 'v2';
+  }
 
-  const products =
-    productsBody && productsBody.data && Array.isArray(productsBody.data.items)
-      ? productsBody.data.items
-      : [];
-  const categories =
-    categoriesBody && Array.isArray(categoriesBody.data) ? categoriesBody.data : [];
+  return 'v1';
+}
+
+function flowApiVersion(data, apiVersion) {
+  return normalizeCatalogApiVersion(
+    apiVersion || (data && data.catalogApiVersion) || CATALOG_API_VERSION
+  );
+}
+
+function catalogUrl(path, apiVersion) {
+  return url(`/api/${normalizeCatalogApiVersion(apiVersion)}${path}`);
+}
+
+function fetchCatalogJson(path, apiVersion) {
+  const res = http.get(catalogUrl(path, apiVersion));
 
   return {
-    productIds: products.map((item) => item.id).filter(Boolean),
-    categoryIds: categories.map((item) => item.ID || item.id).filter(Boolean),
+    res,
+    body: parseJson(res),
   };
 }
 
-export function catalogBrowsingFlow(data) {
-  group('catalog browsing', () => {
-    const productsRes = http.get(url('/api/v1/product?limit=10&sort_by=newest'));
-    const productsBody = parseJson(productsRes);
+function productListPath(limit, extraParams = {}) {
+  const params = {
+    limit,
+    sort_by: 'newest',
+  };
 
-    check(productsRes, {
-      'catalog product list status is 200': (r) => r.status === 200,
-      'catalog product list has success envelope': () => hasSuccessEnvelope(productsBody),
-      'catalog product list has items array': () =>
-        productsBody && productsBody.data && Array.isArray(productsBody.data.items),
-    });
-
-    thinkTime();
-
-    const categoriesRes = http.get(url('/api/v1/category'));
-    const categoriesBody = parseJson(categoriesRes);
-
-    check(categoriesRes, {
-      'catalog category list status is 200': (r) => r.status === 200,
-      'catalog category list has success envelope': () => hasSuccessEnvelope(categoriesBody),
-      'catalog category list data is array': () =>
-        categoriesBody && Array.isArray(categoriesBody.data),
-    });
-  });
-
-  if (Math.random() < 0.6) {
-    productDetailFlow(data);
+  for (const [key, value] of Object.entries(extraParams)) {
+    params[key] = value;
   }
 
-  if (Math.random() < 0.35) {
-    categoryFilterFlow(data);
-  }
+  return `/product${encodeQuery(params)}`;
 }
 
-export function productDetailFlow(data) {
-  const productId = randomItem(data.productIds);
+function productItems(body) {
+  return hasProductItems(body) ? body.data.items : [];
+}
+
+function categoryItems(body) {
+  return hasCategories(body) ? body.data : [];
+}
+
+function hasProductItems(body) {
+  return body && body.data && Array.isArray(body.data.items);
+}
+
+function hasCategories(body) {
+  return body && Array.isArray(body.data);
+}
+
+export function setupCommerceData(apiVersion = CATALOG_API_VERSION) {
+  const version = normalizeCatalogApiVersion(apiVersion);
+
+  assertReady();
+
+  const products = fetchCatalogJson(productListPath(SETUP_PRODUCT_LIMIT), version);
+  check(products.res, {
+    'setup product list status is 200': (r) => r.status === 200,
+    'setup product list has success envelope': () => hasSuccessEnvelope(products.body),
+  });
+
+  const categories = fetchCatalogJson('/category', version);
+  check(categories.res, {
+    'setup category list status is 200': (r) => r.status === 200,
+    'setup category list has success envelope': () => hasSuccessEnvelope(categories.body),
+  });
+
+  return {
+    catalogApiVersion: version,
+    productIds: productItems(products.body).map((item) => item.id).filter(Boolean),
+    categoryIds: categoryItems(categories.body).map((item) => item.ID || item.id).filter(Boolean),
+  };
+}
+
+export function catalogBrowsingFlow(data, apiVersion) {
+  const version = flowApiVersion(data, apiVersion);
+
+  group(`catalog browsing ${version}`, () => {
+    browseProductList(version);
+    thinkTime();
+    browseCategories(version);
+  });
+
+  maybeRun(0.6, () => productDetailFlow(data, version));
+  maybeRun(0.35, () => categoryFilterFlow(data, version));
+}
+
+export function catalogBrowsingFlowV1(data) {
+  catalogBrowsingFlow(data, 'v1');
+}
+
+export function catalogBrowsingFlowV2(data) {
+  catalogBrowsingFlow(data, 'v2');
+}
+
+export function productDetailFlow(data, apiVersion) {
+  const productId = randomItem(data && data.productIds);
   if (!productId) {
     return;
   }
 
   group('product detail', () => {
-    const res = http.get(url(`/api/v1/product/${productId}`));
-    const body = parseJson(res);
+    const { res, body } = fetchCatalogJson(`/product/${productId}`, apiVersion);
 
     check(res, {
       'product detail status is 200': (r) => r.status === 200,
@@ -97,26 +143,22 @@ export function productDetailFlow(data) {
   thinkTime(0.2, 0.8);
 }
 
-export function categoryFilterFlow(data) {
-  const categoryId = randomItem(data.categoryIds);
+export function categoryFilterFlow(data, apiVersion) {
+  const categoryId = randomItem(data && data.categoryIds);
   if (!categoryId) {
     return;
   }
 
   group('category filter', () => {
-    const query = encodeQuery({
-      category_id: categoryId,
-      limit: 10,
-      sort_by: 'newest',
-    });
-    const res = http.get(url(`/api/v1/product${query}`));
-    const body = parseJson(res);
+    const { res, body } = fetchCatalogJson(
+      productListPath(BROWSE_PRODUCT_LIMIT, { category_id: categoryId }),
+      apiVersion
+    );
 
     check(res, {
       'category filter status is 200': (r) => r.status === 200,
       'category filter has success envelope': () => hasSuccessEnvelope(body),
-      'category filter data has items array': () =>
-        body && body.data && Array.isArray(body.data.items),
+      'category filter data has items array': () => hasProductItems(body),
     });
   });
 
@@ -133,4 +175,30 @@ export function metricsProbe() {
         r.body.includes('# HELP') && r.body.includes('go_goroutines'),
     });
   });
+}
+
+function browseProductList(apiVersion) {
+  const { res, body } = fetchCatalogJson(productListPath(BROWSE_PRODUCT_LIMIT), apiVersion);
+
+  check(res, {
+    'catalog product list status is 200': (r) => r.status === 200,
+    'catalog product list has success envelope': () => hasSuccessEnvelope(body),
+    'catalog product list has items array': () => hasProductItems(body),
+  });
+}
+
+function browseCategories(apiVersion) {
+  const { res, body } = fetchCatalogJson('/category', apiVersion);
+
+  check(res, {
+    'catalog category list status is 200': (r) => r.status === 200,
+    'catalog category list has success envelope': () => hasSuccessEnvelope(body),
+    'catalog category list data is array': () => hasCategories(body),
+  });
+}
+
+function maybeRun(probability, fn) {
+  if (Math.random() < probability) {
+    fn();
+  }
 }
