@@ -66,6 +66,12 @@ func (u *UpdateProductReq) ToUpdateData(productID string, sellerID string) *mode
 	}
 }
 
+type UpdateStockReq struct {
+	ProductID string `uri:"id"`
+	SellerID  string `json:"seller_id"`
+	Quantity  int    `json:"quantity"`
+}
+
 type ProductRes struct {
 	ID          string    `json:"id"`
 	SellerID    string    `json:"seller_id,omitempty"`

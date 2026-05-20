@@ -161,30 +161,22 @@ func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
 
-type updateStockReq struct {
-	Quantity int `json:"quantity"`
-}
-
 func (h *CatalogHandler) UpdateProductStock(ctx *gin.Context) {
-	productID := ctx.Param("id")
-	if productID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
+	req := dto.UpdateStockReq{
+		ProductID: ctx.Param("id"),
 	}
 
-	sellerID := ctx.Query("seller_id")
-	if sellerID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	var req updateStockReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
 
-	if err := h.ProductService.UpdateStock(ctx, productID, sellerID, req.Quantity); err != nil {
+	if req.ProductID == "" || req.SellerID == "" {
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
+		return
+	}
+
+	if err := h.ProductService.UpdateStock(ctx, req.ProductID, req.SellerID, req.Quantity); err != nil {
 		ctx.Error(err)
 		return
 	}
