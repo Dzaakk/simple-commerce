@@ -8,17 +8,20 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 type CatalogHandler struct {
 	ProductService  service.ProductService
 	CategoryService service.CategoryService
+	Redis           *redis.Client
 }
 
-func NewCatalogHandler(productService service.ProductService, categoryService service.CategoryService) *CatalogHandler {
+func NewCatalogHandler(productService service.ProductService, categoryService service.CategoryService, redis *redis.Client) *CatalogHandler {
 	return &CatalogHandler{
 		ProductService:  productService,
 		CategoryService: categoryService,
+		Redis:           redis,
 	}
 }
 
@@ -107,50 +110,11 @@ func (h *CatalogHandler) FindProductByID(ctx *gin.Context) {
 }
 
 func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
-	var req dto.ProductQueryReq
-
-	if val := ctx.Query("category_id"); val != "" {
-		id, err := strconv.ParseInt(val, 10, 64)
-		if err != nil {
-			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-			return
-		}
-		req.CategoryID = &id
+	req, err := productQueryReqFromContext(ctx)
+	if err != nil {
+		ctx.Error(err)
+		return
 	}
-	if val := ctx.Query("seller_id"); val != "" {
-		req.SellerID = &val
-	}
-	if val := ctx.Query("min_price"); val != "" {
-		minPrice, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-			return
-		}
-		req.MinPrice = &minPrice
-	}
-	if val := ctx.Query("max_price"); val != "" {
-		maxPrice, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-			return
-		}
-		req.MaxPrice = &maxPrice
-	}
-	if val := ctx.Query("name"); val != "" {
-		req.Name = &val
-	}
-	if val := ctx.Query("cursor"); val != "" {
-		req.Cursor = &val
-	}
-	if val := ctx.Query("limit"); val != "" {
-		limit, err := strconv.Atoi(val)
-		if err != nil {
-			ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-			return
-		}
-		req.Limit = limit
-	}
-	req.SortBy = ctx.Query("sort_by")
 
 	data, err := h.ProductService.FindAll(ctx, req)
 	if err != nil {
