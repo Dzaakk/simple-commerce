@@ -72,7 +72,7 @@ func main() {
 
 	auth.InitializedService(postgres, redis, rabbitClient).Route(&r.RouterGroup)
 	user.InitializedService(postgres).Route(&r.RouterGroup)
-	catalog.InitializedService(postgres).Route(&r.RouterGroup)
+	catalog.InitializedService(postgres, redis).Route(&r.RouterGroup)
 	cart.InitializedService(postgres).Route(&r.RouterGroup)
 	order.InitializedService(postgres).Route(&r.RouterGroup)
 	transaction.InitializedService(postgres).Route(&r.RouterGroup)
