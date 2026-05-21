@@ -534,3 +534,22 @@ FROM (
         ('44444444-4444-4444-8444-444444444406'::UUID, 20)
 ) AS seed(product_id, stock_quantity)
 WHERE inventories.product_id = seed.product_id;
+
+
+INSERT INTO public.sellers
+(id, email, password_hash, shop_name, phone, status, created_at, updated_at)
+values
+('44444444-4444-4444-8444-444444444444'::uuid, 'sports.seller@simple-commerce.test', '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e', 'Sports Arena', '+6281200000004', 'active', '2026-05-16 16:10:03.518', '2026-05-16 16:10:03.518'),
+('55555555-5555-4555-8555-555555555555'::uuid, 'books.seller@simple-commerce.test', '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e', 'Book Haven', '+6281200000005', 'active', '2026-05-16 16:10:03.518', '2026-05-16 16:10:03.518'),
+('66666666-6666-4666-8666-666666666666'::uuid, 'beauty.seller@simple-commerce.test', '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e', 'Beauty Central', '+6281200000006', 'active', '2026-05-16 16:10:03.518', '2026-05-16 16:10:03.518'),
+('77777777-7777-4777-8777-777777777777'::uuid, 'gaming.seller@simple-commerce.test', '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e', 'Gaming Zone', '+6281200000007', 'active', '2026-05-16 16:10:03.518', '2026-05-16 16:10:03.518'),
+('88888888-8888-4888-8888-888888888888'::uuid, 'groceries.seller@simple-commerce.test', '$2a$10$zr.I2oj8buuLxf43LT27weVFjK6OiEjyPhAK7/kUmlAGrOSSdgT8e', 'Groceries Hub', '+6281200000008', 'active', '2026-05-16 16:10:03.518', '2026-05-16 16:10:03.518');
+
+INSERT INTO public.categories
+(id, parent_id, "name", slug, is_active, created_at, updated_at)
+values
+(6, NULL, 'Beauty', 'beauty', true, '2026-05-16 16:10:03.547', '2026-05-16 16:10:03.547'),
+(7, NULL, 'Gaming', 'gaming', true, '2026-05-16 16:10:03.547', '2026-05-16 16:10:03.547'),
+(8, NULL, 'Groceries', 'groceries', true, '2026-05-16 16:10:03.547', '2026-05-16 16:10:03.547'),
+(9, NULL, 'Office Supplies', 'office-supplies', true, '2026-05-16 16:10:03.547', '2026-05-16 16:10:03.547'),
+(10, NULL, 'Automotive', 'automotive', true, '2026-05-16 16:10:03.547', '2026-05-16 16:10:03.547');
