@@ -14,7 +14,9 @@ type ProductService interface {
 	Update(ctx context.Context, productID string, sellerID string, req *dto.UpdateProductReq) error
 	SoftDelete(ctx context.Context, productID string, sellerID string) error
 	FindByID(ctx context.Context, productID string) (*dto.ProductRes, error)
+	FindByIDCached(ctx context.Context, productID string) (*dto.ProductRes, error)
 	FindAll(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error)
+	FindAllCached(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error)
 	UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error
 }
 

@@ -8,14 +8,25 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type ProductServiceImpl struct {
-	Repo ProductRepository
+	Repo  ProductRepository
+	Redis *redis.Client
 }
 
-func NewProductService(repo ProductRepository) ProductService {
-	return &ProductServiceImpl{Repo: repo}
+func NewProductService(repo ProductRepository, redisClient ...*redis.Client) ProductService {
+	var cache *redis.Client
+	if len(redisClient) > 0 {
+		cache = redisClient[0]
+	}
+
+	return &ProductServiceImpl{
+		Repo:  repo,
+		Redis: cache,
+	}
 }
 
 func (p *ProductServiceImpl) Create(ctx context.Context, req *dto.CreateProductReq) (string, error) {
@@ -83,6 +94,23 @@ func (p *ProductServiceImpl) FindByID(ctx context.Context, productID string) (*d
 	return &product, nil
 }
 
+func (p *ProductServiceImpl) FindByIDCached(ctx context.Context, productID string) (*dto.ProductRes, error) {
+	cacheKey := productDetailCacheKey(productID)
+	var cached dto.ProductRes
+	if readCatalogCache(ctx, p.Redis, cacheKey, &cached) {
+		return &cached, nil
+	}
+
+	data, err := p.FindByID(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	writeCatalogCache(ctx, p.Redis, cacheKey, data, catalogProductCacheTTL)
+
+	return data, nil
+}
+
 func (p *ProductServiceImpl) FindAll(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error) {
 	filter := repo.ProductFilter{
 		CategoryID: req.CategoryID,
@@ -125,6 +153,25 @@ func (p *ProductServiceImpl) FindAll(ctx context.Context, req dto.ProductQueryRe
 	}
 
 	return res, nil
+}
+
+func (p *ProductServiceImpl) FindAllCached(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error) {
+	cacheKey, cacheable := productListCacheKey(req)
+	var cached dto.ProductListRes
+	if cacheable && readCatalogCache(ctx, p.Redis, cacheKey, &cached) {
+		return &cached, nil
+	}
+
+	data, err := p.FindAll(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if cacheable {
+		writeCatalogCache(ctx, p.Redis, cacheKey, data, catalogProductCacheTTL)
+	}
+
+	return data, nil
 }
 
 func (p *ProductServiceImpl) UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error {
