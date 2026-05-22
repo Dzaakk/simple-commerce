@@ -58,10 +58,10 @@ func InitializedService(db *sql.DB, redis *redis.Client) *CatalogRoutes {
 	productRepo := repository.NewProductRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 
-	productService := service.NewProductService(productRepo)
-	categoryService := service.NewCategoryService(categoryRepo)
+	productService := service.NewProductService(productRepo, redis)
+	categoryService := service.NewCategoryService(categoryRepo, redis)
 
-	catalogHandler := handler.NewCatalogHandler(productService, categoryService, redis)
+	catalogHandler := handler.NewCatalogHandler(productService, categoryService)
 
 	return NewCatalogRoutes(catalogHandler)
 }

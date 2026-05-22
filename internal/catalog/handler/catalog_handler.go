@@ -8,20 +8,17 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type CatalogHandler struct {
 	ProductService  service.ProductService
 	CategoryService service.CategoryService
-	Redis           *redis.Client
 }
 
-func NewCatalogHandler(productService service.ProductService, categoryService service.CategoryService, redis *redis.Client) *CatalogHandler {
+func NewCatalogHandler(productService service.ProductService, categoryService service.CategoryService) *CatalogHandler {
 	return &CatalogHandler{
 		ProductService:  productService,
 		CategoryService: categoryService,
-		Redis:           redis,
 	}
 }
 
