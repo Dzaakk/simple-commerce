@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"Dzaakk/simple-commerce/internal/catalog/dto"
@@ -16,8 +15,9 @@ import (
 )
 
 const (
-	catalogProductCacheTTL  = time.Minute
-	catalogCategoryCacheTTL = 5 * time.Minute
+	catalogProductCacheTTL       = time.Minute
+	catalogCategoryCacheTTL      = 5 * time.Minute
+	catalogProductListCacheLimit = 100
 )
 
 func (h *CatalogHandler) FindAllProductsV2(ctx *gin.Context) {
@@ -27,9 +27,9 @@ func (h *CatalogHandler) FindAllProductsV2(ctx *gin.Context) {
 		return
 	}
 
-	cacheKey := productListCacheKey(req)
+	cacheKey, cacheable := productListCacheKey(req)
 	var cached dto.ProductListRes
-	if h.getCatalogCache(ctx, cacheKey, &cached) {
+	if cacheable && h.getCatalogCache(ctx, cacheKey, &cached) {
 		ctx.JSON(http.StatusOK, response.Success(&cached))
 		return
 	}
@@ -40,7 +40,9 @@ func (h *CatalogHandler) FindAllProductsV2(ctx *gin.Context) {
 		return
 	}
 
-	h.setCatalogCache(ctx, cacheKey, data, catalogProductCacheTTL)
+	if cacheable {
+		h.setCatalogCache(ctx, cacheKey, data, catalogProductCacheTTL)
+	}
 
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
@@ -125,13 +127,26 @@ func (h *CatalogHandler) setCatalogCache(ctx *gin.Context, key string, value int
 	h.Redis.Set(ctx.Request.Context(), key, data, ttl)
 }
 
-func productListCacheKey(req dto.ProductQueryReq) string {
-	data, err := json.Marshal(req)
-	if err != nil {
-		return "catalog:v2:product:list:fallback"
+func productListCacheKey(req dto.ProductQueryReq) (string, bool) {
+	if req.Cursor != nil && *req.Cursor != "" {
+		return "", false
+	}
+	if req.SellerID != nil || req.MinPrice != nil || req.MaxPrice != nil || req.Name != nil {
+		return "", false
+	}
+	if req.SortBy != "" {
+		return "", false
+	}
+	if req.Limit != catalogProductListCacheLimit {
+		return "", false
 	}
 
-	sum := sha256.Sum256(data)
+	if req.CategoryID != nil {
+		return "catalog:v2:products:list:category_id=" +
+			strconv.FormatInt(*req.CategoryID, 10) +
+			":limit=" +
+			strconv.Itoa(req.Limit), true
+	}
 
-	return "catalog:v2:product:list:" + hex.EncodeToString(sum[:])
+	return "catalog:v2:products:list:limit=" + strconv.Itoa(req.Limit), true
 }
