@@ -279,12 +279,6 @@ make docker-up
 make docker-down
 make docker-logs
 make k6-smoke
-make k6-load-100
-make k6-load-300
-make k6-load-500
-make k6-load-1000
-make k6-stress
-make k6-spike
 ```
 
 Useful targets:
@@ -304,12 +298,6 @@ Useful targets:
 | `make docker-up-d` | Start Docker Compose services in detached mode |
 | `make docker-down` | Stop Docker Compose services |
 | `make k6-smoke` | Run lightweight k6 smoke test |
-| `make k6-load-100` | Run k6 load test with the 100 VU profile |
-| `make k6-load-300` | Run k6 load test with the 300 VU profile |
-| `make k6-load-500` | Run k6 load test with the 500 VU profile |
-| `make k6-load-1000` | Run k6 load test with the 1000 VU profile |
-| `make k6-stress` | Run k6 stress test |
-| `make k6-spike` | Run k6 spike test |
 
 ## Testing The API
 
@@ -326,7 +314,7 @@ Recommended manual test flow:
 
 ## k6 Smoke Test
 
-The smoke test is a lightweight pre-flight check before running heavier load, stress, or spike tests. It validates service health, readiness, critical read endpoints, a safe write/error contract, and the Prometheus metrics endpoint.
+The smoke test is a lightweight pre-flight check before running heavier future performance tests. It validates service health, readiness, critical read endpoints, a safe write/error contract, and the Prometheus metrics endpoint.
 
 Run smoke test:
 
@@ -359,85 +347,7 @@ Purpose:
 
 - Validate service health and dependency readiness.
 - Validate critical endpoint behavior.
-- Confirm the system is ready before load testing.
-
-## k6 Performance Tests
-
-The load, stress, and spike tests simulate public commerce browsing behavior:
-
-- catalog browsing
-- category listing
-- product listing
-- product detail lookup when seeded products are available
-- category-filtered product search when seeded categories are available
-- occasional metrics probe to confirm observability remains reachable
-
-These scripts are intended for benchmark preparation and bottleneck analysis, not functional correctness testing. Run `k6-smoke` first, then run one performance profile at a time while watching Prometheus and Grafana.
-
-Run load test:
-
-```bash
-k6 run tests/k6/load.js
-```
-
-Run stress test:
-
-```bash
-k6 run tests/k6/stress.js
-```
-
-Run spike test:
-
-```bash
-k6 run tests/k6/spike.js
-```
-
-Or through Make:
-
-```bash
-make k6-load-100
-make k6-load-300
-make k6-load-500
-make k6-load-1000
-make k6-stress
-make k6-spike
-```
-
-Load profiles:
-
-```bash
-k6 run -e LOAD_PROFILE=100 tests/k6/load.js
-k6 run -e LOAD_PROFILE=300 tests/k6/load.js
-k6 run -e LOAD_PROFILE=500 tests/k6/load.js
-k6 run -e LOAD_PROFILE=1000 tests/k6/load.js
-```
-
-Manual load overrides still work when you need a custom run:
-
-```bash
-k6 run -e TARGET_VUS=750 -e RAMP_UP=4m -e STEADY_STATE=8m -e RAMP_DOWN=4m tests/k6/load.js
-```
-
-Stress and spike overrides:
-
-```bash
-k6 run -e MAX_VUS=500 tests/k6/stress.js
-k6 run -e SPIKE_VUS=1000 tests/k6/spike.js
-```
-
-With custom base URL:
-
-```bash
-k6 run -e BASE_URL=http://localhost:8080 -e LOAD_PROFILE=100 tests/k6/load.js
-```
-
-Default profiles:
-
-| Script | Default profile | Purpose |
-| --- | --- | --- |
-| `tests/k6/load.js` | Default 100 VU profile, with 100/300/500/1000 VU profiles available | Check normal sustained load |
-| `tests/k6/stress.js` | Step up to 300 VUs, hold each step, ramp down | Find degradation point |
-| `tests/k6/spike.js` | Jump from 10 to 500 VUs, recover, ramp down | Observe sudden traffic burst behavior |
+- Confirm the system is ready before future performance testing.
 
 ## Observability And Load Testing Roadmap
 
