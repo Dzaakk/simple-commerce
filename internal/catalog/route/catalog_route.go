@@ -47,11 +47,6 @@ func (cr *CatalogRoutes) Route(r *gin.RouterGroup) {
 		productV2.GET("", cr.Handler.FindAllProductsV2)
 		productV2.GET("/:id", cr.Handler.FindProductByIDV2)
 	}
-
-	categoryV2 := apiV2.Group("/category")
-	{
-		categoryV2.GET("", cr.Handler.FindAllCategoriesV2)
-	}
 }
 
 func InitializedService(db *sql.DB, redis *redis.Client) *CatalogRoutes {
@@ -59,7 +54,7 @@ func InitializedService(db *sql.DB, redis *redis.Client) *CatalogRoutes {
 	categoryRepo := repository.NewCategoryRepository(db)
 
 	productService := service.NewProductService(productRepo, redis)
-	categoryService := service.NewCategoryService(categoryRepo, redis)
+	categoryService := service.NewCategoryService(categoryRepo)
 
 	catalogHandler := handler.NewCatalogHandler(productService, categoryService)
 

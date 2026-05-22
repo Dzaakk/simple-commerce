@@ -39,13 +39,3 @@ func (h *CatalogHandler) FindProductByIDV2(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response.Success(data))
 }
-
-func (h *CatalogHandler) FindAllCategoriesV2(ctx *gin.Context) {
-	data, err := h.CategoryService.FindAllCached(ctx.Request.Context())
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success(data))
-}
