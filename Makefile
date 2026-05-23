@@ -14,7 +14,7 @@ else
 	CLEAN_BIN := rm -rf $(BIN_DIR)
 endif
 
-.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up-d docker-up docker-down docker-logs docker-ps k6-smoke clean
+.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up-d docker-up docker-down docker-logs docker-ps k6-smoke k6-load-v1-100 k6-load-v1-300 k6-load-v1-500 k6-load-v1-1000 k6-load-v2-100 k6-load-v2-300 k6-load-v2-500 k6-load-v2-1000 clean
 
 help:
 	@echo "Available commands:"
@@ -32,6 +32,14 @@ help:
 	@echo "  make docker-logs      Follow service logs"
 	@echo "  make docker-ps        Show service status"
 	@echo "  make k6-smoke         Run k6 smoke test"
+	@echo "  make k6-load-v1-100   Run v1 catalog browsing load test with 100 VUs"
+	@echo "  make k6-load-v1-300   Run v1 catalog browsing load test with 300 VUs"
+	@echo "  make k6-load-v1-500   Run v1 catalog browsing load test with 500 VUs"
+	@echo "  make k6-load-v1-1000  Run v1 catalog browsing load test with 1000 VUs"
+	@echo "  make k6-load-v2-100   Run v2 catalog browsing load test with 100 VUs"
+	@echo "  make k6-load-v2-300   Run v2 catalog browsing load test with 300 VUs"
+	@echo "  make k6-load-v2-500   Run v2 catalog browsing load test with 500 VUs"
+	@echo "  make k6-load-v2-1000  Run v2 catalog browsing load test with 1000 VUs"
 	@echo "  make clean            Remove build artifacts"
 
 run:
@@ -78,6 +86,62 @@ docker-ps:
 
 k6-smoke:
 	k6 run tests/k6/smoke.js
+
+k6-load-v1-100:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v1/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 100 --duration 3m tests/k6/catalog-browsing.js
+
+k6-load-v1-300:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v1/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 300 --duration 3m tests/k6/catalog-browsing.js
+
+k6-load-v1-500:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v1/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 500 --duration 3m tests/k6/catalog-browsing.js
+
+k6-load-v1-1000:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v1/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 1000 --duration 3m tests/k6/catalog-browsing.js
+
+k6-load-v2-100:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v2/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 100 --duration 3m tests/k6/catalog-browsing.js
+
+k6-load-v2-300:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v2/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 300 --duration 3m tests/k6/catalog-browsing.js
+
+k6-load-v2-500:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v2/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 500 --duration 3m tests/k6/catalog-browsing.js
+
+k6-load-v2-1000:
+	BASE_URL=http://localhost:8080 \
+	PRODUCT_LIST_ENDPOINT=/api/v2/product \
+	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
+	PRODUCT_LIMIT=100 \
+	k6 run --vus 1000 --duration 3m tests/k6/catalog-browsing.js
 
 clean:
 	$(CLEAN_BIN)

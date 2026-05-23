@@ -349,6 +349,50 @@ Purpose:
 - Validate critical endpoint behavior.
 - Confirm the system is ready before future performance testing.
 
+## Catalog Browsing Load Test: v1 vs v2
+
+This benchmark compares catalog product read performance between:
+
+| Version | Endpoint | Purpose |
+| --- | --- | --- |
+| v1 | `/api/v1/product` | Baseline non-cached product read endpoint |
+| v2 | `/api/v2/product` | Redis cached product read endpoint |
+
+The k6 scenario simulates product browsing:
+
+| Action | Weight |
+| --- | ---: |
+| Product list | 50% |
+| Product list by category | 30% |
+| Product detail by UUID | 20% |
+
+Before running the test, make sure this file contains valid product UUIDs:
+
+```text
+tests/k6/fixtures/catalog-fixture.js
+```
+
+Run v1 baseline:
+
+```bash
+make k6-load-v1-100
+make k6-load-v1-300
+make k6-load-v1-500
+make k6-load-v1-1000
+```
+
+Run v2 Redis cached benchmark:
+
+```bash
+make k6-load-v2-100
+make k6-load-v2-300
+make k6-load-v2-500
+make k6-load-v2-1000
+```
+
+Use the same dataset, same VU count, same duration, and same script for v1 and v2.
+Only the endpoint version changes.
+
 ## Observability And Load Testing Roadmap
 
 Planned improvements:
