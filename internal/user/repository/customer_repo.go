@@ -66,7 +66,7 @@ func (r *CustomerRepository) Update(ctx context.Context, data *model.Customer) (
 		return 0, response.Error("failed to get rows affected", err)
 	}
 	if rowsAffected == 0 {
-		return 0, response.Error("no rows updated", sql.ErrNoRows)
+		return 0, nil
 	}
 
 	return rowsAffected, nil
