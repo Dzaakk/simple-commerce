@@ -32,6 +32,7 @@ type SellerService interface {
 	FindByEmail(ctx context.Context, email string) (*model.Seller, error)
 	FindByID(ctx context.Context, sellerID string) (*dto.SellerRes, error)
 	FindByShopName(ctx context.Context, name string) ([]dto.SellerRes, error)
+	UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error
 	UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error
 }
 
