@@ -10,6 +10,7 @@ import (
 
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 var sellerColumns = []string{"id", "email", "password_hash", "shop_name", "phone", "status", "created_at", "updated_at"}
@@ -25,11 +26,10 @@ func TestSellerRepositoryCreate(t *testing.T) {
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
-	db := newTestDB(t, expectQuery(
-		sellerQueryCreate,
-		[]any{seller.Email, seller.PasswordHash, seller.ShopName, seller.Phone, seller.Status, seller.CreatedAt, seller.UpdatedAt},
-		rows([]string{"id"}, []driver.Value{"seller-1"}),
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(sellerQueryCreate).
+		WithArgs(seller.Email, seller.PasswordHash, seller.ShopName, seller.Phone, seller.Status, seller.CreatedAt, seller.UpdatedAt).
+		WillReturnRows(sqlmockRows([]string{"id"}).AddRow("seller-1"))
 
 	got, err := NewSellerRepository(db).Create(context.Background(), seller)
 	if err != nil {
@@ -50,11 +50,10 @@ func TestSellerRepositoryUpdate(t *testing.T) {
 		Status:    string(constant.StatusActive),
 		UpdatedAt: now,
 	}
-	db := newTestDB(t, expectExec(
-		sellerQueryUpdate,
-		[]any{seller.Email, seller.ShopName, seller.Phone, seller.Status, seller.UpdatedAt, seller.ID},
-		1,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectExec(sellerQueryUpdate).
+		WithArgs(seller.Email, seller.ShopName, seller.Phone, seller.Status, seller.UpdatedAt, seller.ID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	got, err := NewSellerRepository(db).Update(context.Background(), seller)
 	if err != nil {
@@ -67,11 +66,10 @@ func TestSellerRepositoryUpdate(t *testing.T) {
 
 func TestSellerRepositoryUpdateReturnsWrappedExecError(t *testing.T) {
 	wantErr := errors.New("update failed")
-	db := newTestDB(t, expectExecError(
-		sellerQueryUpdate,
-		[]any{"new@example.com", "New Shop", "08999999999", string(constant.StatusActive), time.Time{}, "seller-1"},
-		wantErr,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectExec(sellerQueryUpdate).
+		WithArgs("new@example.com", "New Shop", "08999999999", string(constant.StatusActive), time.Time{}, "seller-1").
+		WillReturnError(wantErr)
 
 	got, err := NewSellerRepository(db).Update(context.Background(), &model.Seller{
 		ID:       "seller-1",
@@ -89,11 +87,10 @@ func TestSellerRepositoryUpdateReturnsWrappedExecError(t *testing.T) {
 }
 
 func TestSellerRepositoryFindByIDReturnsNilWhenNotFound(t *testing.T) {
-	db := newTestDB(t, expectQuery(
-		sellerQueryFindByID,
-		[]any{"missing"},
-		rows(sellerColumns),
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(sellerQueryFindByID).
+		WithArgs("missing").
+		WillReturnRows(sqlmockRows(sellerColumns))
 
 	got, err := NewSellerRepository(db).FindByID(context.Background(), "missing")
 	if err != nil {
@@ -106,11 +103,11 @@ func TestSellerRepositoryFindByIDReturnsNilWhenNotFound(t *testing.T) {
 
 func TestSellerRepositoryFindByEmail(t *testing.T) {
 	now := time.Date(2026, time.June, 2, 12, 0, 0, 0, time.UTC)
-	db := newTestDB(t, expectQuery(
-		sellerQueryFindByEmail,
-		[]any{"seller@example.com"},
-		rows(sellerColumns, sellerRow("seller-1", "seller@example.com", "Best Shop", "08123456789", string(constant.StatusActive), now)),
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(sellerQueryFindByEmail).
+		WithArgs("seller@example.com").
+		WillReturnRows(sqlmockRows(sellerColumns).
+			AddRow(sellerRow("seller-1", "seller@example.com", "Best Shop", "08123456789", string(constant.StatusActive), now)...))
 
 	got, err := NewSellerRepository(db).FindByEmail(context.Background(), "seller@example.com")
 	if err != nil {
@@ -121,15 +118,12 @@ func TestSellerRepositoryFindByEmail(t *testing.T) {
 
 func TestSellerRepositoryFindByShopName(t *testing.T) {
 	now := time.Date(2026, time.June, 2, 13, 0, 0, 0, time.UTC)
-	db := newTestDB(t, expectQuery(
-		sellerQueryFindByName,
-		[]any{"%shop%"},
-		rows(
-			sellerColumns,
-			sellerRow("seller-1", "first@example.com", "First Shop", "08111111111", string(constant.StatusActive), now),
-			sellerRow("seller-2", "second@example.com", "Second Shop", "08222222222", string(constant.StatusPending), now),
-		),
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(sellerQueryFindByName).
+		WithArgs("%shop%").
+		WillReturnRows(sqlmockRows(sellerColumns).
+			AddRow(sellerRow("seller-1", "first@example.com", "First Shop", "08111111111", string(constant.StatusActive), now)...).
+			AddRow(sellerRow("seller-2", "second@example.com", "Second Shop", "08222222222", string(constant.StatusPending), now)...))
 
 	got, err := NewSellerRepository(db).FindByShopName(context.Background(), "shop")
 	if err != nil {
@@ -144,7 +138,8 @@ func TestSellerRepositoryFindByShopName(t *testing.T) {
 
 func TestSellerRepositoryFindByShopNameReturnsQueryError(t *testing.T) {
 	wantErr := errors.New("select failed")
-	db := newTestDB(t, expectQueryError(sellerQueryFindByName, []any{"%shop%"}, wantErr))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(sellerQueryFindByName).WithArgs("%shop%").WillReturnError(wantErr)
 
 	got, err := NewSellerRepository(db).FindByShopName(context.Background(), "shop")
 	if !errors.Is(err, wantErr) {
@@ -156,11 +151,10 @@ func TestSellerRepositoryFindByShopNameReturnsQueryError(t *testing.T) {
 }
 
 func TestSellerRepositoryUpdateStatusReturnsErrorWhenNoRowsAffected(t *testing.T) {
-	db := newTestDB(t, expectExec(
-		sellerQueryUpdateStatus,
-		[]any{string(constant.StatusActive), "missing"},
-		0,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectExec(sellerQueryUpdateStatus).
+		WithArgs(string(constant.StatusActive), "missing").
+		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	err := NewSellerRepository(db).UpdateStatus(context.Background(), "missing", constant.StatusActive)
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -169,11 +163,12 @@ func TestSellerRepositoryUpdateStatusReturnsErrorWhenNoRowsAffected(t *testing.T
 }
 
 func TestSellerRepositoryUpdateStatusWithTx(t *testing.T) {
-	db := newTestDB(t, expectExec(
-		sellerQueryUpdateStatus,
-		[]any{string(constant.StatusActive), "seller-1"},
-		1,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectBegin()
+	mock.ExpectExec(sellerQueryUpdateStatus).
+		WithArgs(string(constant.StatusActive), "seller-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectRollback()
 	tx, err := db.BeginTx(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("begin tx: %v", err)

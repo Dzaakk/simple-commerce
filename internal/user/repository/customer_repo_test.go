@@ -10,6 +10,7 @@ import (
 
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 var customerColumns = []string{"id", "email", "password_hash", "full_name", "phone", "status", "created_at", "updated_at"}
@@ -25,11 +26,10 @@ func TestCustomerRepositoryCreate(t *testing.T) {
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
-	db := newTestDB(t, expectQuery(
-		customerQueryCreate,
-		[]any{customer.Email, customer.PasswordHash, customer.FullName, customer.Phone, customer.Status, customer.CreatedAt, customer.UpdatedAt},
-		rows([]string{"id"}, []driver.Value{"customer-1"}),
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(customerQueryCreate).
+		WithArgs(customer.Email, customer.PasswordHash, customer.FullName, customer.Phone, customer.Status, customer.CreatedAt, customer.UpdatedAt).
+		WillReturnRows(sqlmockRows([]string{"id"}).AddRow("customer-1"))
 
 	got, err := NewCustomerRepository(db).Create(context.Background(), customer)
 	if err != nil {
@@ -42,11 +42,10 @@ func TestCustomerRepositoryCreate(t *testing.T) {
 
 func TestCustomerRepositoryCreateReturnsWrappedError(t *testing.T) {
 	wantErr := errors.New("insert failed")
-	db := newTestDB(t, expectQueryError(
-		customerQueryCreate,
-		[]any{"customer@example.com", "hash", "Customer Name", "08123456789", string(constant.StatusPending), time.Time{}, time.Time{}},
-		wantErr,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(customerQueryCreate).
+		WithArgs("customer@example.com", "hash", "Customer Name", "08123456789", string(constant.StatusPending), time.Time{}, time.Time{}).
+		WillReturnError(wantErr)
 
 	got, err := NewCustomerRepository(db).Create(context.Background(), &model.Customer{
 		Email:        "customer@example.com",
@@ -73,11 +72,10 @@ func TestCustomerRepositoryUpdate(t *testing.T) {
 		Status:    string(constant.StatusActive),
 		UpdatedAt: now,
 	}
-	db := newTestDB(t, expectExec(
-		customerQueryUpdate,
-		[]any{customer.Email, customer.FullName, customer.Phone, customer.Status, customer.UpdatedAt, customer.ID},
-		1,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectExec(customerQueryUpdate).
+		WithArgs(customer.Email, customer.FullName, customer.Phone, customer.Status, customer.UpdatedAt, customer.ID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	got, err := NewCustomerRepository(db).Update(context.Background(), customer)
 	if err != nil {
@@ -89,11 +87,10 @@ func TestCustomerRepositoryUpdate(t *testing.T) {
 }
 
 func TestCustomerRepositoryUpdateReturnsZeroWhenNoRowsAffected(t *testing.T) {
-	db := newTestDB(t, expectExec(
-		customerQueryUpdate,
-		[]any{"new@example.com", "New Name", "08999999999", string(constant.StatusActive), time.Time{}, "missing"},
-		0,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectExec(customerQueryUpdate).
+		WithArgs("new@example.com", "New Name", "08999999999", string(constant.StatusActive), time.Time{}, "missing").
+		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	got, err := NewCustomerRepository(db).Update(context.Background(), &model.Customer{
 		ID:       "missing",
@@ -112,11 +109,11 @@ func TestCustomerRepositoryUpdateReturnsZeroWhenNoRowsAffected(t *testing.T) {
 
 func TestCustomerRepositoryFindByID(t *testing.T) {
 	now := time.Date(2026, time.June, 2, 12, 0, 0, 0, time.UTC)
-	db := newTestDB(t, expectQuery(
-		customerQueryFindByID,
-		[]any{"customer-1"},
-		rows(customerColumns, customerRow("customer-1", "customer@example.com", "Customer Name", "08123456789", string(constant.StatusActive), now)),
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(customerQueryFindByID).
+		WithArgs("customer-1").
+		WillReturnRows(sqlmockRows(customerColumns).
+			AddRow(customerRow("customer-1", "customer@example.com", "Customer Name", "08123456789", string(constant.StatusActive), now)...))
 
 	got, err := NewCustomerRepository(db).FindByID(context.Background(), "customer-1")
 	if err != nil {
@@ -126,11 +123,10 @@ func TestCustomerRepositoryFindByID(t *testing.T) {
 }
 
 func TestCustomerRepositoryFindByEmailReturnsNilWhenNotFound(t *testing.T) {
-	db := newTestDB(t, expectQuery(
-		customerQueryFindByEmail,
-		[]any{"missing@example.com"},
-		rows(customerColumns),
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectQuery(customerQueryFindByEmail).
+		WithArgs("missing@example.com").
+		WillReturnRows(sqlmockRows(customerColumns))
 
 	got, err := NewCustomerRepository(db).FindByEmail(context.Background(), "missing@example.com")
 	if err != nil {
@@ -142,11 +138,10 @@ func TestCustomerRepositoryFindByEmailReturnsNilWhenNotFound(t *testing.T) {
 }
 
 func TestCustomerRepositoryUpdateStatus(t *testing.T) {
-	db := newTestDB(t, expectExec(
-		customerQueryUpdateStatus,
-		[]any{string(constant.StatusActive), "customer-1"},
-		1,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectExec(customerQueryUpdateStatus).
+		WithArgs(string(constant.StatusActive), "customer-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	if err := NewCustomerRepository(db).UpdateStatus(context.Background(), "customer-1", constant.StatusActive); err != nil {
 		t.Fatalf("UpdateStatus returned error: %v", err)
@@ -154,11 +149,10 @@ func TestCustomerRepositoryUpdateStatus(t *testing.T) {
 }
 
 func TestCustomerRepositoryUpdateStatusReturnsErrorWhenNoRowsAffected(t *testing.T) {
-	db := newTestDB(t, expectExec(
-		customerQueryUpdateStatus,
-		[]any{string(constant.StatusActive), "missing"},
-		0,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectExec(customerQueryUpdateStatus).
+		WithArgs(string(constant.StatusActive), "missing").
+		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	err := NewCustomerRepository(db).UpdateStatus(context.Background(), "missing", constant.StatusActive)
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -167,11 +161,12 @@ func TestCustomerRepositoryUpdateStatusReturnsErrorWhenNoRowsAffected(t *testing
 }
 
 func TestCustomerRepositoryUpdateStatusWithTx(t *testing.T) {
-	db := newTestDB(t, expectExec(
-		customerQueryUpdateStatus,
-		[]any{string(constant.StatusActive), "customer-1"},
-		1,
-	))
+	db, mock := newMockDB(t)
+	mock.ExpectBegin()
+	mock.ExpectExec(customerQueryUpdateStatus).
+		WithArgs(string(constant.StatusActive), "customer-1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectRollback()
 	tx, err := db.BeginTx(context.Background(), nil)
 	if err != nil {
 		t.Fatalf("begin tx: %v", err)
