@@ -168,7 +168,7 @@ func (p *ProductServiceImpl) FindAllCached(ctx context.Context, req dto.ProductQ
 	}
 
 	if cacheable {
-		writeCatalogCache(ctx, p.Redis, cacheKey, data, catalogProductCacheTTL)
+		writeCatalogCacheAsync(p.Redis, cacheKey, data, catalogProductCacheTTL)
 	}
 
 	return data, nil

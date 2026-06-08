@@ -15,6 +15,7 @@ const (
 	catalogProductCacheTTL       = time.Minute
 	catalogCategoryCacheTTL      = 5 * time.Minute
 	catalogProductListCacheLimit = 100
+	catalogCacheWriteTimeout     = 500 * time.Millisecond
 )
 
 func readCatalogCache(ctx context.Context, redisClient *redis.Client, key string, dst interface{}) bool {
@@ -46,6 +47,19 @@ func writeCatalogCache(ctx context.Context, redisClient *redis.Client, key strin
 	}
 
 	redisClient.Set(ctx, key, data, ttl)
+}
+
+func writeCatalogCacheAsync(redisClient *redis.Client, key string, value interface{}, ttl time.Duration) {
+	if redisClient == nil {
+		return
+	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), catalogCacheWriteTimeout)
+		defer cancel()
+
+		writeCatalogCache(ctx, redisClient, key, value, ttl)
+	}()
 }
 
 func productDetailCacheKey(productID string) string {
