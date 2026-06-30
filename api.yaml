@@ -1,0 +1,1719 @@
+openapi: 3.0.3
+info:
+  title: Simple Commerce API
+  version: 1.0.0
+  description: REST API specification for the Simple Commerce backend.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: Health
+  - name: Observability
+  - name: Auth
+  - name: Customer
+  - name: Seller
+  - name: Product
+  - name: Category
+  - name: Cart
+  - name: Order
+  - name: Transaction
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Liveness check
+      operationId: liveCheck
+      responses:
+        "200":
+          description: Service is alive.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      operationId: readyCheck
+      responses:
+        "200":
+          description: Dependencies are ready.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+        "503":
+          description: One or more dependencies are unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+
+  /metrics:
+    get:
+      tags: [Observability]
+      summary: Prometheus metrics
+      operationId: getMetrics
+      responses:
+        "200":
+          description: Prometheus metrics payload.
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/auth/customer/register:
+    post:
+      tags: [Auth]
+      summary: Register a customer account
+      operationId: registerCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterCustomerRequest"
+      responses:
+        "201":
+          description: Customer account created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+              example:
+                meta:
+                  code: 200
+                  message: Success
+                data: Success Create Customer
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/seller/register:
+    post:
+      tags: [Auth]
+      summary: Register a seller account
+      operationId: registerSeller
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterSellerRequest"
+      responses:
+        "201":
+          description: Seller account created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+              example:
+                meta:
+                  code: 200
+                  message: Success
+                data: Success Create Seller
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verify an account email
+      operationId: verifyEmail
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Email verified.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+              example:
+                meta:
+                  code: 200
+                  message: Success
+                data: Email verified successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/login:
+    get:
+      tags: [Auth]
+      summary: Login and issue access and refresh tokens
+      description: Current Gin route is GET and the handler reads a JSON body.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/refresh-token:
+    post:
+      tags: [Auth]
+      summary: Issue a new access token from a refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Access token refreshed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshTokenResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke a refresh token
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Logged out.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+              example:
+                meta:
+                  code: 200
+                  message: Success
+                data: Logged out successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/customer/by-email:
+    get:
+      tags: [Customer]
+      summary: Find a customer by email
+      operationId: findCustomerByEmail
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        "200":
+          description: Customer found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/customer/by-id:
+    get:
+      tags: [Customer]
+      summary: Find a customer by ID
+      operationId: findCustomerById
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Customer found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/seller/by-name:
+    get:
+      tags: [Seller]
+      summary: Find sellers by shop name
+      operationId: findSellerByName
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sellers found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SellerListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/product:
+    post:
+      tags: [Product]
+      summary: Create a product
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "201":
+          description: Product created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    get:
+      tags: [Product]
+      summary: List products
+      operationId: listProducts
+      parameters:
+        - $ref: "#/components/parameters/CategoryIdQuery"
+        - $ref: "#/components/parameters/SellerIdQuery"
+        - $ref: "#/components/parameters/MinPriceQuery"
+        - $ref: "#/components/parameters/MaxPriceQuery"
+        - $ref: "#/components/parameters/ProductNameQuery"
+        - $ref: "#/components/parameters/CursorQuery"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/ProductSortByQuery"
+      responses:
+        "200":
+          description: Product list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/product/{id}:
+    get:
+      tags: [Product]
+      summary: Get product detail
+      operationId: getProductById
+      parameters:
+        - $ref: "#/components/parameters/ProductIdPath"
+      responses:
+        "200":
+          description: Product detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags: [Product]
+      summary: Update a product
+      operationId: updateProduct
+      parameters:
+        - $ref: "#/components/parameters/ProductIdPath"
+        - $ref: "#/components/parameters/SellerIdRequiredQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductRequest"
+      responses:
+        "200":
+          description: Product updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [Product]
+      summary: Soft delete a product
+      operationId: deleteProduct
+      parameters:
+        - $ref: "#/components/parameters/ProductIdPath"
+        - $ref: "#/components/parameters/SellerIdRequiredQuery"
+      responses:
+        "200":
+          description: Product deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/product/{id}/stock:
+    patch:
+      tags: [Product]
+      summary: Update product stock
+      operationId: updateProductStock
+      parameters:
+        - $ref: "#/components/parameters/ProductIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStockRequest"
+      responses:
+        "200":
+          description: Product stock updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/category:
+    post:
+      tags: [Category]
+      summary: Create a category
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryRequest"
+      responses:
+        "201":
+          description: Category created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    get:
+      tags: [Category]
+      summary: List categories as a flattened tree
+      operationId: listCategories
+      responses:
+        "200":
+          description: Category tree.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryTreeListResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/category/{id}:
+    get:
+      tags: [Category]
+      summary: Get category detail
+      operationId: getCategoryById
+      parameters:
+        - $ref: "#/components/parameters/CategoryIdPath"
+      responses:
+        "200":
+          description: Category detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryTreeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v2/product:
+    get:
+      tags: [Product]
+      summary: List products through cached v2 catalog endpoint
+      operationId: listProductsV2
+      parameters:
+        - $ref: "#/components/parameters/CategoryIdQuery"
+        - $ref: "#/components/parameters/SellerIdQuery"
+        - $ref: "#/components/parameters/MinPriceQuery"
+        - $ref: "#/components/parameters/MaxPriceQuery"
+        - $ref: "#/components/parameters/ProductNameQuery"
+        - $ref: "#/components/parameters/CursorQuery"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/ProductSortByQuery"
+      responses:
+        "200":
+          description: Product list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v2/product/{id}:
+    get:
+      tags: [Product]
+      summary: Get product detail through cached v2 catalog endpoint
+      operationId: getProductByIdV2
+      parameters:
+        - $ref: "#/components/parameters/ProductIdPath"
+      responses:
+        "200":
+          description: Product detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/cart:
+    get:
+      tags: [Cart]
+      summary: Get customer cart
+      operationId: getCart
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+      responses:
+        "200":
+          description: Cart detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/cart/items:
+    post:
+      tags: [Cart]
+      summary: Add an item to cart
+      operationId: addCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartItemRequest"
+      responses:
+        "200":
+          description: Updated cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags: [Cart]
+      summary: Update cart item quantity
+      operationId: updateCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartItemRequest"
+      responses:
+        "200":
+          description: Updated cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [Cart]
+      summary: Clear all cart items
+      operationId: clearCartItems
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+      responses:
+        "200":
+          description: Cart cleared.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/cart/items/{product_id}:
+    delete:
+      tags: [Cart]
+      summary: Delete a cart item
+      operationId: deleteCartItem
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+      responses:
+        "200":
+          description: Cart item deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/orders:
+    post:
+      tags: [Order]
+      summary: Create an order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    get:
+      tags: [Order]
+      summary: List customer orders
+      operationId: listOrders
+      parameters:
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Customer orders.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/orders/{id}:
+    get:
+      tags: [Order]
+      summary: Get order detail
+      operationId: getOrderDetail
+      parameters:
+        - $ref: "#/components/parameters/OrderIdPath"
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+      responses:
+        "200":
+          description: Order detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetailResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/orders/{id}/cancel:
+    patch:
+      tags: [Order]
+      summary: Cancel a pending order
+      operationId: cancelOrder
+      parameters:
+        - $ref: "#/components/parameters/OrderIdPath"
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+      responses:
+        "200":
+          description: Order cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/transactions:
+    post:
+      tags: [Transaction]
+      summary: Create a payment transaction
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionRequest"
+      responses:
+        "201":
+          description: Transaction created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/transactions/{id}:
+    get:
+      tags: [Transaction]
+      summary: Get transaction detail
+      operationId: getTransactionById
+      parameters:
+        - $ref: "#/components/parameters/TransactionIdPath"
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+      responses:
+        "200":
+          description: Transaction detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/transactions/by-order/{order_id}:
+    get:
+      tags: [Transaction]
+      summary: Get transaction by order ID
+      operationId: getTransactionByOrderId
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CustomerIdRequiredQuery"
+      responses:
+        "200":
+          description: Transaction detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/transactions/callback:
+    post:
+      tags: [Transaction]
+      summary: Handle payment provider callback
+      operationId: paymentCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentCallbackRequest"
+      responses:
+        "200":
+          description: Callback processed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/transactions/{id}/expire:
+    patch:
+      tags: [Transaction]
+      summary: Expire a transaction
+      operationId: expireTransaction
+      parameters:
+        - $ref: "#/components/parameters/TransactionIdPath"
+      responses:
+        "200":
+          description: Transaction expired.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StringResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  parameters:
+    CustomerIdRequiredQuery:
+      name: customer_id
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SellerIdQuery:
+      name: seller_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+    SellerIdRequiredQuery:
+      name: seller_id
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CategoryIdQuery:
+      name: category_id
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+    CategoryIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    ProductIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    OrderIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TransactionIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MinPriceQuery:
+      name: min_price
+      in: query
+      required: false
+      schema:
+        type: number
+        format: double
+        minimum: 0
+    MaxPriceQuery:
+      name: max_price
+      in: query
+      required: false
+      schema:
+        type: number
+        format: double
+        minimum: 0
+    ProductNameQuery:
+      name: name
+      in: query
+      required: false
+      schema:
+        type: string
+    CursorQuery:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+    ProductSortByQuery:
+      name: sort_by
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [price_asc, price_desc, newest]
+
+  responses:
+    BadRequest:
+      description: Invalid request data or invalid parameter.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Unauthorized request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Forbidden request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Request conflicts with current resource state.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    Meta:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+
+    ErrorResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          nullable: true
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true
+          example: invalid request data
+
+    StringResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          type: string
+
+    IntegerResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          type: integer
+          format: int64
+
+    HealthResponse:
+      type: object
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: simple-commerce
+
+    ReadyResponse:
+      type: object
+      required: [status, service, dependencies]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        service:
+          type: string
+          example: simple-commerce
+        dependencies:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [ok, down]
+          example:
+            postgres: ok
+            redis: ok
+
+    RegisterCustomerRequest:
+      type: object
+      required: [Email, Password, FullName]
+      properties:
+        Email:
+          type: string
+          format: email
+        Password:
+          type: string
+          format: password
+        FullName:
+          type: string
+        Phone:
+          type: string
+      description: Uses current auth DTO field names because the runtime DTO has no json tags.
+
+    RegisterSellerRequest:
+      type: object
+      required: [Email, Password, FullName, ShopName]
+      properties:
+        Email:
+          type: string
+          format: email
+        Password:
+          type: string
+          format: password
+        FullName:
+          type: string
+        Phone:
+          type: string
+        ShopName:
+          type: string
+      description: Uses current auth DTO field names because the runtime DTO has no json tags.
+
+    LoginRequest:
+      type: object
+      required: [email, password, user_type]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        user_type:
+          type: string
+          enum: [customer, seller]
+
+    LoginResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          type: object
+          required: [AccessToken, RefreshToken, ExpiresIn]
+          properties:
+            AccessToken:
+              type: string
+            RefreshToken:
+              type: string
+            ExpiresIn:
+              type: integer
+              example: 900
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    RefreshTokenResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          type: object
+          required: [AccessToken, ExpiresIn]
+          properties:
+            AccessToken:
+              type: string
+            ExpiresIn:
+              type: integer
+              example: 900
+
+    Customer:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        phone:
+          type: string
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CustomerResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/Customer"
+
+    Seller:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        shop_name:
+          type: string
+        phone:
+          type: string
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SellerListResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Seller"
+
+    UserStatus:
+      type: string
+      enum: [pending, active]
+
+    CreateProductRequest:
+      type: object
+      required: [seller_id, category_id, name, sku, price]
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+        category_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        sku:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+          minimum: 0
+        image_url:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+          nullable: true
+
+    UpdateProductRequest:
+      type: object
+      required: [category_id, name, sku, price]
+      properties:
+        category_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        sku:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+          minimum: 0
+        image_url:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+          nullable: true
+
+    UpdateStockRequest:
+      type: object
+      required: [seller_id, quantity]
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 0
+
+    Product:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        category_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        sku:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+        image_url:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProductList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        next_cursor:
+          type: string
+          nullable: true
+
+    ProductResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/Product"
+
+    ProductListResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/ProductList"
+
+    CreateCategoryRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+        is_active:
+          type: boolean
+          nullable: true
+
+    CategoryTree:
+      type: object
+      required: [ID, Name, Slug, Depth]
+      properties:
+        ID:
+          type: integer
+          format: int64
+        ParentID:
+          type: integer
+          format: int64
+          nullable: true
+        Name:
+          type: string
+        Slug:
+          type: string
+        Depth:
+          type: integer
+      description: Uses current DTO field names because CategoryTree has no json tags.
+
+    CategoryTreeResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/CategoryTree"
+
+    CategoryTreeListResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryTree"
+
+    CartItemRequest:
+      type: object
+      required: [customer_id, product_id, quantity]
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+
+    CartItem:
+      type: object
+      required: [product_id, quantity, price_snapshot, subtotal]
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        price_snapshot:
+          type: number
+          format: double
+        subtotal:
+          type: number
+          format: double
+
+    Cart:
+      type: object
+      required: [customer_id, items, total]
+      properties:
+        cart_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        total:
+          type: number
+          format: double
+
+    CartResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/Cart"
+
+    CreateOrderRequest:
+      type: object
+      required: [customer_id, items, shipping_address]
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/OrderItemRequest"
+        shipping_address:
+          type: string
+
+    OrderItemRequest:
+      type: object
+      required: [product_id, quantity]
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+
+    OrderStatus:
+      type: string
+      enum: [pending, confirmed, processing, shipped, delivered, cancelled]
+
+    Order:
+      type: object
+      required: [id, order_number, status, total_amount, shipping_address, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_number:
+          type: string
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        total_amount:
+          type: number
+          format: double
+        shipping_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    OrderItem:
+      type: object
+      required: [product_id, seller_id, quantity, price, subtotal]
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: double
+        subtotal:
+          type: number
+          format: double
+
+    OrderDetail:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrderItem"
+
+    OrderResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/Order"
+
+    OrderListResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+
+    OrderDetailResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/OrderDetail"
+
+    CreateTransactionRequest:
+      type: object
+      required: [customer_id, order_id, payment_method]
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        payment_method:
+          type: string
+
+    TransactionStatus:
+      type: string
+      enum: [pending, processing, success, failed, expired, refunded]
+
+    Transaction:
+      type: object
+      required: [id, order_id, transaction_number, payment_method, status, amount, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        transaction_number:
+          type: string
+        payment_method:
+          type: string
+        status:
+          $ref: "#/components/schemas/TransactionStatus"
+        amount:
+          type: number
+          format: double
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    TransactionResponse:
+      type: object
+      required: [meta, data]
+      properties:
+        meta:
+          $ref: "#/components/schemas/Meta"
+        data:
+          $ref: "#/components/schemas/Transaction"
+
+    PaymentCallbackRequest:
+      type: object
+      required: [transaction_number, status, signature]
+      properties:
+        transaction_number:
+          type: string
+        status:
+          $ref: "#/components/schemas/TransactionStatus"
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        signature:
+          type: string
