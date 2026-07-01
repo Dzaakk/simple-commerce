@@ -1,0 +1,9 @@
+package: generated
+generate:
+  models: true
+  gin-server: true
+  embedded-spec: false
+output-options:
+  include-operation-ids:
+    - listProductsV2
+    - getProductByIdV2

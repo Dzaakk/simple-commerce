@@ -1,6 +1,7 @@
 package route
 
 import (
+	contractapi "Dzaakk/simple-commerce/internal/api"
 	"Dzaakk/simple-commerce/internal/catalog/handler"
 	"Dzaakk/simple-commerce/internal/catalog/repository"
 	"Dzaakk/simple-commerce/internal/catalog/service"
@@ -40,13 +41,7 @@ func (cr *CatalogRoutes) Route(r *gin.RouterGroup) {
 		category.GET("/:id", cr.Handler.FindCategoryByID)
 	}
 
-	apiV2 := r.Group("/api/v2")
-
-	productV2 := apiV2.Group("/product")
-	{
-		productV2.GET("", cr.Handler.FindAllProductsV2)
-		productV2.GET("/:id", cr.Handler.FindProductByIDV2)
-	}
+	contractapi.RegisterCatalogV2Routes(r, cr.Handler.ProductService)
 }
 
 func InitializedService(db *sql.DB, redis *redis.Client) *CatalogRoutes {

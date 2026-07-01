@@ -14,7 +14,7 @@ else
 	CLEAN_BIN := rm -rf $(BIN_DIR)
 endif
 
-.PHONY: help run dev build build-linux build-windows test tidy fmt vet deps docker-build docker-up-d docker-up docker-down docker-logs docker-ps k6-smoke k6-load-v1-100 k6-load-v1-300 k6-load-v1-500 k6-load-v1-1000 k6-load-v2-100 k6-load-v2-300 k6-load-v2-500 k6-load-v2-1000 clean
+.PHONY: help run dev build build-linux build-windows generate test tidy fmt vet deps docker-build docker-up-d docker-up docker-down docker-logs docker-ps k6-smoke k6-load-v1-100 k6-load-v1-300 k6-load-v1-500 k6-load-v1-1000 k6-load-v2-100 k6-load-v2-300 k6-load-v2-500 k6-load-v2-1000 clean
 
 help:
 	@echo "Available commands:"
@@ -23,6 +23,7 @@ help:
 	@echo "  make build            Build local binary into ./bin"
 	@echo "  make build-linux      Build Linux amd64 binary"
 	@echo "  make build-windows    Build Windows amd64 binary"
+	@echo "  make generate         Generate Go API contracts from api.yaml"
 	@echo "  make test             Run all Go tests"
 	@echo "  make tidy             Run go mod tidy"
 	@echo "  make fmt              Format Go files"
@@ -59,6 +60,9 @@ build-linux:
 build-windows:
 	$(MKDIR_BIN)
 	GOOS=windows GOARCH=amd64 $(GO) build -trimpath -o $(BIN_DIR)/$(APP_NAME)-windows-amd64.exe .
+
+generate:
+	$(GO) run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1 --config oapi-codegen.catalog-v2.yaml -o internal/api/generated/openapi.gen.go api.yaml
 
 test:
 	$(GO) test ./...
