@@ -30,13 +30,13 @@ import (
 func main() {
 	godotenv.Load()
 
-	postgres, err := postgres.Init(postgres.Config{
-		Host:     os.Getenv("POSTGRES_HOST"),
-		Port:     os.Getenv("POSTGRES_PORT"),
-		DBName:   os.Getenv("POSTGRES_DB"),
-		User:     os.Getenv("POSTGRES_USER"),
-		Password: os.Getenv("POSTGRES_PASSWORD"),
-	})
+	postgresDB, err := postgres.NewBuilder().
+		WithHost(os.Getenv("POSTGRES_HOST")).
+		WithPort(os.Getenv("POSTGRES_PORT")).
+		WithDBName(os.Getenv("POSTGRES_DB")).
+		WithUser(os.Getenv("POSTGRES_USER")).
+		WithPassword(os.Getenv("POSTGRES_PASSWORD")).
+		Connect()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,14 +68,14 @@ func main() {
 	r.Use(middleware.ErrorHandler())
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	health.NewHandler(postgres, redis).Route(r)
+	health.NewHandler(postgresDB, redis).Route(r)
 
-	auth.InitializedService(postgres, redis, rabbitClient).Route(&r.RouterGroup)
-	user.InitializedService(postgres).Route(&r.RouterGroup)
-	catalog.InitializedService(postgres, redis).Route(&r.RouterGroup)
-	cart.InitializedService(postgres).Route(&r.RouterGroup)
-	order.InitializedService(postgres).Route(&r.RouterGroup)
-	transaction.InitializedService(postgres).Route(&r.RouterGroup)
+	auth.InitializedService(postgresDB, redis, rabbitClient).Route(&r.RouterGroup)
+	user.InitializedService(postgresDB).Route(&r.RouterGroup)
+	catalog.InitializedService(postgresDB, redis).Route(&r.RouterGroup)
+	cart.InitializedService(postgresDB).Route(&r.RouterGroup)
+	order.InitializedService(postgresDB).Route(&r.RouterGroup)
+	transaction.InitializedService(postgresDB).Route(&r.RouterGroup)
 
 	r.Run()
 }
