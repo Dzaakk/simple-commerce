@@ -41,7 +41,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	redis, err := redis.Init()
+	redisClient, err := redis.NewBuilder().
+		WithHost(os.Getenv("REDIS_HOST")).
+		WithPort(os.Getenv("REDIS_PORT")).
+		WithPassword(os.Getenv("REDIS_PASSWORD")).
+		WithDB(0).
+		Connect()
 	if err != nil {
 		log.Fatalf("error connect to redis : %v", err)
 	}
@@ -68,11 +73,11 @@ func main() {
 	r.Use(middleware.ErrorHandler())
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	health.NewHandler(postgresDB, redis).Route(r)
+	health.NewHandler(postgresDB, redisClient).Route(r)
 
-	auth.InitializedService(postgresDB, redis, rabbitClient).Route(&r.RouterGroup)
+	auth.InitializedService(postgresDB, redisClient, rabbitClient).Route(&r.RouterGroup)
 	user.InitializedService(postgresDB).Route(&r.RouterGroup)
-	catalog.InitializedService(postgresDB, redis).Route(&r.RouterGroup)
+	catalog.InitializedService(postgresDB, redisClient).Route(&r.RouterGroup)
 	cart.InitializedService(postgresDB).Route(&r.RouterGroup)
 	order.InitializedService(postgresDB).Route(&r.RouterGroup)
 	transaction.InitializedService(postgresDB).Route(&r.RouterGroup)
