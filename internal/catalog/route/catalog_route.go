@@ -5,6 +5,8 @@ import (
 	"Dzaakk/simple-commerce/internal/catalog/handler"
 	"Dzaakk/simple-commerce/internal/catalog/repository"
 	"Dzaakk/simple-commerce/internal/catalog/service"
+	"Dzaakk/simple-commerce/internal/middleware"
+	"Dzaakk/simple-commerce/package/constant"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
@@ -26,12 +28,14 @@ func (cr *CatalogRoutes) Route(r *gin.RouterGroup) {
 
 	product := api.Group("/product")
 	{
-		product.POST("", cr.Handler.CreateProduct)
-		product.PUT("/:id", cr.Handler.UpdateProduct)
-		product.DELETE("/:id", cr.Handler.DeleteProduct)
 		product.GET("", cr.Handler.FindAllProducts)
 		product.GET("/:id", cr.Handler.FindProductByID)
-		product.PATCH("/:id/stock", cr.Handler.UpdateProductStock)
+
+		sellerProduct := product.Group("", middleware.Authenticate(), middleware.RequireUserType(constant.Seller))
+		sellerProduct.POST("", cr.Handler.CreateProduct)
+		sellerProduct.PUT("/:id", cr.Handler.UpdateProduct)
+		sellerProduct.DELETE("/:id", cr.Handler.DeleteProduct)
+		sellerProduct.PATCH("/:id/stock", cr.Handler.UpdateProductStock)
 	}
 
 	category := api.Group("/category")
