@@ -59,7 +59,7 @@ func TestProductRepositoryUpdateReturnsNoRowsError(t *testing.T) {
 	}
 	db, mock := newMockDB(t)
 	mock.ExpectExec(productQueryUpdate).
-		WithArgs(product.SellerID, product.CategoryID, product.Name, product.SKU, nil, product.Price, nil, product.IsActive, product.UpdatedAt, product.ID).
+		WithArgs(product.SellerID, product.CategoryID, product.Name, product.SKU, nil, product.Price, nil, product.IsActive, product.UpdatedAt, product.ID, product.SellerID).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	got, err := NewProductRepository(db).Update(context.Background(), product)
@@ -75,10 +75,10 @@ func TestProductRepositorySoftDelete(t *testing.T) {
 	now := time.Date(2026, time.June, 3, 15, 0, 0, 0, time.UTC)
 	db, mock := newMockDB(t)
 	mock.ExpectExec(productQuerySoftDelete).
-		WithArgs(now, "product-1").
+		WithArgs(now, "product-1", "seller-1").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	got, err := NewProductRepository(db).SoftDelete(context.Background(), "product-1", now)
+	got, err := NewProductRepository(db).SoftDelete(context.Background(), "product-1", "seller-1", now)
 	if err != nil {
 		t.Fatalf("SoftDelete returned error: %v", err)
 	}

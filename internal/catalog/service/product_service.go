@@ -69,7 +69,7 @@ func (p *ProductServiceImpl) SoftDelete(ctx context.Context, productID string, s
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
 	}
 
-	rowsAffected, err := p.Repo.SoftDelete(ctx, productID, time.Now())
+	rowsAffected, err := p.Repo.SoftDelete(ctx, productID, sellerID, time.Now())
 	if err != nil {
 		return err
 	}

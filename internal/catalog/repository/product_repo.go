@@ -14,8 +14,8 @@ import (
 const (
 	productSelectColumns     = "id, seller_id, category_id, name, sku, description, price, image_url, is_active, created_at, updated_at"
 	productQueryCreate       = "INSERT INTO public.products (seller_id, category_id, name, sku, description, price, image_url, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id"
-	productQueryUpdate       = "UPDATE public.products SET seller_id=$1, category_id=$2, name=$3, sku=$4, description=$5, price=$6, image_url=$7, is_active=$8, updated_at=$9 WHERE id=$10"
-	productQuerySoftDelete   = "UPDATE public.products SET is_active=false, updated_at=$1 WHERE id=$2"
+	productQueryUpdate       = "UPDATE public.products SET seller_id=$1, category_id=$2, name=$3, sku=$4, description=$5, price=$6, image_url=$7, is_active=$8, updated_at=$9 WHERE id=$10 AND seller_id=$11"
+	productQuerySoftDelete   = "UPDATE public.products SET is_active=false, updated_at=$1 WHERE id=$2 AND seller_id=$3"
 	productQueryFindByID     = "SELECT " + productSelectColumns + " FROM public.products WHERE id=$1"
 	productQueryFindBySeller = "SELECT " + productSelectColumns + " FROM public.products WHERE seller_id=$1 AND is_active=true"
 	productQueryUpdateStock  = `
@@ -84,6 +84,7 @@ func (r *ProductRepository) Update(ctx context.Context, data *model.Product) (in
 		data.IsActive,
 		data.UpdatedAt,
 		data.ID,
+		data.SellerID,
 	)
 
 	if err != nil {
@@ -102,8 +103,8 @@ func (r *ProductRepository) Update(ctx context.Context, data *model.Product) (in
 	return rowsAffected, nil
 }
 
-func (r *ProductRepository) SoftDelete(ctx context.Context, id string, updatedAt time.Time) (int64, error) {
-	result, err := r.DB.ExecContext(ctx, productQuerySoftDelete, updatedAt, id)
+func (r *ProductRepository) SoftDelete(ctx context.Context, id string, sellerID string, updatedAt time.Time) (int64, error) {
+	result, err := r.DB.ExecContext(ctx, productQuerySoftDelete, updatedAt, id, sellerID)
 	if err != nil {
 		return 0, response.ExecError("soft delete product", err)
 	}

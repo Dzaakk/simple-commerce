@@ -23,7 +23,7 @@ type ProductService interface {
 type ProductRepository interface {
 	Create(ctx context.Context, data *model.Product) (string, error)
 	Update(ctx context.Context, data *model.Product) (int64, error)
-	SoftDelete(ctx context.Context, productID string, updatedAt time.Time) (int64, error)
+	SoftDelete(ctx context.Context, productID string, sellerID string, updatedAt time.Time) (int64, error)
 	FindByID(ctx context.Context, productID string) (*model.Product, error)
 	FindBySellerID(ctx context.Context, sellerID string) ([]*model.Product, error)
 	FindAll(ctx context.Context, filter repo.ProductFilter) ([]*model.Product, error)

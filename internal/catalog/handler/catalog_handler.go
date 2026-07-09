@@ -29,6 +29,13 @@ func (h *CatalogHandler) CreateProduct(ctx *gin.Context) {
 		return
 	}
 
+	sellerID, ok := getSellerID(ctx, req.SellerID)
+	if !ok {
+		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
+		return
+	}
+	req.SellerID = sellerID
+
 	id, err := h.ProductService.Create(ctx, &req)
 	if err != nil {
 		ctx.Error(err)
@@ -45,9 +52,9 @@ func (h *CatalogHandler) UpdateProduct(ctx *gin.Context) {
 		return
 	}
 
-	sellerID := ctx.Query("seller_id")
-	if sellerID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
+	sellerID, ok := getSellerID(ctx, "")
+	if !ok {
+		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
 		return
 	}
 
@@ -72,9 +79,9 @@ func (h *CatalogHandler) DeleteProduct(ctx *gin.Context) {
 		return
 	}
 
-	sellerID := ctx.Query("seller_id")
-	if sellerID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
+	sellerID, ok := getSellerID(ctx, "")
+	if !ok {
+		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
 		return
 	}
 
@@ -132,10 +139,17 @@ func (h *CatalogHandler) UpdateProductStock(ctx *gin.Context) {
 		return
 	}
 
-	if req.ProductID == "" || req.SellerID == "" {
+	if req.ProductID == "" {
 		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
+
+	sellerID, ok := getSellerID(ctx, req.SellerID)
+	if !ok {
+		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
+		return
+	}
+	req.SellerID = sellerID
 
 	if err := h.ProductService.UpdateStock(ctx, req.ProductID, req.SellerID, req.Quantity); err != nil {
 		ctx.Error(err)
@@ -169,6 +183,22 @@ func (h *CatalogHandler) FindAllCategories(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response.Success(data))
+}
+
+func getSellerID(ctx *gin.Context, requestSellerID string) (string, bool) {
+	if idVal, exists := ctx.Get("id"); exists {
+		if id, ok := idVal.(string); ok && id != "" {
+			if requestSellerID != "" && requestSellerID != id {
+				return "", false
+			}
+			if queryID := ctx.Query("seller_id"); queryID != "" && queryID != id {
+				return "", false
+			}
+			return id, true
+		}
+	}
+
+	return "", false
 }
 
 func (h *CatalogHandler) FindCategoryByID(ctx *gin.Context) {
