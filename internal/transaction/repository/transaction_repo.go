@@ -18,7 +18,14 @@ const (
 	transactionQueryFindByID                = "SELECT " + transactionSelectColumns + " FROM public.transactions WHERE id=$1"
 	transactionQueryFindByOrderID           = "SELECT " + transactionSelectColumns + " FROM public.transactions WHERE order_id=$1"
 	transactionQueryFindByTransactionNumber = "SELECT " + transactionSelectColumns + " FROM public.transactions WHERE transaction_number=$1"
-	transactionQueryUpdateStatus            = "UPDATE public.transactions SET status=$1, paid_at=$2, updated_at=$3 WHERE id=$4"
+	transactionQueryNextNumber              = `
+		INSERT INTO public.business_number_counters (name, counter_date, value, updated_at)
+		VALUES ('transaction', $1, 1, $2)
+		ON CONFLICT (name, counter_date)
+		DO UPDATE SET value = public.business_number_counters.value + 1, updated_at = EXCLUDED.updated_at
+		RETURNING value
+	`
+	transactionQueryUpdateStatus = "UPDATE public.transactions SET status=$1, paid_at=$2, updated_at=$3 WHERE id=$4"
 )
 
 type TransactionRepository struct {
@@ -96,22 +103,14 @@ func (r *TransactionRepository) UpdateStatus(ctx context.Context, tx *sql.Tx, tr
 func (r *TransactionRepository) GenerateTransactionNumber(ctx context.Context) (string, error) {
 	now := time.Now()
 	dateStr := now.Format("20060102")
+	counterDate := now.Format("2006-01-02")
 
-	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	end := start.Add(24 * time.Hour)
-
-	var count int
-	err := r.DB.QueryRowContext(
-		ctx,
-		"SELECT COUNT(*) FROM public.transactions WHERE created_at >= $1 AND created_at < $2",
-		start,
-		end,
-	).Scan(&count)
+	var seq int64
+	err := r.DB.QueryRowContext(ctx, transactionQueryNextNumber, counterDate, now).Scan(&seq)
 	if err != nil {
-		return "", response.Error("failed to count transactions", err)
+		return "", response.Error("failed to generate transaction number", err)
 	}
 
-	seq := count + 1
 	return fmt.Sprintf("TRX-%s-%04d", dateStr, seq), nil
 }
 

@@ -193,6 +193,19 @@ CREATE TABLE cart_items (
 );
 
 -- ============================================
+-- BUSINESS NUMBER COUNTER
+-- Atomic daily counters for human-readable order and transaction numbers.
+-- ============================================
+CREATE TABLE business_number_counters (
+    name         VARCHAR(50) NOT NULL,
+    counter_date DATE NOT NULL,
+    value        BIGINT NOT NULL CHECK (value > 0),
+    updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_business_number_counters PRIMARY KEY (name, counter_date)
+);
+
+-- ============================================
 -- ORDER
 -- ============================================
 CREATE TABLE orders (

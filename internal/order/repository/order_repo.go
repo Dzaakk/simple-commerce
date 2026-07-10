@@ -15,8 +15,15 @@ import (
 const (
 	orderSelectColumns = "id, order_number, customer_id, status, total_amount, shipping_address, created_at, updated_at"
 
-	orderQueryCreate      = "INSERT INTO public.orders (order_number, customer_id, status, total_amount, shipping_address, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
-	orderQueryFindByID    = "SELECT " + orderSelectColumns + " FROM public.orders WHERE id=$1"
+	orderQueryCreate     = "INSERT INTO public.orders (order_number, customer_id, status, total_amount, shipping_address, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+	orderQueryFindByID   = "SELECT " + orderSelectColumns + " FROM public.orders WHERE id=$1"
+	orderQueryNextNumber = `
+		INSERT INTO public.business_number_counters (name, counter_date, value, updated_at)
+		VALUES ('order', $1, 1, $2)
+		ON CONFLICT (name, counter_date)
+		DO UPDATE SET value = public.business_number_counters.value + 1, updated_at = EXCLUDED.updated_at
+		RETURNING value
+	`
 	orderQueryUpdateStatus = "UPDATE public.orders SET status=$1, updated_at=$2 WHERE id=$3"
 )
 
@@ -115,22 +122,14 @@ func (r *OrderRepository) UpdateStatus(ctx context.Context, tx *sql.Tx, orderID 
 func (r *OrderRepository) GenerateOrderNumber(ctx context.Context) (string, error) {
 	now := time.Now()
 	dateStr := now.Format("20060102")
+	counterDate := now.Format("2006-01-02")
 
-	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	end := start.Add(24 * time.Hour)
-
-	var count int
-	err := r.DB.QueryRowContext(
-		ctx,
-		"SELECT COUNT(*) FROM public.orders WHERE created_at >= $1 AND created_at < $2",
-		start,
-		end,
-	).Scan(&count)
+	var seq int64
+	err := r.DB.QueryRowContext(ctx, orderQueryNextNumber, counterDate, now).Scan(&seq)
 	if err != nil {
-		return "", response.Error("failed to count orders", err)
+		return "", response.Error("failed to generate order number", err)
 	}
 
-	seq := count + 1
 	return fmt.Sprintf("ORD-%s-%04d", dateStr, seq), nil
 }
 
