@@ -3,6 +3,10 @@ BIN_DIR := bin
 GO := go
 AIR := air
 DOCKER_COMPOSE := docker compose
+K6 := k6
+K6_BASE_URL ?= http://localhost:8080
+K6_PRODUCT_LIMIT ?= 100
+K6_DURATION ?= 3m
 
 ifeq ($(OS),Windows_NT)
 	BINARY := $(BIN_DIR)/$(APP_NAME).exe
@@ -92,60 +96,28 @@ k6-smoke:
 	k6 run tests/k6/smoke.js
 
 k6-load-v1-100:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v1/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 100 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v1/product --env PRODUCT_DETAIL_ENDPOINT=/api/v1/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 100 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 k6-load-v1-300:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v1/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 300 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v1/product --env PRODUCT_DETAIL_ENDPOINT=/api/v1/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 300 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 k6-load-v1-500:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v1/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 500 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v1/product --env PRODUCT_DETAIL_ENDPOINT=/api/v1/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 500 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 k6-load-v1-1000:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v1/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v1/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 1000 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v1/product --env PRODUCT_DETAIL_ENDPOINT=/api/v1/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 1000 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 k6-load-v2-100:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v2/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 100 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v2/product --env PRODUCT_DETAIL_ENDPOINT=/api/v2/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 100 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 k6-load-v2-300:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v2/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 300 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v2/product --env PRODUCT_DETAIL_ENDPOINT=/api/v2/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 300 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 k6-load-v2-500:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v2/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 500 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v2/product --env PRODUCT_DETAIL_ENDPOINT=/api/v2/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 500 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 k6-load-v2-1000:
-	BASE_URL=http://localhost:8080 \
-	PRODUCT_LIST_ENDPOINT=/api/v2/product \
-	PRODUCT_DETAIL_ENDPOINT=/api/v2/product \
-	PRODUCT_LIMIT=100 \
-	k6 run --vus 1000 --duration 3m tests/k6/catalog-browsing.js
+	$(K6) run --env BASE_URL=$(K6_BASE_URL) --env PRODUCT_LIST_ENDPOINT=/api/v2/product --env PRODUCT_DETAIL_ENDPOINT=/api/v2/product --env PRODUCT_LIMIT=$(K6_PRODUCT_LIMIT) --vus 1000 --duration $(K6_DURATION) tests/k6/catalog-browsing.js
 
 clean:
 	$(CLEAN_BIN)
