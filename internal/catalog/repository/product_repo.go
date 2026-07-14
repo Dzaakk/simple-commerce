@@ -157,6 +157,9 @@ func (r *ProductRepository) FindBySellerID(ctx context.Context, sellerID string)
 
 		products = append(products, &p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, response.Error("failed to iterate products by seller", err)
+	}
 
 	return products, nil
 }
@@ -192,6 +195,9 @@ func (r *ProductRepository) FindAll(ctx context.Context, filter ProductFilter) (
 		}
 
 		products = append(products, &p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, response.Error("failed to iterate products", err)
 	}
 
 	return products, nil

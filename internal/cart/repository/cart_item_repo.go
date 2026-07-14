@@ -51,6 +51,9 @@ func (r *CartItemRepository) GetCartItems(ctx context.Context, cartID string) ([
 
 		items = append(items, &item)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, response.Error("failed to iterate cart items", err)
+	}
 
 	return items, nil
 }

@@ -75,6 +75,9 @@ func (r *CategoryRepository) FindAll(ctx context.Context) ([]*model.Category, er
 
 		categories = append(categories, &c)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, response.Error("failed to iterate categories", err)
+	}
 
 	return categories, nil
 }

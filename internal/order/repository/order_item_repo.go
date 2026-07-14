@@ -85,6 +85,9 @@ func (r *OrderItemRepository) FindByOrderID(ctx context.Context, orderID string)
 
 		items = append(items, &item)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, response.Error("failed to iterate order items", err)
+	}
 
 	return items, nil
 }

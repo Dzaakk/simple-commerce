@@ -94,6 +94,9 @@ func (r *OrderRepository) FindByCustomerID(ctx context.Context, customerID strin
 
 		orders = append(orders, &o)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, response.Error("failed to iterate orders", err)
+	}
 
 	return orders, nil
 }
