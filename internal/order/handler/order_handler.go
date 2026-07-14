@@ -34,7 +34,7 @@ func (h *OrderHandler) CreateOrder(ctx *gin.Context) {
 		}
 	}
 
-	res, err := h.Service.CreateOrder(ctx, &req)
+	res, err := h.Service.CreateOrder(ctx.Request.Context(), &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -56,7 +56,7 @@ func (h *OrderHandler) GetOrders(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.Service.GetOrdersByCustomer(ctx, customerID, filter)
+	data, err := h.Service.GetOrdersByCustomer(ctx.Request.Context(), customerID, filter)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -78,7 +78,7 @@ func (h *OrderHandler) GetOrderDetail(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.Service.GetOrderByID(ctx, customerID, orderID)
+	data, err := h.Service.GetOrderByID(ctx.Request.Context(), customerID, orderID)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -100,7 +100,7 @@ func (h *OrderHandler) CancelOrder(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Service.CancelOrder(ctx, customerID, orderID); err != nil {
+	if err := h.Service.CancelOrder(ctx.Request.Context(), customerID, orderID); err != nil {
 		ctx.Error(err)
 		return
 	}

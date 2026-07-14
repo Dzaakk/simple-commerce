@@ -29,7 +29,7 @@ func (h *CartHandler) GetCart(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.Service.GetCartItems(ctx, customerID)
+	data, err := h.Service.GetCartItems(ctx.Request.Context(), customerID)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -51,7 +51,7 @@ func (h *CartHandler) AddItem(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.Service.AddItem(ctx, customerID, req.ProductID, req.Quantity)
+	data, err := h.Service.AddItem(ctx.Request.Context(), customerID, req.ProductID, req.Quantity)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -73,7 +73,7 @@ func (h *CartHandler) UpdateItem(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.Service.UpdateItem(ctx, customerID, req.ProductID, req.Quantity)
+	data, err := h.Service.UpdateItem(ctx.Request.Context(), customerID, req.ProductID, req.Quantity)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -95,7 +95,7 @@ func (h *CartHandler) DeleteItem(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Service.DeleteItem(ctx, customerID, productID); err != nil {
+	if err := h.Service.DeleteItem(ctx.Request.Context(), customerID, productID); err != nil {
 		ctx.Error(err)
 		return
 	}
@@ -110,7 +110,7 @@ func (h *CartHandler) ClearItems(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Service.ClearItems(ctx, customerID); err != nil {
+	if err := h.Service.ClearItems(ctx.Request.Context(), customerID); err != nil {
 		ctx.Error(err)
 		return
 	}

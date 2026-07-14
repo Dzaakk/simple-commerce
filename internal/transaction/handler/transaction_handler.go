@@ -32,7 +32,7 @@ func (h *TransactionHandler) CreateTransaction(ctx *gin.Context) {
 		}
 	}
 
-	res, err := h.Service.CreateTransaction(ctx, &req)
+	res, err := h.Service.CreateTransaction(ctx.Request.Context(), &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -54,7 +54,7 @@ func (h *TransactionHandler) GetTransactionByID(ctx *gin.Context) {
 		return
 	}
 
-	res, err := h.Service.GetTransactionByID(ctx, customerID, transactionID)
+	res, err := h.Service.GetTransactionByID(ctx.Request.Context(), customerID, transactionID)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -76,7 +76,7 @@ func (h *TransactionHandler) GetTransactionByOrderID(ctx *gin.Context) {
 		return
 	}
 
-	res, err := h.Service.GetTransactionByOrderID(ctx, customerID, orderID)
+	res, err := h.Service.GetTransactionByOrderID(ctx.Request.Context(), customerID, orderID)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -92,7 +92,7 @@ func (h *TransactionHandler) PaymentCallback(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Service.HandlePaymentCallback(ctx, &req); err != nil {
+	if err := h.Service.HandlePaymentCallback(ctx.Request.Context(), &req); err != nil {
 		ctx.Error(err)
 		return
 	}
@@ -107,7 +107,7 @@ func (h *TransactionHandler) ExpireTransaction(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Service.ExpireTransaction(ctx, transactionID); err != nil {
+	if err := h.Service.ExpireTransaction(ctx.Request.Context(), transactionID); err != nil {
 		ctx.Error(err)
 		return
 	}

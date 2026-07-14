@@ -29,7 +29,7 @@ func (h *UserHandler) FindCustomerByID(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.CustomerService.FindByID(ctx, customerID)
+	data, err := h.CustomerService.FindByID(ctx.Request.Context(), customerID)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -50,7 +50,7 @@ func (h *UserHandler) FindCustomerByEmail(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.CustomerService.FindByEmail(ctx, email)
+	data, err := h.CustomerService.FindByEmail(ctx.Request.Context(), email)
 	if err != nil {
 		ctx.Error(err)
 		return

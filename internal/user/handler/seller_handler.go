@@ -14,7 +14,7 @@ func (h *UserHandler) FindSellerByName(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.SellerService.FindByShopName(ctx, name)
+	data, err := h.SellerService.FindByShopName(ctx.Request.Context(), name)
 	if err != nil {
 		ctx.Error(err)
 		return

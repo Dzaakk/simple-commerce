@@ -27,7 +27,7 @@ func (h *AuthHandler) RegisterCustomer(ctx *gin.Context) {
 		return
 	}
 
-	err := h.service.RegisterCustomer(ctx, &data)
+	err := h.service.RegisterCustomer(ctx.Request.Context(), &data)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -44,7 +44,7 @@ func (h *AuthHandler) RegisterSeller(ctx *gin.Context) {
 		return
 	}
 
-	err := h.service.RegisterSeller(ctx, &data)
+	err := h.service.RegisterSeller(ctx.Request.Context(), &data)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -60,7 +60,7 @@ func (h *AuthHandler) VerifyEmail(ctx *gin.Context) {
 		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
-	err := h.service.VerifyEmail(ctx, activationCode)
+	err := h.service.VerifyEmail(ctx.Request.Context(), activationCode)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -82,7 +82,7 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		UserType: body.UserType,
 	}
 
-	res, err := h.service.Login(ctx, req)
+	res, err := h.service.Login(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -98,7 +98,7 @@ func (h *AuthHandler) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
-	res, err := h.service.RefreshToken(ctx, body.RefreshToken)
+	res, err := h.service.RefreshToken(ctx.Request.Context(), body.RefreshToken)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -113,7 +113,7 @@ func (h *AuthHandler) Logout(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.service.Logout(ctx, body.RefreshToken); err != nil {
+	if err := h.service.Logout(ctx.Request.Context(), body.RefreshToken); err != nil {
 		ctx.Error(err)
 		return
 	}

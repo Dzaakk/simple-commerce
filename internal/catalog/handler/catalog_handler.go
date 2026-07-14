@@ -36,7 +36,7 @@ func (h *CatalogHandler) CreateProduct(ctx *gin.Context) {
 	}
 	req.SellerID = sellerID
 
-	id, err := h.ProductService.Create(ctx, &req)
+	id, err := h.ProductService.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -64,7 +64,7 @@ func (h *CatalogHandler) UpdateProduct(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.ProductService.Update(ctx, productID, sellerID, &req); err != nil {
+	if err := h.ProductService.Update(ctx.Request.Context(), productID, sellerID, &req); err != nil {
 		ctx.Error(err)
 		return
 	}
@@ -85,7 +85,7 @@ func (h *CatalogHandler) DeleteProduct(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.ProductService.SoftDelete(ctx, productID, sellerID); err != nil {
+	if err := h.ProductService.SoftDelete(ctx.Request.Context(), productID, sellerID); err != nil {
 		ctx.Error(err)
 		return
 	}
@@ -100,7 +100,7 @@ func (h *CatalogHandler) FindProductByID(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.ProductService.FindByID(ctx, productID)
+	data, err := h.ProductService.FindByID(ctx.Request.Context(), productID)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -120,7 +120,7 @@ func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.ProductService.FindAll(ctx, req)
+	data, err := h.ProductService.FindAll(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -151,7 +151,7 @@ func (h *CatalogHandler) UpdateProductStock(ctx *gin.Context) {
 	}
 	req.SellerID = sellerID
 
-	if err := h.ProductService.UpdateStock(ctx, req.ProductID, req.SellerID, req.Quantity); err != nil {
+	if err := h.ProductService.UpdateStock(ctx.Request.Context(), req.ProductID, req.SellerID, req.Quantity); err != nil {
 		ctx.Error(err)
 		return
 	}
@@ -166,7 +166,7 @@ func (h *CatalogHandler) CreateCategory(ctx *gin.Context) {
 		return
 	}
 
-	id, err := h.CategoryService.Create(ctx, &req)
+	id, err := h.CategoryService.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -176,7 +176,7 @@ func (h *CatalogHandler) CreateCategory(ctx *gin.Context) {
 }
 
 func (h *CatalogHandler) FindAllCategories(ctx *gin.Context) {
-	data, err := h.CategoryService.FindAll(ctx)
+	data, err := h.CategoryService.FindAll(ctx.Request.Context())
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -214,7 +214,7 @@ func (h *CatalogHandler) FindCategoryByID(ctx *gin.Context) {
 		return
 	}
 
-	data, err := h.CategoryService.FindByID(ctx, id)
+	data, err := h.CategoryService.FindByID(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.Error(err)
 		return
