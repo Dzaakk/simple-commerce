@@ -15,22 +15,22 @@ const (
 )
 
 type CartRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewCartRepository(db *sql.DB) *CartRepository {
-	return &CartRepository{DB: db}
+	return &CartRepository{db: db}
 }
 
 func (r *CartRepository) GetCartByCustomerID(ctx context.Context, customerID string) (*model.Cart, error) {
-	row := r.DB.QueryRowContext(ctx, cartQueryFindByCustomerID, customerID)
+	row := r.db.QueryRowContext(ctx, cartQueryFindByCustomerID, customerID)
 
 	return scanCart(row)
 }
 
 func (r *CartRepository) GetOrCreateCart(ctx context.Context, customerID string) (*model.Cart, error) {
 	now := time.Now()
-	row := r.DB.QueryRowContext(ctx, cartQueryGetOrCreate, customerID, now, now)
+	row := r.db.QueryRowContext(ctx, cartQueryGetOrCreate, customerID, now, now)
 
 	return scanCart(row)
 }

@@ -21,17 +21,17 @@ const (
 )
 
 type RefreshTokenRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewRefreshTokenRepository(db *sql.DB) *RefreshTokenRepository {
-	return &RefreshTokenRepository{DB: db}
+	return &RefreshTokenRepository{db: db}
 }
 
 func (r *RefreshTokenRepository) Create(ctx context.Context, data *model.RefreshToken) (int64, error) {
 	var id int64
 
-	err := r.DB.QueryRowContext(
+	err := r.db.QueryRowContext(
 		ctx,
 		refreshTokenQueryCreate,
 		data.UserID,
@@ -49,13 +49,13 @@ func (r *RefreshTokenRepository) Create(ctx context.Context, data *model.Refresh
 }
 
 func (r *RefreshTokenRepository) FindByUserID(ctx context.Context, userID string) (*model.RefreshToken, error) {
-	row := r.DB.QueryRowContext(ctx, refreshTokenQueryFindByUser, userID)
+	row := r.db.QueryRowContext(ctx, refreshTokenQueryFindByUser, userID)
 
 	return scanRefreshToken(row)
 }
 
 func (r *RefreshTokenRepository) SetExpire(ctx context.Context, id int64, expiresAt time.Time) (int64, error) {
-	result, err := r.DB.ExecContext(ctx, refreshTokenQuerySetExpire, expiresAt, id)
+	result, err := r.db.ExecContext(ctx, refreshTokenQuerySetExpire, expiresAt, id)
 	if err != nil {
 		return 0, response.ExecError("update refresh token expiry", err)
 	}
@@ -72,13 +72,13 @@ func (r *RefreshTokenRepository) SetExpire(ctx context.Context, id int64, expire
 }
 
 func (r *RefreshTokenRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*model.RefreshToken, error) {
-	row := r.DB.QueryRowContext(ctx, refreshTokenQueryFindByTokenHash, tokenHash)
+	row := r.db.QueryRowContext(ctx, refreshTokenQueryFindByTokenHash, tokenHash)
 
 	return scanRefreshToken(row)
 }
 
 func (r *RefreshTokenRepository) Revoke(ctx context.Context, tokenHash string) error {
-	_, err := r.DB.ExecContext(ctx, refreshTokenQueryRevoke, tokenHash)
+	_, err := r.db.ExecContext(ctx, refreshTokenQueryRevoke, tokenHash)
 	if err != nil {
 		return response.Error("failed to revoke refresh token", err)
 	}
@@ -87,7 +87,7 @@ func (r *RefreshTokenRepository) Revoke(ctx context.Context, tokenHash string) e
 }
 
 func (r *RefreshTokenRepository) RevokeAllByUser(ctx context.Context, userID string, userType constant.UserType) error {
-	_, err := r.DB.ExecContext(ctx, refreshTokenQueryRevokeAllByUser, userID, userType)
+	_, err := r.db.ExecContext(ctx, refreshTokenQueryRevokeAllByUser, userID, userType)
 	if err != nil {
 		return response.Error("failed to revoke all refresh tokens for user", err)
 	}

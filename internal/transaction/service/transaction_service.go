@@ -13,22 +13,22 @@ import (
 )
 
 type TransactionServiceImpl struct {
-	DB              *sql.DB
-	TxRepo          TransactionRepository
-	OrderRepo       OrderRepository
-	OrderItemRepo   OrderItemRepository
-	OrderService    OrderService
-	InventoryService InventoryService
+	db               *sql.DB
+	txRepo           TransactionRepository
+	orderRepo        OrderRepository
+	orderItemRepo    OrderItemRepository
+	orderService     OrderService
+	inventoryService InventoryService
 }
 
-func NewTransactionService(db *sql.DB, txRepo TransactionRepository, orderRepo OrderRepository, orderItemRepo OrderItemRepository, orderService OrderService, inventoryService InventoryService) TransactionService {
+func NewTransactionService(db *sql.DB, txRepo TransactionRepository, orderRepo OrderRepository, orderItemRepo OrderItemRepository, orderService OrderService, inventoryService InventoryService) *TransactionServiceImpl {
 	return &TransactionServiceImpl{
-		DB:               db,
-		TxRepo:           txRepo,
-		OrderRepo:        orderRepo,
-		OrderItemRepo:    orderItemRepo,
-		OrderService:     orderService,
-		InventoryService: inventoryService,
+		db:               db,
+		txRepo:           txRepo,
+		orderRepo:        orderRepo,
+		orderItemRepo:    orderItemRepo,
+		orderService:     orderService,
+		inventoryService: inventoryService,
 	}
 }
 
@@ -46,7 +46,7 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter payment method")
 	}
 
-	order, err := s.OrderRepo.FindByID(ctx, req.OrderID)
+	order, err := s.orderRepo.FindByID(ctx, req.OrderID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 		return nil, response.NewAppError(http.StatusConflict, "order status is not pending")
 	}
 
-	existing, err := s.TxRepo.FindByOrderID(ctx, req.OrderID)
+	existing, err := s.txRepo.FindByOrderID(ctx, req.OrderID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 		return nil, response.NewAppError(http.StatusConflict, "transaction already exists")
 	}
 
-	txNumber, err := s.TxRepo.GenerateTransactionNumber(ctx)
+	txNumber, err := s.txRepo.GenerateTransactionNumber(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,13 +84,13 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 		UpdatedAt:         now,
 	}
 
-	tx, err := s.DB.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
-	id, err := s.TxRepo.Create(ctx, tx, data)
+	id, err := s.txRepo.Create(ctx, tx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (s *TransactionServiceImpl) GetTransactionByID(ctx context.Context, custome
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter")
 	}
 
-	txData, err := s.TxRepo.FindByID(ctx, transactionID)
+	txData, err := s.txRepo.FindByID(ctx, transactionID)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (s *TransactionServiceImpl) GetTransactionByID(ctx context.Context, custome
 		return nil, response.NewAppError(http.StatusNotFound, "transaction not found")
 	}
 
-	order, err := s.OrderRepo.FindByID(ctx, txData.OrderID)
+	order, err := s.orderRepo.FindByID(ctx, txData.OrderID)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (s *TransactionServiceImpl) GetTransactionByOrderID(ctx context.Context, cu
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter")
 	}
 
-	order, err := s.OrderRepo.FindByID(ctx, orderID)
+	order, err := s.orderRepo.FindByID(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (s *TransactionServiceImpl) GetTransactionByOrderID(ctx context.Context, cu
 		return nil, response.NewAppError(http.StatusUnauthorized, "unauthorized")
 	}
 
-	txData, err := s.TxRepo.FindByOrderID(ctx, orderID)
+	txData, err := s.txRepo.FindByOrderID(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 		return response.NewAppError(http.StatusBadRequest, "invalid signature")
 	}
 
-	txData, err := s.TxRepo.FindByTransactionNumber(ctx, req.TransactionNumber)
+	txData, err := s.txRepo.FindByTransactionNumber(ctx, req.TransactionNumber)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter status")
 	}
 
-	order, err := s.OrderRepo.FindByID(ctx, txData.OrderID)
+	order, err := s.orderRepo.FindByID(ctx, txData.OrderID)
 	if err != nil {
 		return err
 	}
@@ -198,12 +198,12 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 		return response.NewAppError(http.StatusNotFound, "order not found")
 	}
 
-	items, err := s.OrderItemRepo.FindByOrderID(ctx, order.ID)
+	items, err := s.orderItemRepo.FindByOrderID(ctx, order.ID)
 	if err != nil {
 		return err
 	}
 
-	tx, err := s.DB.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -215,27 +215,27 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 		paidAt = &now
 	}
 
-	if err := s.TxRepo.UpdateStatus(ctx, tx, txData.ID, newStatus, paidAt); err != nil {
+	if err := s.txRepo.UpdateStatus(ctx, tx, txData.ID, newStatus, paidAt); err != nil {
 		return err
 	}
 
 	switch newStatus {
 	case constant.TransactionSuccess:
-		if err := s.OrderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderConfirmed); err != nil {
+		if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderConfirmed); err != nil {
 			return err
 		}
 	case constant.TransactionFailed, constant.TransactionExpired:
-		if err := s.OrderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
+		if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
 			return err
 		}
-		if err := releaseOrderItems(ctx, tx, items, s.InventoryService); err != nil {
+		if err := releaseOrderItems(ctx, tx, items, s.inventoryService); err != nil {
 			return err
 		}
 	case constant.TransactionRefunded:
-		if err := s.OrderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
+		if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
 			return err
 		}
-		if err := releaseOrderItems(ctx, tx, items, s.InventoryService); err != nil {
+		if err := releaseOrderItems(ctx, tx, items, s.inventoryService); err != nil {
 			return err
 		}
 	default:
@@ -250,7 +250,7 @@ func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transact
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter transaction id")
 	}
 
-	txData, err := s.TxRepo.FindByID(ctx, transactionID)
+	txData, err := s.txRepo.FindByID(ctx, transactionID)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transact
 		return nil
 	}
 
-	order, err := s.OrderRepo.FindByID(ctx, txData.OrderID)
+	order, err := s.orderRepo.FindByID(ctx, txData.OrderID)
 	if err != nil {
 		return err
 	}
@@ -271,24 +271,24 @@ func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transact
 		return response.NewAppError(http.StatusNotFound, "order not found")
 	}
 
-	items, err := s.OrderItemRepo.FindByOrderID(ctx, order.ID)
+	items, err := s.orderItemRepo.FindByOrderID(ctx, order.ID)
 	if err != nil {
 		return err
 	}
 
-	tx, err := s.DB.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	if err := s.TxRepo.UpdateStatus(ctx, tx, txData.ID, constant.TransactionExpired, nil); err != nil {
+	if err := s.txRepo.UpdateStatus(ctx, tx, txData.ID, constant.TransactionExpired, nil); err != nil {
 		return err
 	}
-	if err := s.OrderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
+	if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
 		return err
 	}
-	if err := releaseOrderItems(ctx, tx, items, s.InventoryService); err != nil {
+	if err := releaseOrderItems(ctx, tx, items, s.inventoryService); err != nil {
 		return err
 	}
 

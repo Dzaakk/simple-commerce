@@ -17,11 +17,11 @@ const (
 )
 
 type OrderItemRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewOrderItemRepository(db *sql.DB) *OrderItemRepository {
-	return &OrderItemRepository{DB: db}
+	return &OrderItemRepository{db: db}
 }
 
 func (r *OrderItemRepository) CreateBatch(ctx context.Context, tx *sql.Tx, items []*model.OrderItem) error {
@@ -59,7 +59,7 @@ func (r *OrderItemRepository) CreateBatch(ctx context.Context, tx *sql.Tx, items
 }
 
 func (r *OrderItemRepository) FindByOrderID(ctx context.Context, orderID string) ([]*model.OrderItem, error) {
-	rows, err := r.DB.QueryContext(ctx, orderItemQueryFindByOrderID, orderID)
+	rows, err := r.db.QueryContext(ctx, orderItemQueryFindByOrderID, orderID)
 	if err != nil {
 		return nil, response.Error("failed to query order items", err)
 	}

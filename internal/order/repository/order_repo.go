@@ -28,11 +28,11 @@ const (
 )
 
 type OrderRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewOrderRepository(db *sql.DB) *OrderRepository {
-	return &OrderRepository{DB: db}
+	return &OrderRepository{db: db}
 }
 
 func (r *OrderRepository) Create(ctx context.Context, tx *sql.Tx, data *model.Order) (string, error) {
@@ -60,7 +60,7 @@ func (r *OrderRepository) Create(ctx context.Context, tx *sql.Tx, data *model.Or
 }
 
 func (r *OrderRepository) FindByID(ctx context.Context, orderID string) (*model.Order, error) {
-	row := r.DB.QueryRowContext(ctx, orderQueryFindByID, orderID)
+	row := r.db.QueryRowContext(ctx, orderQueryFindByID, orderID)
 
 	return scanOrder(row)
 }
@@ -68,7 +68,7 @@ func (r *OrderRepository) FindByID(ctx context.Context, orderID string) (*model.
 func (r *OrderRepository) FindByCustomerID(ctx context.Context, customerID string, filter dto.OrderFilter) ([]*model.Order, error) {
 	query, args := buildOrderQuery(customerID, filter)
 
-	rows, err := r.DB.QueryContext(ctx, query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, response.Error("failed to query orders", err)
 	}
@@ -128,7 +128,7 @@ func (r *OrderRepository) GenerateOrderNumber(ctx context.Context) (string, erro
 	counterDate := now.Format("2006-01-02")
 
 	var seq int64
-	err := r.DB.QueryRowContext(ctx, orderQueryNextNumber, counterDate, now).Scan(&seq)
+	err := r.db.QueryRowContext(ctx, orderQueryNextNumber, counterDate, now).Scan(&seq)
 	if err != nil {
 		return "", response.Error("failed to generate order number", err)
 	}

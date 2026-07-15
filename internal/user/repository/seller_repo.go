@@ -19,17 +19,17 @@ const (
 )
 
 type SellerRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewSellerRepository(db *sql.DB) *SellerRepository {
-	return &SellerRepository{DB: db}
+	return &SellerRepository{db: db}
 }
 
 func (r *SellerRepository) Create(ctx context.Context, data *model.Seller) (string, error) {
 	var id string
 
-	err := r.DB.QueryRowContext(
+	err := r.db.QueryRowContext(
 		ctx,
 		sellerQueryCreate,
 		data.Email,
@@ -48,7 +48,7 @@ func (r *SellerRepository) Create(ctx context.Context, data *model.Seller) (stri
 }
 
 func (r *SellerRepository) Update(ctx context.Context, data *model.Seller) (int64, error) {
-	result, err := r.DB.ExecContext(
+	result, err := r.db.ExecContext(
 		ctx,
 		sellerQueryUpdate,
 		data.Email,
@@ -74,19 +74,19 @@ func (r *SellerRepository) Update(ctx context.Context, data *model.Seller) (int6
 }
 
 func (r *SellerRepository) FindByID(ctx context.Context, sellerID string) (*model.Seller, error) {
-	row := r.DB.QueryRowContext(ctx, sellerQueryFindByID, sellerID)
+	row := r.db.QueryRowContext(ctx, sellerQueryFindByID, sellerID)
 
 	return scanSeller(row)
 }
 
 func (r *SellerRepository) FindByEmail(ctx context.Context, email string) (*model.Seller, error) {
-	row := r.DB.QueryRowContext(ctx, sellerQueryFindByEmail, email)
+	row := r.db.QueryRowContext(ctx, sellerQueryFindByEmail, email)
 
 	return scanSeller(row)
 }
 
 func (r *SellerRepository) FindByShopName(ctx context.Context, name string) ([]*model.Seller, error) {
-	rows, err := r.DB.QueryContext(ctx, sellerQueryFindByName, "%"+name+"%")
+	rows, err := r.db.QueryContext(ctx, sellerQueryFindByName, "%"+name+"%")
 	if err != nil {
 		return nil, response.Error("failed to query sellers by shop name", err)
 	}
@@ -117,7 +117,7 @@ func (r *SellerRepository) FindByShopName(ctx context.Context, name string) ([]*
 }
 
 func (r *SellerRepository) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {
-	result, err := r.DB.ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
+	result, err := r.db.ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
 	if err != nil {
 		return response.ExecError("update seller status", err)
 	}

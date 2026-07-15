@@ -13,26 +13,26 @@ import (
 )
 
 type ProductServiceImpl struct {
-	Repo  ProductRepository
-	Redis *redis.Client
+	repo  ProductRepository
+	redis *redis.Client
 }
 
-func NewProductService(repo ProductRepository, redisClient ...*redis.Client) ProductService {
+func NewProductService(repo ProductRepository, redisClient ...*redis.Client) *ProductServiceImpl {
 	var cache *redis.Client
 	if len(redisClient) > 0 {
 		cache = redisClient[0]
 	}
 
 	return &ProductServiceImpl{
-		Repo:  repo,
-		Redis: cache,
+		repo:  repo,
+		redis: cache,
 	}
 }
 
 func (p *ProductServiceImpl) Create(ctx context.Context, req *dto.CreateProductReq) (string, error) {
 	data := req.ToCreateData()
 
-	id, err := p.Repo.Create(ctx, data)
+	id, err := p.repo.Create(ctx, data)
 	if err != nil {
 		return "", err
 	}
@@ -50,7 +50,7 @@ func (p *ProductServiceImpl) Update(ctx context.Context, productID string, selle
 
 	data := req.ToUpdateData(productID, sellerID)
 
-	rowsAffected, err := p.Repo.Update(ctx, data)
+	rowsAffected, err := p.repo.Update(ctx, data)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (p *ProductServiceImpl) SoftDelete(ctx context.Context, productID string, s
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
 	}
 
-	rowsAffected, err := p.Repo.SoftDelete(ctx, productID, sellerID, time.Now())
+	rowsAffected, err := p.repo.SoftDelete(ctx, productID, sellerID, time.Now())
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (p *ProductServiceImpl) SoftDelete(ctx context.Context, productID string, s
 }
 
 func (p *ProductServiceImpl) FindByID(ctx context.Context, productID string) (*dto.ProductRes, error) {
-	data, err := p.Repo.FindByID(ctx, productID)
+	data, err := p.repo.FindByID(ctx, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (p *ProductServiceImpl) FindByID(ctx context.Context, productID string) (*d
 func (p *ProductServiceImpl) FindByIDCached(ctx context.Context, productID string) (*dto.ProductRes, error) {
 	cacheKey := productDetailCacheKey(productID)
 	var cached dto.ProductRes
-	if readCatalogCache(ctx, p.Redis, cacheKey, &cached) {
+	if readCatalogCache(ctx, p.redis, cacheKey, &cached) {
 		return &cached, nil
 	}
 
@@ -106,7 +106,7 @@ func (p *ProductServiceImpl) FindByIDCached(ctx context.Context, productID strin
 		return nil, err
 	}
 
-	writeCatalogCache(ctx, p.Redis, cacheKey, data, catalogProductCacheTTL)
+	writeCatalogCache(ctx, p.redis, cacheKey, data, catalogProductCacheTTL)
 
 	return data, nil
 }
@@ -123,7 +123,7 @@ func (p *ProductServiceImpl) FindAll(ctx context.Context, req dto.ProductQueryRe
 		SortBy:     req.SortBy,
 	}
 
-	data, err := p.Repo.FindAll(ctx, filter)
+	data, err := p.repo.FindAll(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (p *ProductServiceImpl) FindAll(ctx context.Context, req dto.ProductQueryRe
 func (p *ProductServiceImpl) FindAllCached(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error) {
 	cacheKey, cacheable := productListCacheKey(req)
 	var cached dto.ProductListRes
-	if cacheable && readCatalogCache(ctx, p.Redis, cacheKey, &cached) {
+	if cacheable && readCatalogCache(ctx, p.redis, cacheKey, &cached) {
 		return &cached, nil
 	}
 
@@ -168,7 +168,7 @@ func (p *ProductServiceImpl) FindAllCached(ctx context.Context, req dto.ProductQ
 	}
 
 	if cacheable {
-		writeCatalogCacheAsync(p.Redis, cacheKey, data, catalogProductCacheTTL)
+		writeCatalogCacheAsync(p.redis, cacheKey, data, catalogProductCacheTTL)
 	}
 
 	return data, nil
@@ -185,7 +185,7 @@ func (p *ProductServiceImpl) UpdateStock(ctx context.Context, productID string, 
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter quantity")
 	}
 
-	return p.Repo.UpdateStock(ctx, productID, sellerID, quantity)
+	return p.repo.UpdateStock(ctx, productID, sellerID, quantity)
 }
 
 func buildProductCursor(sortBy string, p dto.ProductRes) string {

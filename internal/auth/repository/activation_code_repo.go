@@ -18,17 +18,17 @@ const (
 )
 
 type ActivationCodeRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewActivationCodeRepository(db *sql.DB) *ActivationCodeRepository {
-	return &ActivationCodeRepository{DB: db}
+	return &ActivationCodeRepository{db: db}
 }
 
 func (r *ActivationCodeRepository) Create(ctx context.Context, data *model.ActivationCode) (int64, error) {
 	var id int64
 
-	err := r.DB.QueryRowContext(
+	err := r.db.QueryRowContext(
 		ctx,
 		activationCodeQueryCreate,
 		data.Code,
@@ -47,13 +47,13 @@ func (r *ActivationCodeRepository) Create(ctx context.Context, data *model.Activ
 }
 
 func (r *ActivationCodeRepository) FindByEmailAndUserType(ctx context.Context, email, userType string) (*model.ActivationCode, error) {
-	row := r.DB.QueryRowContext(ctx, activationCodeQueryFindByEmailAndUT, email, userType)
+	row := r.db.QueryRowContext(ctx, activationCodeQueryFindByEmailAndUT, email, userType)
 
 	return scanActivationCode(row)
 }
 
 func (r *ActivationCodeRepository) FindByCode(ctx context.Context, code string) (*model.ActivationCode, error) {
-	row := r.DB.QueryRowContext(ctx, activationCodeQueryFindByCode, code)
+	row := r.db.QueryRowContext(ctx, activationCodeQueryFindByCode, code)
 
 	return scanActivationCode(row)
 }
@@ -68,7 +68,7 @@ func (r *ActivationCodeRepository) MarkAsUsedWithTx(ctx context.Context, tx *sql
 }
 
 func (r *ActivationCodeRepository) DeleteExpiredCodes(ctx context.Context) error {
-	_, err := r.DB.ExecContext(ctx, activationCodeQueryDeleteExpired)
+	_, err := r.db.ExecContext(ctx, activationCodeQueryDeleteExpired)
 	if err != nil {
 		return response.Error("failed to delete expired activation codes", err)
 	}

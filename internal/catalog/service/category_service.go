@@ -10,17 +10,17 @@ import (
 )
 
 type CategoryServiceImpl struct {
-	Repo CategoryRepository
+	repo CategoryRepository
 }
 
-func NewCategoryService(repo CategoryRepository) CategoryService {
-	return &CategoryServiceImpl{Repo: repo}
+func NewCategoryService(repo CategoryRepository) *CategoryServiceImpl {
+	return &CategoryServiceImpl{repo: repo}
 }
 
 func (c *CategoryServiceImpl) Create(ctx context.Context, req *dto.CreateCategoryReq) (int64, error) {
 	data := req.ToCreateData()
 
-	id, err := c.Repo.Create(ctx, data)
+	id, err := c.repo.Create(ctx, data)
 	if err != nil {
 		return 0, err
 	}
@@ -29,7 +29,7 @@ func (c *CategoryServiceImpl) Create(ctx context.Context, req *dto.CreateCategor
 }
 
 func (c *CategoryServiceImpl) FindAll(ctx context.Context) ([]*dto.CategoryTree, error) {
-	data, err := c.Repo.FindAll(ctx)
+	data, err := c.repo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (c *CategoryServiceImpl) FindByID(ctx context.Context, categoryID int64) (*
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter category id")
 	}
 
-	data, err := c.Repo.FindByID(ctx, categoryID)
+	data, err := c.repo.FindByID(ctx, categoryID)
 	if err != nil {
 		return nil, err
 	}

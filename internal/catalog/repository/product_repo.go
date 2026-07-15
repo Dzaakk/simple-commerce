@@ -38,17 +38,17 @@ type ProductFilter struct {
 }
 
 type ProductRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewProductRepository(db *sql.DB) *ProductRepository {
-	return &ProductRepository{DB: db}
+	return &ProductRepository{db: db}
 }
 
 func (r *ProductRepository) Create(ctx context.Context, data *model.Product) (string, error) {
 	var id string
 
-	err := r.DB.QueryRowContext(
+	err := r.db.QueryRowContext(
 		ctx,
 		productQueryCreate,
 		data.SellerID,
@@ -71,7 +71,7 @@ func (r *ProductRepository) Create(ctx context.Context, data *model.Product) (st
 }
 
 func (r *ProductRepository) Update(ctx context.Context, data *model.Product) (int64, error) {
-	result, err := r.DB.ExecContext(
+	result, err := r.db.ExecContext(
 		ctx,
 		productQueryUpdate,
 		data.SellerID,
@@ -104,7 +104,7 @@ func (r *ProductRepository) Update(ctx context.Context, data *model.Product) (in
 }
 
 func (r *ProductRepository) SoftDelete(ctx context.Context, id string, sellerID string, updatedAt time.Time) (int64, error) {
-	result, err := r.DB.ExecContext(ctx, productQuerySoftDelete, updatedAt, id, sellerID)
+	result, err := r.db.ExecContext(ctx, productQuerySoftDelete, updatedAt, id, sellerID)
 	if err != nil {
 		return 0, response.ExecError("soft delete product", err)
 	}
@@ -122,13 +122,13 @@ func (r *ProductRepository) SoftDelete(ctx context.Context, id string, sellerID 
 }
 
 func (r *ProductRepository) FindByID(ctx context.Context, id string) (*model.Product, error) {
-	row := r.DB.QueryRowContext(ctx, productQueryFindByID, id)
+	row := r.db.QueryRowContext(ctx, productQueryFindByID, id)
 
 	return scanProduct(row)
 }
 
 func (r *ProductRepository) FindBySellerID(ctx context.Context, sellerID string) ([]*model.Product, error) {
-	rows, err := r.DB.QueryContext(ctx, productQueryFindBySeller, sellerID)
+	rows, err := r.db.QueryContext(ctx, productQueryFindBySeller, sellerID)
 	if err != nil {
 		return nil, response.Error("failed to query products by seller", err)
 	}
@@ -167,7 +167,7 @@ func (r *ProductRepository) FindBySellerID(ctx context.Context, sellerID string)
 func (r *ProductRepository) FindAll(ctx context.Context, filter ProductFilter) ([]*model.Product, error) {
 	query, args := buildProductQuery(filter)
 
-	rows, err := r.DB.QueryContext(ctx, query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, response.Error("failed to query products", err)
 	}
@@ -204,7 +204,7 @@ func (r *ProductRepository) FindAll(ctx context.Context, filter ProductFilter) (
 }
 
 func (r *ProductRepository) UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error {
-	result, err := r.DB.ExecContext(
+	result, err := r.db.ExecContext(
 		ctx,
 		productQueryUpdateStock,
 		quantity,

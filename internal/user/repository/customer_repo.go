@@ -18,17 +18,17 @@ const (
 )
 
 type CustomerRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewCustomerRepository(db *sql.DB) *CustomerRepository {
-	return &CustomerRepository{DB: db}
+	return &CustomerRepository{db: db}
 }
 
 func (r *CustomerRepository) Create(ctx context.Context, data *model.Customer) (string, error) {
 	var id string
 
-	err := r.DB.QueryRowContext(
+	err := r.db.QueryRowContext(
 		ctx,
 		customerQueryCreate,
 		data.Email,
@@ -47,7 +47,7 @@ func (r *CustomerRepository) Create(ctx context.Context, data *model.Customer) (
 }
 
 func (r *CustomerRepository) Update(ctx context.Context, data *model.Customer) (int64, error) {
-	result, err := r.DB.ExecContext(
+	result, err := r.db.ExecContext(
 		ctx, customerQueryUpdate,
 		data.Email,
 		data.FullName,
@@ -73,18 +73,18 @@ func (r *CustomerRepository) Update(ctx context.Context, data *model.Customer) (
 }
 
 func (r *CustomerRepository) FindByID(ctx context.Context, customerID string) (*model.Customer, error) {
-	row := r.DB.QueryRowContext(ctx, customerQueryFindByID, customerID)
+	row := r.db.QueryRowContext(ctx, customerQueryFindByID, customerID)
 
 	return scanCustomer(row)
 }
 
 func (r *CustomerRepository) FindByEmail(ctx context.Context, email string) (*model.Customer, error) {
-	row := r.DB.QueryRowContext(ctx, customerQueryFindByEmail, email)
+	row := r.db.QueryRowContext(ctx, customerQueryFindByEmail, email)
 
 	return scanCustomer(row)
 }
 func (r *CustomerRepository) UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error {
-	result, err := r.DB.ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
+	result, err := r.db.ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
 	if err != nil {
 		return response.ExecError("update customer status", err)
 	}

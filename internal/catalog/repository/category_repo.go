@@ -15,17 +15,17 @@ const (
 )
 
 type CategoryRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewCategoryRepository(db *sql.DB) *CategoryRepository {
-	return &CategoryRepository{DB: db}
+	return &CategoryRepository{db: db}
 }
 
 func (r *CategoryRepository) Create(ctx context.Context, data *model.Category) (int64, error) {
 	var id int64
 
-	err := r.DB.QueryRowContext(
+	err := r.db.QueryRowContext(
 		ctx,
 		categoryQueryCreate,
 		data.ParentID,
@@ -44,13 +44,13 @@ func (r *CategoryRepository) Create(ctx context.Context, data *model.Category) (
 }
 
 func (r *CategoryRepository) FindByID(ctx context.Context, id int64) (*model.Category, error) {
-	row := r.DB.QueryRowContext(ctx, categoryQueryFindByID, id)
+	row := r.db.QueryRowContext(ctx, categoryQueryFindByID, id)
 
 	return scanCategory(row)
 }
 
 func (r *CategoryRepository) FindAll(ctx context.Context) ([]*model.Category, error) {
-	rows, err := r.DB.QueryContext(ctx, categoryQueryFindAll)
+	rows, err := r.db.QueryContext(ctx, categoryQueryFindAll)
 	if err != nil {
 		return nil, response.Error("failed to query categories", err)
 	}

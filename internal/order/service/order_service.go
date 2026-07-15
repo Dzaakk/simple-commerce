@@ -12,20 +12,20 @@ import (
 )
 
 type OrderServiceImpl struct {
-	DB            *sql.DB
-	OrderRepo     OrderRepository
-	OrderItemRepo OrderItemRepository
-	ProductSvc    ProductService
-	InventorySvc  InventoryService
+	db            *sql.DB
+	orderRepo     OrderRepository
+	orderItemRepo OrderItemRepository
+	productSvc    ProductService
+	inventorySvc  InventoryService
 }
 
-func NewOrderService(db *sql.DB, orderRepo OrderRepository, orderItemRepo OrderItemRepository, productSvc ProductService, inventorySvc InventoryService) OrderService {
+func NewOrderService(db *sql.DB, orderRepo OrderRepository, orderItemRepo OrderItemRepository, productSvc ProductService, inventorySvc InventoryService) *OrderServiceImpl {
 	return &OrderServiceImpl{
-		DB:            db,
-		OrderRepo:     orderRepo,
-		OrderItemRepo: orderItemRepo,
-		ProductSvc:    productSvc,
-		InventorySvc:  inventorySvc,
+		db:            db,
+		orderRepo:     orderRepo,
+		orderItemRepo: orderItemRepo,
+		productSvc:    productSvc,
+		inventorySvc:  inventorySvc,
 	}
 }
 
@@ -43,12 +43,12 @@ func (s *OrderServiceImpl) CreateOrder(ctx context.Context, req *dto.CreateOrder
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter items")
 	}
 
-	orderNumber, err := s.OrderRepo.GenerateOrderNumber(ctx)
+	orderNumber, err := s.orderRepo.GenerateOrderNumber(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	tx, err := s.DB.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *OrderServiceImpl) CreateOrder(ctx context.Context, req *dto.CreateOrder
 			return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter item")
 		}
 
-		product, err := s.ProductSvc.FindByID(ctx, item.ProductID)
+		product, err := s.productSvc.FindByID(ctx, item.ProductID)
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +75,7 @@ func (s *OrderServiceImpl) CreateOrder(ctx context.Context, req *dto.CreateOrder
 			return nil, response.NewAppError(http.StatusNotFound, "product not found")
 		}
 
-		if err := s.InventorySvc.ReserveStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
+		if err := s.inventorySvc.ReserveStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
 			return nil, err
 		}
 
@@ -102,7 +102,7 @@ func (s *OrderServiceImpl) CreateOrder(ctx context.Context, req *dto.CreateOrder
 		UpdatedAt:       now,
 	}
 
-	orderID, err := s.OrderRepo.Create(ctx, tx, order)
+	orderID, err := s.orderRepo.Create(ctx, tx, order)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (s *OrderServiceImpl) CreateOrder(ctx context.Context, req *dto.CreateOrder
 		item.OrderID = orderID
 	}
 
-	if err := s.OrderItemRepo.CreateBatch(ctx, tx, items); err != nil {
+	if err := s.orderItemRepo.CreateBatch(ctx, tx, items); err != nil {
 		return nil, err
 	}
 
@@ -135,7 +135,7 @@ func (s *OrderServiceImpl) GetOrderByID(ctx context.Context, customerID string, 
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter")
 	}
 
-	order, err := s.OrderRepo.FindByID(ctx, orderID)
+	order, err := s.orderRepo.FindByID(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (s *OrderServiceImpl) GetOrderByID(ctx context.Context, customerID string, 
 		return nil, response.NewAppError(http.StatusUnauthorized, "unauthorized")
 	}
 
-	items, err := s.OrderItemRepo.FindByOrderID(ctx, orderID)
+	items, err := s.orderItemRepo.FindByOrderID(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (s *OrderServiceImpl) GetOrdersByCustomer(ctx context.Context, customerID s
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
 	}
 
-	orders, err := s.OrderRepo.FindByCustomerID(ctx, customerID, filter)
+	orders, err := s.orderRepo.FindByCustomerID(ctx, customerID, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (s *OrderServiceImpl) CancelOrder(ctx context.Context, customerID string, o
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter")
 	}
 
-	order, err := s.OrderRepo.FindByID(ctx, orderID)
+	order, err := s.orderRepo.FindByID(ctx, orderID)
 	if err != nil {
 		return err
 	}
@@ -215,12 +215,12 @@ func (s *OrderServiceImpl) CancelOrder(ctx context.Context, customerID string, o
 		return response.NewAppError(http.StatusConflict, "order status is not pending")
 	}
 
-	items, err := s.OrderItemRepo.FindByOrderID(ctx, orderID)
+	items, err := s.orderItemRepo.FindByOrderID(ctx, orderID)
 	if err != nil {
 		return err
 	}
 
-	tx, err := s.DB.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -230,12 +230,12 @@ func (s *OrderServiceImpl) CancelOrder(ctx context.Context, customerID string, o
 		if item == nil {
 			continue
 		}
-		if err := s.InventorySvc.ReleaseStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
+		if err := s.inventorySvc.ReleaseStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
 			return err
 		}
 	}
 
-	if err := s.OrderRepo.UpdateStatus(ctx, tx, orderID, constant.OrderCancelled); err != nil {
+	if err := s.orderRepo.UpdateStatus(ctx, tx, orderID, constant.OrderCancelled); err != nil {
 		return err
 	}
 
@@ -250,7 +250,7 @@ func (s *OrderServiceImpl) UpdateOrderStatus(ctx context.Context, tx *sql.Tx, or
 		return response.NewAppError(http.StatusInternalServerError, "internal server error")
 	}
 
-	return s.OrderRepo.UpdateStatus(ctx, tx, orderID, status)
+	return s.orderRepo.UpdateStatus(ctx, tx, orderID, status)
 }
 
 func toOrderRes(order *model.Order) dto.OrderRes {

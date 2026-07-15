@@ -18,15 +18,15 @@ const (
 )
 
 type CartItemRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewCartItemRepository(db *sql.DB) *CartItemRepository {
-	return &CartItemRepository{DB: db}
+	return &CartItemRepository{db: db}
 }
 
 func (r *CartItemRepository) GetCartItems(ctx context.Context, cartID string) ([]*model.CartItem, error) {
-	rows, err := r.DB.QueryContext(ctx, cartItemQueryFindByCartID, cartID)
+	rows, err := r.db.QueryContext(ctx, cartItemQueryFindByCartID, cartID)
 	if err != nil {
 		return nil, response.Error("failed to query cart items", err)
 	}
@@ -59,7 +59,7 @@ func (r *CartItemRepository) GetCartItems(ctx context.Context, cartID string) ([
 }
 
 func (r *CartItemRepository) UpsertItem(ctx context.Context, cartID string, productID string, quantity int, priceSnapshot float64) error {
-	result, err := r.DB.ExecContext(
+	result, err := r.db.ExecContext(
 		ctx,
 		cartItemQueryUpsert,
 		cartID,
@@ -85,7 +85,7 @@ func (r *CartItemRepository) UpsertItem(ctx context.Context, cartID string, prod
 }
 
 func (r *CartItemRepository) DeleteItem(ctx context.Context, cartID string, productID string) error {
-	result, err := r.DB.ExecContext(ctx, cartItemQueryDelete, cartID, productID)
+	result, err := r.db.ExecContext(ctx, cartItemQueryDelete, cartID, productID)
 	if err != nil {
 		return response.ExecError("delete cart item", err)
 	}
@@ -102,7 +102,7 @@ func (r *CartItemRepository) DeleteItem(ctx context.Context, cartID string, prod
 }
 
 func (r *CartItemRepository) ClearItems(ctx context.Context, cartID string) error {
-	_, err := r.DB.ExecContext(ctx, cartItemQueryClear, cartID)
+	_, err := r.db.ExecContext(ctx, cartItemQueryClear, cartID)
 	if err != nil {
 		return response.ExecError("clear cart items", err)
 	}

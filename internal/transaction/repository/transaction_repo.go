@@ -29,11 +29,11 @@ const (
 )
 
 type TransactionRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewTransactionRepository(db *sql.DB) *TransactionRepository {
-	return &TransactionRepository{DB: db}
+	return &TransactionRepository{db: db}
 }
 
 func (r *TransactionRepository) Create(ctx context.Context, tx *sql.Tx, data *model.Transaction) (string, error) {
@@ -62,19 +62,19 @@ func (r *TransactionRepository) Create(ctx context.Context, tx *sql.Tx, data *mo
 }
 
 func (r *TransactionRepository) FindByID(ctx context.Context, transactionID string) (*model.Transaction, error) {
-	row := r.DB.QueryRowContext(ctx, transactionQueryFindByID, transactionID)
+	row := r.db.QueryRowContext(ctx, transactionQueryFindByID, transactionID)
 
 	return scanTransaction(row)
 }
 
 func (r *TransactionRepository) FindByOrderID(ctx context.Context, orderID string) (*model.Transaction, error) {
-	row := r.DB.QueryRowContext(ctx, transactionQueryFindByOrderID, orderID)
+	row := r.db.QueryRowContext(ctx, transactionQueryFindByOrderID, orderID)
 
 	return scanTransaction(row)
 }
 
 func (r *TransactionRepository) FindByTransactionNumber(ctx context.Context, txNumber string) (*model.Transaction, error) {
-	row := r.DB.QueryRowContext(ctx, transactionQueryFindByTransactionNumber, txNumber)
+	row := r.db.QueryRowContext(ctx, transactionQueryFindByTransactionNumber, txNumber)
 
 	return scanTransaction(row)
 }
@@ -106,7 +106,7 @@ func (r *TransactionRepository) GenerateTransactionNumber(ctx context.Context) (
 	counterDate := now.Format("2006-01-02")
 
 	var seq int64
-	err := r.DB.QueryRowContext(ctx, transactionQueryNextNumber, counterDate, now).Scan(&seq)
+	err := r.db.QueryRowContext(ctx, transactionQueryNextNumber, counterDate, now).Scan(&seq)
 	if err != nil {
 		return "", response.Error("failed to generate transaction number", err)
 	}

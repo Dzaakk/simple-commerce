@@ -25,15 +25,15 @@ const (
 )
 
 type InventoryRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 func NewInventoryRepository(db *sql.DB) *InventoryRepository {
-	return &InventoryRepository{DB: db}
+	return &InventoryRepository{db: db}
 }
 
 func (r *InventoryRepository) FindByProductID(ctx context.Context, productID string) (*catalogModel.Inventory, error) {
-	row := r.DB.QueryRowContext(ctx, inventoryQueryFindByProduct, productID)
+	row := r.db.QueryRowContext(ctx, inventoryQueryFindByProduct, productID)
 
 	var inv catalogModel.Inventory
 	if err := row.Scan(

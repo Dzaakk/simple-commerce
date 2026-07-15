@@ -9,11 +9,11 @@ import (
 )
 
 type InventoryServiceImpl struct {
-	Repo InventoryRepository
+	repo InventoryRepository
 }
 
-func NewInventoryService(repo InventoryRepository) InventoryService {
-	return &InventoryServiceImpl{Repo: repo}
+func NewInventoryService(repo InventoryRepository) *InventoryServiceImpl {
+	return &InventoryServiceImpl{repo: repo}
 }
 
 func (s *InventoryServiceImpl) FindByProductID(ctx context.Context, productID string) (*model.Inventory, error) {
@@ -21,7 +21,7 @@ func (s *InventoryServiceImpl) FindByProductID(ctx context.Context, productID st
 		return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
 	}
 
-	return s.Repo.FindByProductID(ctx, productID)
+	return s.repo.FindByProductID(ctx, productID)
 }
 
 func (s *InventoryServiceImpl) ReserveStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error {
@@ -35,7 +35,7 @@ func (s *InventoryServiceImpl) ReserveStock(ctx context.Context, tx *sql.Tx, pro
 		return response.NewAppError(http.StatusInternalServerError, "internal server error")
 	}
 
-	return s.Repo.ReserveStock(ctx, tx, productID, qty)
+	return s.repo.ReserveStock(ctx, tx, productID, qty)
 }
 
 func (s *InventoryServiceImpl) ReleaseStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error {
@@ -49,5 +49,5 @@ func (s *InventoryServiceImpl) ReleaseStock(ctx context.Context, tx *sql.Tx, pro
 		return response.NewAppError(http.StatusInternalServerError, "internal server error")
 	}
 
-	return s.Repo.ReleaseStock(ctx, tx, productID, qty)
+	return s.repo.ReleaseStock(ctx, tx, productID, qty)
 }
