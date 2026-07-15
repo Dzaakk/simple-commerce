@@ -26,7 +26,6 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - LOKI_URL=http://loki:3100
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
       - JWT_SECRET=${JWT_SECRET}
       - APP_BASE_URL=${APP_BASE_URL}

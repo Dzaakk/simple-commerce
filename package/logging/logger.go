@@ -2,28 +2,25 @@ package logging
 
 import (
 	"context"
-	"sync"
-	"time"
+	"log/slog"
+	"os"
 )
 
 type Logger struct {
-	client  *LokiClient
+	logger  *slog.Logger
 	module  string
 	service string
 }
 
-var (
-	defaultClient     *LokiClient
-	defaultClientOnce sync.Once
-)
+var defaultLogger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 func NewLogger(module, service string) *Logger {
-	defaultClientOnce.Do(func() {
-		defaultClient = NewLokiClientFromEnv()
-	})
+	return newLogger(defaultLogger, module, service)
+}
 
+func newLogger(logger *slog.Logger, module, service string) *Logger {
 	return &Logger{
-		client:  defaultClient,
+		logger:  logger,
 		module:  module,
 		service: service,
 	}
@@ -42,32 +39,38 @@ func (l *Logger) Error(ctx context.Context, message string, fields map[string]in
 }
 
 func (l *Logger) log(ctx context.Context, level, message string, fields map[string]interface{}) {
-	if l == nil || l.client == nil {
+	if l == nil || l.logger == nil {
 		return
 	}
 
-	payload := map[string]interface{}{
-		"module":  l.module,
-		"service": l.service,
-	}
-
-	for k, v := range fields {
-		payload[k] = v
-	}
+	attrs := make([]slog.Attr, 0, len(fields)+3)
+	attrs = append(attrs,
+		slog.String("module", l.module),
+		slog.String("service", l.service),
+	)
 
 	if ctx != nil {
 		if requestID, ok := ctx.Value("request_id").(string); ok && requestID != "" {
-			payload["request_id"] = requestID
+			attrs = append(attrs, slog.String("request_id", requestID))
 		}
+	} else {
+		ctx = context.Background()
 	}
 
-	pushCtx := context.Background()
-	if ctx != nil {
-		pushCtx = ctx
+	for key, value := range fields {
+		attrs = append(attrs, slog.Any(key, value))
 	}
 
-	timeoutCtx, cancel := context.WithTimeout(pushCtx, time.Second)
-	defer cancel()
+	l.logger.LogAttrs(ctx, parseLevel(level), message, attrs...)
+}
 
-	_ = l.client.Push(timeoutCtx, level, message, payload)
+func parseLevel(level string) slog.Level {
+	switch level {
+	case "error":
+		return slog.LevelError
+	case "warn":
+		return slog.LevelWarn
+	default:
+		return slog.LevelInfo
+	}
 }

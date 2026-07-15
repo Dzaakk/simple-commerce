@@ -66,10 +66,11 @@ func main() {
 		}
 	}
 
-	r := gin.Default()
+	r := gin.New()
 	r.Use(requestid.RequestID())
 	r.Use(metricsMiddleware.HTTPMiddleware())
-	r.Use(logMiddleware.RequestLogger(logging.NewLokiClientFromEnv()))
+	r.Use(logMiddleware.RequestLogger(logging.NewLogger("http", "api")))
+	r.Use(gin.Recovery())
 	r.Use(middleware.ErrorHandler())
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
