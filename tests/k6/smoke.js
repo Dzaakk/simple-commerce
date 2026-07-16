@@ -1,6 +1,6 @@
 import http from 'k6/http';
-import { check, group, sleep } from 'k6';
-import { fail } from 'k6';
+import { check, fail, group, sleep } from 'k6';
+import { waitForReadiness } from './helpers/readiness.js';
 
 const BASE_URL = (__ENV.BASE_URL || 'http://localhost:8080').replace(/\/+$/, '');
 
@@ -11,18 +11,32 @@ http.setResponseCallback(
 export const options = {
   vus: 1,
   duration: '30s',
+  setupTimeout: '2m',
   thresholds: {
-    http_req_failed: ['rate<0.01'],
-    http_req_duration: ['p(95)<500'],
+    'http_req_failed{traffic_type:workload}': ['rate<0.01'],
+    'http_req_duration{traffic_type:workload}': ['p(95)<500'],
     checks: ['rate>0.99'],
   },
 };
 
-const jsonHeaders = {
+const workloadParams = {
+  tags: {
+    traffic_type: 'workload',
+  },
+};
+
+const jsonRequestParams = {
   headers: {
     'Content-Type': 'application/json',
   },
+  tags: {
+    traffic_type: 'workload',
+  },
 };
+
+export function setup() {
+  waitForReadiness(BASE_URL);
+}
 
 function url(path) {
   return `${BASE_URL}${path}`;
@@ -42,7 +56,7 @@ function hasSuccessEnvelope(body) {
 
 export default function () {
   group('Health Checks', () => {
-    const live = http.get(url('/healthz'));
+    const live = http.get(url('/healthz'), workloadParams);
     const liveBody = parseJson(live);
 
     const liveOk = check(live, {
@@ -54,7 +68,7 @@ export default function () {
       fail('service liveness check failed');
     }
 
-    const ready = http.get(url('/readyz'));
+    const ready = http.get(url('/readyz'), workloadParams);
     const readyBody = parseJson(ready);
 
     const readyOk = check(ready, {
@@ -73,7 +87,7 @@ export default function () {
   sleep(1);
 
   group('Catalog Read Endpoints', () => {
-    const products = http.get(url('/api/v1/product?limit=5'));
+    const products = http.get(url('/api/v1/product?limit=5'), workloadParams);
     const productsBody = parseJson(products);
 
     check(products, {
@@ -83,7 +97,7 @@ export default function () {
         productsBody && productsBody.data && Array.isArray(productsBody.data.items),
     });
 
-    const categories = http.get(url('/api/v1/category'));
+    const categories = http.get(url('/api/v1/category'), workloadParams);
     const categoriesBody = parseJson(categories);
 
     check(categories, {
@@ -97,7 +111,7 @@ export default function () {
   sleep(1);
 
   group('Safe Write Contract', () => {
-    const res = http.post(url('/api/v1/auth/refresh-token'), JSON.stringify({}), jsonHeaders);
+    const res = http.post(url('/api/v1/auth/refresh-token'), JSON.stringify({}), jsonRequestParams);
     const body = parseJson(res);
 
     check(res, {
@@ -110,7 +124,7 @@ export default function () {
   sleep(1);
 
   group('Metrics Endpoint', () => {
-    const res = http.get(url('/metrics'));
+    const res = http.get(url('/metrics'), workloadParams);
 
     check(res, {
       'metrics status is 200': (r) => r.status === 200,

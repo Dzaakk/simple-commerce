@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { productIds, categoryIds } from './fixtures/catalog-fixture.js';
+import { waitForReadiness } from './helpers/readiness.js';
 
 const BASE_URL = (__ENV.BASE_URL || 'http://localhost:8080').replace(/\/+$/, '');
 const PRODUCT_LIST_ENDPOINT = __ENV.PRODUCT_LIST_ENDPOINT || '/api/v1/product';
@@ -8,12 +9,23 @@ const PRODUCT_DETAIL_ENDPOINT = __ENV.PRODUCT_DETAIL_ENDPOINT || '/api/v1/produc
 const PRODUCT_LIMIT = Number(__ENV.PRODUCT_LIMIT || 100);
 
 export const options = {
+  setupTimeout: '2m',
   thresholds: {
-    http_req_failed: ['rate<0.01'],
-    http_req_duration: ['p(95)<2000'],
+    'http_req_failed{traffic_type:workload}': ['rate<0.01'],
+    'http_req_duration{traffic_type:workload}': ['p(95)<2000'],
     checks: ['rate>0.99'],
   },
 };
+
+const workloadParams = {
+  tags: {
+    traffic_type: 'workload',
+  },
+};
+
+export function setup() {
+  waitForReadiness(BASE_URL);
+}
 
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -32,21 +44,21 @@ function checkResponse(res, name) {
 
 function getProductList() {
   const url = `${BASE_URL}${PRODUCT_LIST_ENDPOINT}?limit=${PRODUCT_LIMIT}`;
-  const res = http.get(url);
+  const res = http.get(url, workloadParams);
   checkResponse(res, 'product list');
 }
 
 function getProductListByCategory() {
   const categoryId = randomChoice(categoryIds);
   const url = `${BASE_URL}${PRODUCT_LIST_ENDPOINT}?category_id=${categoryId}&limit=${PRODUCT_LIMIT}`;
-  const res = http.get(url);
+  const res = http.get(url, workloadParams);
   checkResponse(res, 'product list by category');
 }
 
 function getProductDetail() {
   const productId = randomChoice(productIds);
   const url = `${BASE_URL}${PRODUCT_DETAIL_ENDPOINT}/${productId}`;
-  const res = http.get(url);
+  const res = http.get(url, workloadParams);
   checkResponse(res, 'product detail');
 }
 
