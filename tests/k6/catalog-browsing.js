@@ -7,9 +7,25 @@ const BASE_URL = (__ENV.BASE_URL || 'http://localhost:8080').replace(/\/+$/, '')
 const PRODUCT_LIST_ENDPOINT = __ENV.PRODUCT_LIST_ENDPOINT || '/api/v1/product';
 const PRODUCT_DETAIL_ENDPOINT = __ENV.PRODUCT_DETAIL_ENDPOINT || '/api/v1/product';
 const PRODUCT_LIMIT = Number(__ENV.PRODUCT_LIMIT || 100);
+const TARGET_VUS = positiveInteger(__ENV.TARGET_VUS, 100, 'TARGET_VUS');
+const RAMP_UP_DURATION = __ENV.RAMP_UP_DURATION || '30s';
+const STEADY_DURATION = __ENV.STEADY_DURATION || '3m';
+const RAMP_DOWN_DURATION = __ENV.RAMP_DOWN_DURATION || '30s';
 
 export const options = {
   setupTimeout: '2m',
+  scenarios: {
+    catalog_browsing: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: RAMP_UP_DURATION, target: TARGET_VUS },
+        { duration: STEADY_DURATION, target: TARGET_VUS },
+        { duration: RAMP_DOWN_DURATION, target: 0 },
+      ],
+      gracefulRampDown: RAMP_DOWN_DURATION,
+    },
+  },
   thresholds: {
     'http_req_failed{traffic_type:workload}': ['rate<0.01'],
     'http_req_duration{traffic_type:workload}': ['p(95)<2000'],
@@ -25,6 +41,19 @@ const workloadParams = {
 
 export function setup() {
   waitForReadiness(BASE_URL);
+}
+
+function positiveInteger(value, fallback, name) {
+  if (value === undefined || value === '') {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive integer, got: ${value}`);
+  }
+
+  return parsed;
 }
 
 function randomInt(min, max) {
