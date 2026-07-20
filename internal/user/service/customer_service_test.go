@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"net/http"
 	"testing"
@@ -15,12 +14,11 @@ import (
 )
 
 type mockCustomerRepository struct {
-	createFn             func(context.Context, *model.Customer) (string, error)
-	updateFn             func(context.Context, *model.Customer) (int64, error)
-	findByIDFn           func(context.Context, string) (*model.Customer, error)
-	findByEmailFn        func(context.Context, string) (*model.Customer, error)
-	updateStatusFn       func(context.Context, string, constant.UserStatus) error
-	updateStatusWithTxFn func(context.Context, *sql.Tx, string, constant.UserStatus) error
+	createFn       func(context.Context, *model.Customer) (string, error)
+	updateFn       func(context.Context, *model.Customer) (int64, error)
+	findByIDFn     func(context.Context, string) (*model.Customer, error)
+	findByEmailFn  func(context.Context, string) (*model.Customer, error)
+	updateStatusFn func(context.Context, string, constant.UserStatus) error
 }
 
 func (f *mockCustomerRepository) Create(ctx context.Context, data *model.Customer) (string, error) {
@@ -56,13 +54,6 @@ func (f *mockCustomerRepository) UpdateStatus(ctx context.Context, customerID st
 		return errors.New("unexpected UpdateStatus call")
 	}
 	return f.updateStatusFn(ctx, customerID, status)
-}
-
-func (f *mockCustomerRepository) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, customerID string, status constant.UserStatus) error {
-	if f.updateStatusWithTxFn == nil {
-		return errors.New("unexpected UpdateStatusWithTx call")
-	}
-	return f.updateStatusWithTxFn(ctx, tx, customerID, status)
 }
 
 func TestCustomerServiceCreate(t *testing.T) {
@@ -298,15 +289,15 @@ func TestCustomerServiceUpdateStatusDelegatesToRepository(t *testing.T) {
 	}
 }
 
-func TestCustomerServiceUpdateStatusWithTxReturnsRepositoryError(t *testing.T) {
+func TestCustomerServiceUpdateStatusReturnsRepositoryError(t *testing.T) {
 	wantErr := errors.New("transaction failed")
 	repo := &mockCustomerRepository{
-		updateStatusWithTxFn: func(context.Context, *sql.Tx, string, constant.UserStatus) error {
+		updateStatusFn: func(context.Context, string, constant.UserStatus) error {
 			return wantErr
 		},
 	}
 
-	err := NewCustomerService(repo).UpdateStatusWithTx(context.Background(), nil, "customer-1", constant.StatusActive)
+	err := NewCustomerService(repo).UpdateStatus(context.Background(), "customer-1", constant.StatusActive)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v, want %v", err, wantErr)
 	}

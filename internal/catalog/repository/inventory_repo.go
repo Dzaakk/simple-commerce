@@ -2,6 +2,7 @@ package repository
 
 import (
 	catalogModel "Dzaakk/simple-commerce/internal/catalog/model"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -54,15 +55,12 @@ func (r *InventoryRepository) FindByProductID(ctx context.Context, productID str
 	return &inv, nil
 }
 
-func (r *InventoryRepository) ReserveStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error {
-	if tx == nil {
-		return errors.New("transaction is required")
-	}
+func (r *InventoryRepository) ReserveStock(ctx context.Context, productID string, qty int) error {
 	if qty <= 0 {
 		return errors.New("invalid parameter quantity")
 	}
 
-	result, err := tx.ExecContext(ctx, inventoryQueryReserveStock, qty, time.Now(), productID)
+	result, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, inventoryQueryReserveStock, qty, time.Now(), productID)
 	if err != nil {
 		return response.ExecError("reserve stock", err)
 	}
@@ -78,15 +76,12 @@ func (r *InventoryRepository) ReserveStock(ctx context.Context, tx *sql.Tx, prod
 	return nil
 }
 
-func (r *InventoryRepository) ReleaseStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error {
-	if tx == nil {
-		return errors.New("transaction is required")
-	}
+func (r *InventoryRepository) ReleaseStock(ctx context.Context, productID string, qty int) error {
 	if qty <= 0 {
 		return errors.New("invalid parameter quantity")
 	}
 
-	result, err := tx.ExecContext(ctx, inventoryQueryReleaseStock, qty, time.Now(), productID)
+	result, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, inventoryQueryReleaseStock, qty, time.Now(), productID)
 	if err != nil {
 		return response.ExecError("release stock", err)
 	}

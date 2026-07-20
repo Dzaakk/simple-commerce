@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"strings"
 	"testing"
@@ -21,10 +20,10 @@ import (
 )
 
 type mockAuthCustomerService struct {
-	createFn             func(context.Context, *userdto.RegisterCustomerRequest) (string, error)
-	findByEmailFn        func(context.Context, string) (*usermodel.Customer, error)
-	findByIDFn           func(context.Context, string) (*userdto.CustomerRes, error)
-	updateStatusWithTxFn func(context.Context, *sql.Tx, string, constant.UserStatus) error
+	createFn       func(context.Context, *userdto.RegisterCustomerRequest) (string, error)
+	findByEmailFn  func(context.Context, string) (*usermodel.Customer, error)
+	findByIDFn     func(context.Context, string) (*userdto.CustomerRes, error)
+	updateStatusFn func(context.Context, string, constant.UserStatus) error
 }
 
 func (m *mockAuthCustomerService) Create(ctx context.Context, req *userdto.RegisterCustomerRequest) (string, error) {
@@ -48,18 +47,18 @@ func (m *mockAuthCustomerService) FindByID(ctx context.Context, customerID strin
 	return m.findByIDFn(ctx, customerID)
 }
 
-func (m *mockAuthCustomerService) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, customerID string, status constant.UserStatus) error {
-	if m.updateStatusWithTxFn == nil {
-		return errors.New("unexpected customer UpdateStatusWithTx call")
+func (m *mockAuthCustomerService) UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error {
+	if m.updateStatusFn == nil {
+		return errors.New("unexpected customer UpdateStatus call")
 	}
-	return m.updateStatusWithTxFn(ctx, tx, customerID, status)
+	return m.updateStatusFn(ctx, customerID, status)
 }
 
 type mockAuthSellerService struct {
-	createFn             func(context.Context, *userdto.RegisterSellerRequest) (string, error)
-	findByEmailFn        func(context.Context, string) (*usermodel.Seller, error)
-	findByIDFn           func(context.Context, string) (*userdto.SellerRes, error)
-	updateStatusWithTxFn func(context.Context, *sql.Tx, string, constant.UserStatus) error
+	createFn       func(context.Context, *userdto.RegisterSellerRequest) (string, error)
+	findByEmailFn  func(context.Context, string) (*usermodel.Seller, error)
+	findByIDFn     func(context.Context, string) (*userdto.SellerRes, error)
+	updateStatusFn func(context.Context, string, constant.UserStatus) error
 }
 
 func (m *mockAuthSellerService) Create(ctx context.Context, req *userdto.RegisterSellerRequest) (string, error) {
@@ -83,11 +82,11 @@ func (m *mockAuthSellerService) FindByID(ctx context.Context, sellerID string) (
 	return m.findByIDFn(ctx, sellerID)
 }
 
-func (m *mockAuthSellerService) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error {
-	if m.updateStatusWithTxFn == nil {
-		return errors.New("unexpected seller UpdateStatusWithTx call")
+func (m *mockAuthSellerService) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {
+	if m.updateStatusFn == nil {
+		return errors.New("unexpected seller UpdateStatus call")
 	}
-	return m.updateStatusWithTxFn(ctx, tx, sellerID, status)
+	return m.updateStatusFn(ctx, sellerID, status)
 }
 
 type mockAuthEmailService struct {
@@ -113,9 +112,9 @@ func (m *mockActivationEmailPublisher) PublishVerificationEmail(ctx context.Cont
 }
 
 type mockActivationCodeRepository struct {
-	createFn           func(context.Context, *model.ActivationCode) (int64, error)
-	findByCodeFn       func(context.Context, string) (*model.ActivationCode, error)
-	markAsUsedWithTxFn func(context.Context, *sql.Tx, int64) error
+	createFn     func(context.Context, *model.ActivationCode) (int64, error)
+	findByCodeFn func(context.Context, string) (*model.ActivationCode, error)
+	markAsUsedFn func(context.Context, int64) error
 }
 
 func (m *mockActivationCodeRepository) Create(ctx context.Context, data *model.ActivationCode) (int64, error) {
@@ -132,11 +131,11 @@ func (m *mockActivationCodeRepository) FindByCode(ctx context.Context, code stri
 	return m.findByCodeFn(ctx, code)
 }
 
-func (m *mockActivationCodeRepository) MarkAsUsedWithTx(ctx context.Context, tx *sql.Tx, id int64) error {
-	if m.markAsUsedWithTxFn == nil {
-		return errors.New("unexpected activation MarkAsUsedWithTx call")
+func (m *mockActivationCodeRepository) MarkAsUsed(ctx context.Context, id int64) error {
+	if m.markAsUsedFn == nil {
+		return errors.New("unexpected activation MarkAsUsed call")
 	}
-	return m.markAsUsedWithTxFn(ctx, tx, id)
+	return m.markAsUsedFn(ctx, id)
 }
 
 type mockRefreshTokenRepository struct {
@@ -172,6 +171,19 @@ func (m *mockRefreshTokenRepository) RevokeAllByUser(ctx context.Context, userID
 		return errors.New("unexpected refresh RevokeAllByUser call")
 	}
 	return m.revokeAllByUserFn(ctx, userID, userType)
+}
+
+type mockTransactor struct {
+	called bool
+	fn     func(context.Context, func(context.Context) error) error
+}
+
+func (m *mockTransactor) WithinTx(ctx context.Context, fn func(context.Context) error) error {
+	m.called = true
+	if m.fn != nil {
+		return m.fn(ctx, fn)
+	}
+	return fn(ctx)
 }
 
 func TestAuthServiceRegisterCustomer(t *testing.T) {
@@ -515,6 +527,49 @@ func TestAuthServiceVerifyEmailRejectsInvalidCode(t *testing.T) {
 	err := NewAuthService(nil, nil, nil, nil, nil, activationRepo, nil).VerifyEmail(context.Background(), "bad-code")
 	if !errors.Is(err, response.ErrInvalidActivationCode) {
 		t.Fatalf("error = %v, want %v", err, response.ErrInvalidActivationCode)
+	}
+}
+
+func TestAuthServiceVerifyEmailActivatesCustomerWithinTransaction(t *testing.T) {
+	txManager := &mockTransactor{}
+	activationRepo := &mockActivationCodeRepository{
+		findByCodeFn: func(_ context.Context, code string) (*model.ActivationCode, error) {
+			if code != "valid-code" {
+				t.Fatalf("code = %q, want valid-code", code)
+			}
+			return &model.ActivationCode{ID: 7, Email: "customer@example.com", UserType: string(constant.Customer)}, nil
+		},
+		markAsUsedFn: func(_ context.Context, id int64) error {
+			if id != 7 {
+				t.Fatalf("activation code id = %d, want 7", id)
+			}
+			return nil
+		},
+	}
+	customerSvc := &mockAuthCustomerService{
+		findByEmailFn: func(_ context.Context, email string) (*usermodel.Customer, error) {
+			if email != "customer@example.com" {
+				t.Fatalf("email = %q, want customer@example.com", email)
+			}
+			return &usermodel.Customer{ID: "customer-1", Email: email}, nil
+		},
+		updateStatusFn: func(_ context.Context, customerID string, status constant.UserStatus) error {
+			if customerID != "customer-1" {
+				t.Fatalf("customer id = %q, want customer-1", customerID)
+			}
+			if status != constant.StatusActive {
+				t.Fatalf("status = %q, want %q", status, constant.StatusActive)
+			}
+			return nil
+		},
+	}
+
+	err := NewAuthService(txManager, customerSvc, nil, nil, nil, activationRepo, nil).VerifyEmail(context.Background(), "valid-code")
+	if err != nil {
+		t.Fatalf("VerifyEmail returned error: %v", err)
+	}
+	if !txManager.called {
+		t.Fatal("VerifyEmail must run activation updates inside a transaction")
 	}
 }
 

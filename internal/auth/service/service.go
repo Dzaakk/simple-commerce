@@ -8,7 +8,6 @@ import (
 	usermodel "Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
 	"context"
-	"database/sql"
 )
 
 type AuthService interface {
@@ -24,14 +23,14 @@ type customerService interface {
 	Create(ctx context.Context, req *userdto.RegisterCustomerRequest) (string, error)
 	FindByEmail(ctx context.Context, email string) (*usermodel.Customer, error)
 	FindByID(ctx context.Context, customerID string) (*userdto.CustomerRes, error)
-	UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, customerID string, status constant.UserStatus) error
+	UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error
 }
 
 type sellerService interface {
 	Create(ctx context.Context, req *userdto.RegisterSellerRequest) (string, error)
 	FindByEmail(ctx context.Context, email string) (*usermodel.Seller, error)
 	FindByID(ctx context.Context, sellerID string) (*userdto.SellerRes, error)
-	UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error
+	UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error
 }
 
 type emailService interface {
@@ -45,7 +44,7 @@ type activationEmailPublisher interface {
 type activationCodeRepository interface {
 	Create(ctx context.Context, data *model.ActivationCode) (int64, error)
 	FindByCode(ctx context.Context, code string) (*model.ActivationCode, error)
-	MarkAsUsedWithTx(ctx context.Context, tx *sql.Tx, id int64) error
+	MarkAsUsed(ctx context.Context, id int64) error
 }
 
 type refreshTokenRepository interface {

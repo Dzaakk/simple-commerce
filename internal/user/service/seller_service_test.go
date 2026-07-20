@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"net/http"
 	"testing"
@@ -14,13 +13,12 @@ import (
 )
 
 type mockSellerRepository struct {
-	createFn             func(context.Context, *model.Seller) (string, error)
-	updateFn             func(context.Context, *model.Seller) (int64, error)
-	findByIDFn           func(context.Context, string) (*model.Seller, error)
-	findByEmailFn        func(context.Context, string) (*model.Seller, error)
-	findByShopNameFn     func(context.Context, string) ([]*model.Seller, error)
-	updateStatusFn       func(context.Context, string, constant.UserStatus) error
-	updateStatusWithTxFn func(context.Context, *sql.Tx, string, constant.UserStatus) error
+	createFn         func(context.Context, *model.Seller) (string, error)
+	updateFn         func(context.Context, *model.Seller) (int64, error)
+	findByIDFn       func(context.Context, string) (*model.Seller, error)
+	findByEmailFn    func(context.Context, string) (*model.Seller, error)
+	findByShopNameFn func(context.Context, string) ([]*model.Seller, error)
+	updateStatusFn   func(context.Context, string, constant.UserStatus) error
 }
 
 func (f *mockSellerRepository) Create(ctx context.Context, data *model.Seller) (string, error) {
@@ -63,13 +61,6 @@ func (f *mockSellerRepository) UpdateStatus(ctx context.Context, sellerID string
 		return errors.New("unexpected UpdateStatus call")
 	}
 	return f.updateStatusFn(ctx, sellerID, status)
-}
-
-func (f *mockSellerRepository) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error {
-	if f.updateStatusWithTxFn == nil {
-		return errors.New("unexpected UpdateStatusWithTx call")
-	}
-	return f.updateStatusWithTxFn(ctx, tx, sellerID, status)
 }
 
 func TestSellerServiceCreate(t *testing.T) {
@@ -328,15 +319,15 @@ func TestSellerServiceUpdateStatusDelegatesToRepository(t *testing.T) {
 	}
 }
 
-func TestSellerServiceUpdateStatusWithTxReturnsRepositoryError(t *testing.T) {
+func TestSellerServiceUpdateStatusReturnsRepositoryError(t *testing.T) {
 	wantErr := errors.New("transaction failed")
 	repo := &mockSellerRepository{
-		updateStatusWithTxFn: func(context.Context, *sql.Tx, string, constant.UserStatus) error {
+		updateStatusFn: func(context.Context, string, constant.UserStatus) error {
 			return wantErr
 		},
 	}
 
-	err := NewSellerService(repo).UpdateStatusWithTx(context.Background(), nil, "seller-1", constant.StatusActive)
+	err := NewSellerService(repo).UpdateStatus(context.Background(), "seller-1", constant.StatusActive)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v, want %v", err, wantErr)
 	}

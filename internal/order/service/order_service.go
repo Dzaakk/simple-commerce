@@ -4,24 +4,24 @@ import (
 	"Dzaakk/simple-commerce/internal/order/dto"
 	"Dzaakk/simple-commerce/internal/order/model"
 	"Dzaakk/simple-commerce/package/constant"
+	dbtx "Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"database/sql"
 	"net/http"
 	"time"
 )
 
 type OrderServiceImpl struct {
-	db            *sql.DB
+	transactor    dbtx.Transactor
 	orderRepo     OrderRepository
 	orderItemRepo OrderItemRepository
 	productSvc    ProductService
 	inventorySvc  InventoryService
 }
 
-func NewOrderService(db *sql.DB, orderRepo OrderRepository, orderItemRepo OrderItemRepository, productSvc ProductService, inventorySvc InventoryService) *OrderServiceImpl {
+func NewOrderService(transactor dbtx.Transactor, orderRepo OrderRepository, orderItemRepo OrderItemRepository, productSvc ProductService, inventorySvc InventoryService) *OrderServiceImpl {
 	return &OrderServiceImpl{
-		db:            db,
+		transactor:    transactor,
 		orderRepo:     orderRepo,
 		orderItemRepo: orderItemRepo,
 		productSvc:    productSvc,
@@ -48,75 +48,70 @@ func (s *OrderServiceImpl) CreateOrder(ctx context.Context, req *dto.CreateOrder
 		return nil, err
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
 	now := time.Now()
 
 	var (
-		total  float64
-		items  = make([]*model.OrderItem, 0, len(req.Items))
-		status = constant.OrderPending
+		orderID string
+		total   float64
+		items   = make([]*model.OrderItem, 0, len(req.Items))
+		status  = constant.OrderPending
+		order   *model.Order
 	)
 
-	for _, item := range req.Items {
-		if item.ProductID == "" || item.Quantity <= 0 {
-			return nil, response.NewAppError(http.StatusBadRequest, "invalid parameter item")
+	if err := s.transactor.WithinTx(ctx, func(txCtx context.Context) error {
+		for _, item := range req.Items {
+			if item.ProductID == "" || item.Quantity <= 0 {
+				return response.NewAppError(http.StatusBadRequest, "invalid parameter item")
+			}
+
+			product, err := s.productSvc.FindByID(txCtx, item.ProductID)
+			if err != nil {
+				return err
+			}
+			if product == nil || !product.IsActive {
+				return response.NewAppError(http.StatusNotFound, "product not found")
+			}
+
+			if err := s.inventorySvc.ReserveStock(txCtx, item.ProductID, item.Quantity); err != nil {
+				return err
+			}
+
+			subtotal := product.Price * float64(item.Quantity)
+			total += subtotal
+
+			items = append(items, &model.OrderItem{
+				ProductID: item.ProductID,
+				SellerID:  product.SellerID,
+				Quantity:  item.Quantity,
+				Price:     product.Price,
+				Subtotal:  subtotal,
+				CreatedAt: now,
+			})
 		}
 
-		product, err := s.productSvc.FindByID(ctx, item.ProductID)
+		order = &model.Order{
+			OrderNumber:     orderNumber,
+			CustomerID:      req.CustomerID,
+			Status:          string(status),
+			TotalAmount:     total,
+			ShippingAddress: req.ShippingAddress,
+			CreatedAt:       now,
+			UpdatedAt:       now,
+		}
+
+		var err error
+		orderID, err = s.orderRepo.Create(txCtx, order)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if product == nil || !product.IsActive {
-			return nil, response.NewAppError(http.StatusNotFound, "product not found")
-		}
+		order.ID = orderID
 
-		if err := s.inventorySvc.ReserveStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
-			return nil, err
+		for _, item := range items {
+			item.OrderID = orderID
 		}
 
-		subtotal := product.Price * float64(item.Quantity)
-		total += subtotal
-
-		items = append(items, &model.OrderItem{
-			ProductID: item.ProductID,
-			SellerID:  product.SellerID,
-			Quantity:  item.Quantity,
-			Price:     product.Price,
-			Subtotal:  subtotal,
-			CreatedAt: now,
-		})
-	}
-
-	order := &model.Order{
-		OrderNumber:     orderNumber,
-		CustomerID:      req.CustomerID,
-		Status:          string(status),
-		TotalAmount:     total,
-		ShippingAddress: req.ShippingAddress,
-		CreatedAt:       now,
-		UpdatedAt:       now,
-	}
-
-	orderID, err := s.orderRepo.Create(ctx, tx, order)
-	if err != nil {
-		return nil, err
-	}
-	order.ID = orderID
-
-	for _, item := range items {
-		item.OrderID = orderID
-	}
-
-	if err := s.orderItemRepo.CreateBatch(ctx, tx, items); err != nil {
-		return nil, err
-	}
-
-	if err := tx.Commit(); err != nil {
+		return s.orderItemRepo.CreateBatch(txCtx, items)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -201,56 +196,45 @@ func (s *OrderServiceImpl) CancelOrder(ctx context.Context, customerID string, o
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter")
 	}
 
-	order, err := s.orderRepo.FindByID(ctx, orderID)
-	if err != nil {
-		return err
-	}
-	if order == nil {
-		return response.NewAppError(http.StatusNotFound, "order not found")
-	}
-	if order.CustomerID != customerID {
-		return response.NewAppError(http.StatusUnauthorized, "unauthorized")
-	}
-	if order.Status != string(constant.OrderPending) {
-		return response.NewAppError(http.StatusConflict, "order status is not pending")
-	}
-
-	items, err := s.orderItemRepo.FindByOrderID(ctx, orderID)
-	if err != nil {
-		return err
-	}
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	for _, item := range items {
-		if item == nil {
-			continue
-		}
-		if err := s.inventorySvc.ReleaseStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
+	return s.transactor.WithinTx(ctx, func(txCtx context.Context) error {
+		order, err := s.orderRepo.FindByID(txCtx, orderID)
+		if err != nil {
 			return err
 		}
-	}
+		if order == nil {
+			return response.NewAppError(http.StatusNotFound, "order not found")
+		}
+		if order.CustomerID != customerID {
+			return response.NewAppError(http.StatusUnauthorized, "unauthorized")
+		}
+		if order.Status != string(constant.OrderPending) {
+			return response.NewAppError(http.StatusConflict, "order status is not pending")
+		}
 
-	if err := s.orderRepo.UpdateStatus(ctx, tx, orderID, constant.OrderCancelled); err != nil {
-		return err
-	}
+		items, err := s.orderItemRepo.FindByOrderID(txCtx, orderID)
+		if err != nil {
+			return err
+		}
 
-	return tx.Commit()
+		for _, item := range items {
+			if item == nil {
+				continue
+			}
+			if err := s.inventorySvc.ReleaseStock(txCtx, item.ProductID, item.Quantity); err != nil {
+				return err
+			}
+		}
+
+		return s.orderRepo.UpdateStatus(txCtx, orderID, constant.OrderCancelled)
+	})
 }
 
-func (s *OrderServiceImpl) UpdateOrderStatus(ctx context.Context, tx *sql.Tx, orderID string, status constant.OrderStatus) error {
+func (s *OrderServiceImpl) UpdateOrderStatus(ctx context.Context, orderID string, status constant.OrderStatus) error {
 	if orderID == "" {
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter order id")
 	}
-	if tx == nil {
-		return response.NewAppError(http.StatusInternalServerError, "internal server error")
-	}
 
-	return s.orderRepo.UpdateStatus(ctx, tx, orderID, status)
+	return s.orderRepo.UpdateStatus(ctx, orderID, status)
 }
 
 func toOrderRes(order *model.Order) dto.OrderRes {

@@ -1,13 +1,14 @@
 package route
 
 import (
+	catalogRepo "Dzaakk/simple-commerce/internal/catalog/repository"
+	catalogService "Dzaakk/simple-commerce/internal/catalog/service"
+	orderRepo "Dzaakk/simple-commerce/internal/order/repository"
+	orderService "Dzaakk/simple-commerce/internal/order/service"
 	"Dzaakk/simple-commerce/internal/transaction/handler"
 	"Dzaakk/simple-commerce/internal/transaction/repository"
 	"Dzaakk/simple-commerce/internal/transaction/service"
-	orderRepo "Dzaakk/simple-commerce/internal/order/repository"
-	orderService "Dzaakk/simple-commerce/internal/order/service"
-	catalogRepo "Dzaakk/simple-commerce/internal/catalog/repository"
-	catalogService "Dzaakk/simple-commerce/internal/catalog/service"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
@@ -42,9 +43,10 @@ func InitializedService(db *sql.DB) *TransactionRoutes {
 
 	productSvc := catalogService.NewProductService(productRepo)
 	inventorySvc := catalogService.NewInventoryService(inventoryRepo)
-	orderSvc := orderService.NewOrderService(db, orderRepoImpl, orderItemRepo, productSvc, inventorySvc)
+	txManager := transactor.New(db)
+	orderSvc := orderService.NewOrderService(txManager, orderRepoImpl, orderItemRepo, productSvc, inventorySvc)
 
-	svc := service.NewTransactionService(db, txRepo, orderRepoImpl, orderItemRepo, orderSvc, inventorySvc)
+	svc := service.NewTransactionService(txManager, txRepo, orderRepoImpl, orderItemRepo, orderSvc, inventorySvc)
 	h := handler.NewTransactionHandler(svc)
 
 	return NewTransactionRoutes(h)

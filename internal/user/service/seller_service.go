@@ -7,7 +7,6 @@ import (
 	"Dzaakk/simple-commerce/package/logging"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"database/sql"
 	"net/http"
 	"strconv"
 )
@@ -170,22 +169,6 @@ func (s *SellerServiceImpl) UpdateStatus(ctx context.Context, sellerID string, s
 	}
 
 	s.logger.Info(ctx, "seller_status_updated", map[string]interface{}{
-		"seller_id": sellerID,
-		"status":    status,
-	})
-	return nil
-}
-
-func (s *SellerServiceImpl) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error {
-	if err := s.repo.UpdateStatusWithTx(ctx, tx, sellerID, status); err != nil {
-		s.logger.Error(ctx, "seller_status_update_with_tx_failed", map[string]interface{}{
-			"seller_id": sellerID,
-			"status":    status,
-		})
-		return err
-	}
-
-	s.logger.Info(ctx, "seller_status_updated_with_tx", map[string]interface{}{
 		"seller_id": sellerID,
 		"status":    status,
 	})

@@ -4,6 +4,7 @@ import (
 	"Dzaakk/simple-commerce/internal/order/dto"
 	"Dzaakk/simple-commerce/internal/order/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -35,13 +36,9 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 	return &OrderRepository{db: db}
 }
 
-func (r *OrderRepository) Create(ctx context.Context, tx *sql.Tx, data *model.Order) (string, error) {
-	if tx == nil {
-		return "", errors.New("transaction is required")
-	}
-
+func (r *OrderRepository) Create(ctx context.Context, data *model.Order) (string, error) {
 	var id string
-	row := tx.QueryRowContext(
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(
 		ctx,
 		orderQueryCreate,
 		data.OrderNumber,
@@ -60,7 +57,7 @@ func (r *OrderRepository) Create(ctx context.Context, tx *sql.Tx, data *model.Or
 }
 
 func (r *OrderRepository) FindByID(ctx context.Context, orderID string) (*model.Order, error) {
-	row := r.db.QueryRowContext(ctx, orderQueryFindByID, orderID)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, orderQueryFindByID, orderID)
 
 	return scanOrder(row)
 }
@@ -68,7 +65,7 @@ func (r *OrderRepository) FindByID(ctx context.Context, orderID string) (*model.
 func (r *OrderRepository) FindByCustomerID(ctx context.Context, customerID string, filter dto.OrderFilter) ([]*model.Order, error) {
 	query, args := buildOrderQuery(customerID, filter)
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := transactor.ExecutorFrom(ctx, r.db).QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, response.Error("failed to query orders", err)
 	}
@@ -101,12 +98,8 @@ func (r *OrderRepository) FindByCustomerID(ctx context.Context, customerID strin
 	return orders, nil
 }
 
-func (r *OrderRepository) UpdateStatus(ctx context.Context, tx *sql.Tx, orderID string, status constant.OrderStatus) error {
-	if tx == nil {
-		return errors.New("transaction is required")
-	}
-
-	result, err := tx.ExecContext(ctx, orderQueryUpdateStatus, status, time.Now(), orderID)
+func (r *OrderRepository) UpdateStatus(ctx context.Context, orderID string, status constant.OrderStatus) error {
+	result, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, orderQueryUpdateStatus, status, time.Now(), orderID)
 	if err != nil {
 		return response.ExecError("update order status", err)
 	}

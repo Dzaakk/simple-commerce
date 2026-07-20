@@ -10,6 +10,7 @@ import (
 
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
@@ -160,7 +161,7 @@ func TestCustomerRepositoryUpdateStatusReturnsErrorWhenNoRowsAffected(t *testing
 	}
 }
 
-func TestCustomerRepositoryUpdateStatusWithTx(t *testing.T) {
+func TestCustomerRepositoryUpdateStatusUsesContextExecutor(t *testing.T) {
 	db, mock := newMockDB(t)
 	mock.ExpectBegin()
 	mock.ExpectExec(customerQueryUpdateStatus).
@@ -173,8 +174,9 @@ func TestCustomerRepositoryUpdateStatusWithTx(t *testing.T) {
 	}
 	defer tx.Rollback()
 
-	if err := NewCustomerRepository(db).UpdateStatusWithTx(context.Background(), tx, "customer-1", constant.StatusActive); err != nil {
-		t.Fatalf("UpdateStatusWithTx returned error: %v", err)
+	ctx := transactor.WithExecutor(context.Background(), tx)
+	if err := NewCustomerRepository(db).UpdateStatus(ctx, "customer-1", constant.StatusActive); err != nil {
+		t.Fatalf("UpdateStatus returned error: %v", err)
 	}
 }
 

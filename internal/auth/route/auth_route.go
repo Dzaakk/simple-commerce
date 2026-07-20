@@ -8,6 +8,7 @@ import (
 	emailService "Dzaakk/simple-commerce/internal/email/service"
 	userrepo "Dzaakk/simple-commerce/internal/user/repository"
 	userservice "Dzaakk/simple-commerce/internal/user/service"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/rabbitmq"
 	"database/sql"
 
@@ -55,8 +56,9 @@ func InitializedService(db *sql.DB, redis *redis.Client, rabbit *rabbitmq.Client
 	sellerService := userservice.NewSellerService(sellerRepo)
 	emailService := emailService.NewEmailService()
 	emailPublisher := emailQueue.NewRabbitPublisher(rabbit)
+	txManager := transactor.New(db)
 
-	service := service.NewAuthService(db, customerService, sellerService, emailService, emailPublisher, activationRepo, refreshRepo)
+	service := service.NewAuthService(txManager, customerService, sellerService, emailService, emailPublisher, activationRepo, refreshRepo)
 
 	hander := handler.NewAuthHandler(service)
 	return NewAuthRoutes(hander)

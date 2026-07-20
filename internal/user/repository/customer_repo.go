@@ -3,6 +3,7 @@ package repository
 import (
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -73,35 +74,18 @@ func (r *CustomerRepository) Update(ctx context.Context, data *model.Customer) (
 }
 
 func (r *CustomerRepository) FindByID(ctx context.Context, customerID string) (*model.Customer, error) {
-	row := r.db.QueryRowContext(ctx, customerQueryFindByID, customerID)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, customerQueryFindByID, customerID)
 
 	return scanCustomer(row)
 }
 
 func (r *CustomerRepository) FindByEmail(ctx context.Context, email string) (*model.Customer, error) {
-	row := r.db.QueryRowContext(ctx, customerQueryFindByEmail, email)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, customerQueryFindByEmail, email)
 
 	return scanCustomer(row)
 }
 func (r *CustomerRepository) UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error {
-	result, err := r.db.ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
-	if err != nil {
-		return response.ExecError("update customer status", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return response.Error("failed to get rows affected", err)
-	}
-	if rowsAffected == 0 {
-		return response.Error("no rows updated", sql.ErrNoRows)
-	}
-
-	return nil
-}
-
-func (r *CustomerRepository) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, customerID string, status constant.UserStatus) error {
-	result, err := tx.ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
+	result, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
 	if err != nil {
 		return response.ExecError("update customer status", err)
 	}

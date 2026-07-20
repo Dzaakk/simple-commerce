@@ -1,11 +1,12 @@
 package route
 
 import (
+	catalogRepo "Dzaakk/simple-commerce/internal/catalog/repository"
+	catalogService "Dzaakk/simple-commerce/internal/catalog/service"
 	"Dzaakk/simple-commerce/internal/order/handler"
 	"Dzaakk/simple-commerce/internal/order/repository"
 	"Dzaakk/simple-commerce/internal/order/service"
-	catalogRepo "Dzaakk/simple-commerce/internal/catalog/repository"
-	catalogService "Dzaakk/simple-commerce/internal/catalog/service"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +40,8 @@ func InitializedService(db *sql.DB) *OrderRoutes {
 	productService := catalogService.NewProductService(productRepo)
 	inventoryService := catalogService.NewInventoryService(inventoryRepo)
 
-	orderService := service.NewOrderService(db, orderRepo, orderItemRepo, productService, inventoryService)
+	txManager := transactor.New(db)
+	orderService := service.NewOrderService(txManager, orderRepo, orderItemRepo, productService, inventoryService)
 	orderHandler := handler.NewOrderHandler(orderService)
 
 	return NewOrderRoutes(orderHandler)

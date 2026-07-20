@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"Dzaakk/simple-commerce/internal/catalog/model"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
@@ -46,20 +47,7 @@ func TestInventoryRepositoryFindByProductIDReturnsNilWhenNotFound(t *testing.T) 
 func TestInventoryRepositoryReserveStockRejectsInvalidInput(t *testing.T) {
 	repo := NewInventoryRepository(nil)
 
-	if err := repo.ReserveStock(context.Background(), nil, "product-1", 1); err == nil || err.Error() != "transaction is required" {
-		t.Fatalf("nil tx error = %v, want transaction is required", err)
-	}
-
-	db, mock := newMockDB(t)
-	mock.ExpectBegin()
-	mock.ExpectRollback()
-	tx, err := db.BeginTx(context.Background(), nil)
-	if err != nil {
-		t.Fatalf("begin tx: %v", err)
-	}
-	defer tx.Rollback()
-
-	if err := repo.ReserveStock(context.Background(), tx, "product-1", 0); err == nil || err.Error() != "invalid parameter quantity" {
+	if err := repo.ReserveStock(context.Background(), "product-1", 0); err == nil || err.Error() != "invalid parameter quantity" {
 		t.Fatalf("invalid qty error = %v, want invalid parameter quantity", err)
 	}
 }
@@ -77,7 +65,8 @@ func TestInventoryRepositoryReserveStock(t *testing.T) {
 	}
 	defer tx.Rollback()
 
-	if err := NewInventoryRepository(db).ReserveStock(context.Background(), tx, "product-1", 3); err != nil {
+	ctx := transactor.WithExecutor(context.Background(), tx)
+	if err := NewInventoryRepository(db).ReserveStock(ctx, "product-1", 3); err != nil {
 		t.Fatalf("ReserveStock returned error: %v", err)
 	}
 }
@@ -95,7 +84,8 @@ func TestInventoryRepositoryReserveStockReturnsInsufficientStockWhenNoRowsAffect
 	}
 	defer tx.Rollback()
 
-	err = NewInventoryRepository(db).ReserveStock(context.Background(), tx, "product-1", 3)
+	ctx := transactor.WithExecutor(context.Background(), tx)
+	err = NewInventoryRepository(db).ReserveStock(ctx, "product-1", 3)
 	if !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("error = %v, want wrapping sql.ErrNoRows", err)
 	}
@@ -114,7 +104,8 @@ func TestInventoryRepositoryReleaseStock(t *testing.T) {
 	}
 	defer tx.Rollback()
 
-	if err := NewInventoryRepository(db).ReleaseStock(context.Background(), tx, "product-1", 2); err != nil {
+	ctx := transactor.WithExecutor(context.Background(), tx)
+	if err := NewInventoryRepository(db).ReleaseStock(ctx, "product-1", 2); err != nil {
 		t.Fatalf("ReleaseStock returned error: %v", err)
 	}
 }
@@ -132,7 +123,8 @@ func TestInventoryRepositoryReleaseStockReturnsNoRowsError(t *testing.T) {
 	}
 	defer tx.Rollback()
 
-	err = NewInventoryRepository(db).ReleaseStock(context.Background(), tx, "product-1", 2)
+	ctx := transactor.WithExecutor(context.Background(), tx)
+	err = NewInventoryRepository(db).ReleaseStock(ctx, "product-1", 2)
 	if !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("error = %v, want wrapping sql.ErrNoRows", err)
 	}

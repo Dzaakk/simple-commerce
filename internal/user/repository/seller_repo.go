@@ -3,6 +3,7 @@ package repository
 import (
 	"Dzaakk/simple-commerce/internal/user/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -74,19 +75,19 @@ func (r *SellerRepository) Update(ctx context.Context, data *model.Seller) (int6
 }
 
 func (r *SellerRepository) FindByID(ctx context.Context, sellerID string) (*model.Seller, error) {
-	row := r.db.QueryRowContext(ctx, sellerQueryFindByID, sellerID)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, sellerQueryFindByID, sellerID)
 
 	return scanSeller(row)
 }
 
 func (r *SellerRepository) FindByEmail(ctx context.Context, email string) (*model.Seller, error) {
-	row := r.db.QueryRowContext(ctx, sellerQueryFindByEmail, email)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, sellerQueryFindByEmail, email)
 
 	return scanSeller(row)
 }
 
 func (r *SellerRepository) FindByShopName(ctx context.Context, name string) ([]*model.Seller, error) {
-	rows, err := r.db.QueryContext(ctx, sellerQueryFindByName, "%"+name+"%")
+	rows, err := transactor.ExecutorFrom(ctx, r.db).QueryContext(ctx, sellerQueryFindByName, "%"+name+"%")
 	if err != nil {
 		return nil, response.Error("failed to query sellers by shop name", err)
 	}
@@ -117,24 +118,7 @@ func (r *SellerRepository) FindByShopName(ctx context.Context, name string) ([]*
 }
 
 func (r *SellerRepository) UpdateStatus(ctx context.Context, sellerID string, status constant.UserStatus) error {
-	result, err := r.db.ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
-	if err != nil {
-		return response.ExecError("update seller status", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return response.Error("failed to get rows affected", err)
-	}
-	if rowsAffected == 0 {
-		return response.Error("no rows updated", sql.ErrNoRows)
-	}
-
-	return nil
-}
-
-func (r *SellerRepository) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, sellerID string, status constant.UserStatus) error {
-	result, err := tx.ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
+	result, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, sellerQueryUpdateStatus, status, sellerID)
 	if err != nil {
 		return response.ExecError("update seller status", err)
 	}

@@ -6,7 +6,6 @@ import (
 	txModel "Dzaakk/simple-commerce/internal/transaction/model"
 	"Dzaakk/simple-commerce/package/constant"
 	"context"
-	"database/sql"
 	"time"
 )
 
@@ -19,11 +18,11 @@ type TransactionService interface {
 }
 
 type TransactionRepository interface {
-	Create(ctx context.Context, tx *sql.Tx, data *txModel.Transaction) (string, error)
+	Create(ctx context.Context, data *txModel.Transaction) (string, error)
 	FindByID(ctx context.Context, transactionID string) (*txModel.Transaction, error)
 	FindByOrderID(ctx context.Context, orderID string) (*txModel.Transaction, error)
 	FindByTransactionNumber(ctx context.Context, txNumber string) (*txModel.Transaction, error)
-	UpdateStatus(ctx context.Context, tx *sql.Tx, transactionID string, status constant.TransactionStatus, paidAt *time.Time) error
+	UpdateStatus(ctx context.Context, transactionID string, status constant.TransactionStatus, paidAt *time.Time) error
 	GenerateTransactionNumber(ctx context.Context) (string, error)
 }
 
@@ -36,9 +35,9 @@ type OrderItemRepository interface {
 }
 
 type OrderService interface {
-	UpdateOrderStatus(ctx context.Context, tx *sql.Tx, orderID string, status constant.OrderStatus) error
+	UpdateOrderStatus(ctx context.Context, orderID string, status constant.OrderStatus) error
 }
 
 type InventoryService interface {
-	ReleaseStock(ctx context.Context, tx *sql.Tx, productID string, qty int) error
+	ReleaseStock(ctx context.Context, productID string, qty int) error
 }

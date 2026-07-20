@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"Dzaakk/simple-commerce/internal/auth/model"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
@@ -107,7 +108,7 @@ func TestActivationCodeRepositoryFindByCodeReturnsNilWhenNotFound(t *testing.T) 
 	}
 }
 
-func TestActivationCodeRepositoryMarkAsUsedWithTx(t *testing.T) {
+func TestActivationCodeRepositoryMarkAsUsed(t *testing.T) {
 	db, mock := newMockDB(t)
 	mock.ExpectBegin()
 	mock.ExpectExec(activationCodeQueryMarkAsUsed).
@@ -121,12 +122,13 @@ func TestActivationCodeRepositoryMarkAsUsedWithTx(t *testing.T) {
 	}
 	defer tx.Rollback()
 
-	if err := NewActivationCodeRepository(db).MarkAsUsedWithTx(context.Background(), tx, 7); err != nil {
-		t.Fatalf("MarkAsUsedWithTx returned error: %v", err)
+	ctx := transactor.WithExecutor(context.Background(), tx)
+	if err := NewActivationCodeRepository(db).MarkAsUsed(ctx, 7); err != nil {
+		t.Fatalf("MarkAsUsed returned error: %v", err)
 	}
 }
 
-func TestActivationCodeRepositoryMarkAsUsedWithTxReturnsWrappedError(t *testing.T) {
+func TestActivationCodeRepositoryMarkAsUsedReturnsWrappedError(t *testing.T) {
 	wantErr := errors.New("update failed")
 	db, mock := newMockDB(t)
 	mock.ExpectBegin()
@@ -141,7 +143,8 @@ func TestActivationCodeRepositoryMarkAsUsedWithTxReturnsWrappedError(t *testing.
 	}
 	defer tx.Rollback()
 
-	err = NewActivationCodeRepository(db).MarkAsUsedWithTx(context.Background(), tx, 7)
+	ctx := transactor.WithExecutor(context.Background(), tx)
+	err = NewActivationCodeRepository(db).MarkAsUsed(ctx, 7)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v, want wrapping %v", err, wantErr)
 	}

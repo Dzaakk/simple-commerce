@@ -2,10 +2,10 @@ package repository
 
 import (
 	"Dzaakk/simple-commerce/internal/order/model"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
-	"errors"
 	"strconv"
 	"strings"
 )
@@ -24,10 +24,7 @@ func NewOrderItemRepository(db *sql.DB) *OrderItemRepository {
 	return &OrderItemRepository{db: db}
 }
 
-func (r *OrderItemRepository) CreateBatch(ctx context.Context, tx *sql.Tx, items []*model.OrderItem) error {
-	if tx == nil {
-		return errors.New("transaction is required")
-	}
+func (r *OrderItemRepository) CreateBatch(ctx context.Context, items []*model.OrderItem) error {
 	if len(items) == 0 {
 		return nil
 	}
@@ -51,7 +48,7 @@ func (r *OrderItemRepository) CreateBatch(ctx context.Context, tx *sql.Tx, items
 	}
 
 	query := formatOrderItemInsert(values)
-	if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+	if _, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, query, args...); err != nil {
 		return response.ExecError("create order items", err)
 	}
 
@@ -59,7 +56,7 @@ func (r *OrderItemRepository) CreateBatch(ctx context.Context, tx *sql.Tx, items
 }
 
 func (r *OrderItemRepository) FindByOrderID(ctx context.Context, orderID string) ([]*model.OrderItem, error) {
-	rows, err := r.db.QueryContext(ctx, orderItemQueryFindByOrderID, orderID)
+	rows, err := transactor.ExecutorFrom(ctx, r.db).QueryContext(ctx, orderItemQueryFindByOrderID, orderID)
 	if err != nil {
 		return nil, response.Error("failed to query order items", err)
 	}

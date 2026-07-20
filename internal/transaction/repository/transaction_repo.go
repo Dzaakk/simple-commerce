@@ -3,6 +3,7 @@ package repository
 import (
 	"Dzaakk/simple-commerce/internal/transaction/model"
 	"Dzaakk/simple-commerce/package/constant"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -36,13 +37,9 @@ func NewTransactionRepository(db *sql.DB) *TransactionRepository {
 	return &TransactionRepository{db: db}
 }
 
-func (r *TransactionRepository) Create(ctx context.Context, tx *sql.Tx, data *model.Transaction) (string, error) {
-	if tx == nil {
-		return "", errors.New("transaction is required")
-	}
-
+func (r *TransactionRepository) Create(ctx context.Context, data *model.Transaction) (string, error) {
 	var id string
-	err := tx.QueryRowContext(
+	err := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(
 		ctx,
 		transactionQueryCreate,
 		data.OrderID,
@@ -62,29 +59,25 @@ func (r *TransactionRepository) Create(ctx context.Context, tx *sql.Tx, data *mo
 }
 
 func (r *TransactionRepository) FindByID(ctx context.Context, transactionID string) (*model.Transaction, error) {
-	row := r.db.QueryRowContext(ctx, transactionQueryFindByID, transactionID)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, transactionQueryFindByID, transactionID)
 
 	return scanTransaction(row)
 }
 
 func (r *TransactionRepository) FindByOrderID(ctx context.Context, orderID string) (*model.Transaction, error) {
-	row := r.db.QueryRowContext(ctx, transactionQueryFindByOrderID, orderID)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, transactionQueryFindByOrderID, orderID)
 
 	return scanTransaction(row)
 }
 
 func (r *TransactionRepository) FindByTransactionNumber(ctx context.Context, txNumber string) (*model.Transaction, error) {
-	row := r.db.QueryRowContext(ctx, transactionQueryFindByTransactionNumber, txNumber)
+	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, transactionQueryFindByTransactionNumber, txNumber)
 
 	return scanTransaction(row)
 }
 
-func (r *TransactionRepository) UpdateStatus(ctx context.Context, tx *sql.Tx, transactionID string, status constant.TransactionStatus, paidAt *time.Time) error {
-	if tx == nil {
-		return errors.New("transaction is required")
-	}
-
-	result, err := tx.ExecContext(ctx, transactionQueryUpdateStatus, status, paidAt, time.Now(), transactionID)
+func (r *TransactionRepository) UpdateStatus(ctx context.Context, transactionID string, status constant.TransactionStatus, paidAt *time.Time) error {
+	result, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, transactionQueryUpdateStatus, status, paidAt, time.Now(), transactionID)
 	if err != nil {
 		return response.ExecError("update transaction status", err)
 	}

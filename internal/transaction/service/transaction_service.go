@@ -5,15 +5,15 @@ import (
 	"Dzaakk/simple-commerce/internal/transaction/dto"
 	txModel "Dzaakk/simple-commerce/internal/transaction/model"
 	"Dzaakk/simple-commerce/package/constant"
+	dbtx "Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"database/sql"
 	"net/http"
 	"time"
 )
 
 type TransactionServiceImpl struct {
-	db               *sql.DB
+	transactor       dbtx.Transactor
 	txRepo           TransactionRepository
 	orderRepo        OrderRepository
 	orderItemRepo    OrderItemRepository
@@ -21,9 +21,9 @@ type TransactionServiceImpl struct {
 	inventoryService InventoryService
 }
 
-func NewTransactionService(db *sql.DB, txRepo TransactionRepository, orderRepo OrderRepository, orderItemRepo OrderItemRepository, orderService OrderService, inventoryService InventoryService) *TransactionServiceImpl {
+func NewTransactionService(transactor dbtx.Transactor, txRepo TransactionRepository, orderRepo OrderRepository, orderItemRepo OrderItemRepository, orderService OrderService, inventoryService InventoryService) *TransactionServiceImpl {
 	return &TransactionServiceImpl{
-		db:               db,
+		transactor:       transactor,
 		txRepo:           txRepo,
 		orderRepo:        orderRepo,
 		orderItemRepo:    orderItemRepo,
@@ -84,21 +84,15 @@ func (s *TransactionServiceImpl) CreateTransaction(ctx context.Context, req *dto
 		UpdatedAt:         now,
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	id, err := s.txRepo.Create(ctx, tx, data)
-	if err != nil {
+	var id string
+	if err := s.transactor.WithinTx(ctx, func(txCtx context.Context) error {
+		var err error
+		id, err = s.txRepo.Create(txCtx, data)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	data.ID = id
-
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
 
 	return toTransactionRes(data), nil
 }
@@ -172,77 +166,73 @@ func (s *TransactionServiceImpl) HandlePaymentCallback(ctx context.Context, req 
 		return response.NewAppError(http.StatusBadRequest, "invalid signature")
 	}
 
-	txData, err := s.txRepo.FindByTransactionNumber(ctx, req.TransactionNumber)
-	if err != nil {
-		return err
-	}
-	if txData == nil {
-		return response.NewAppError(http.StatusNotFound, "transaction not found")
-	}
+	return s.transactor.WithinTx(ctx, func(txCtx context.Context) error {
+		txData, err := s.txRepo.FindByTransactionNumber(txCtx, req.TransactionNumber)
+		if err != nil {
+			return err
+		}
+		if txData == nil {
+			return response.NewAppError(http.StatusNotFound, "transaction not found")
+		}
 
-	currentStatus := constant.TransactionStatus(txData.Status)
-	if isFinalTransactionStatus(currentStatus) {
+		currentStatus := constant.TransactionStatus(txData.Status)
+		if isFinalTransactionStatus(currentStatus) {
+			return nil
+		}
+
+		newStatus := req.Status
+		if newStatus == "" {
+			return response.NewAppError(http.StatusBadRequest, "invalid parameter status")
+		}
+
+		order, err := s.orderRepo.FindByID(txCtx, txData.OrderID)
+		if err != nil {
+			return err
+		}
+		if order == nil {
+			return response.NewAppError(http.StatusNotFound, "order not found")
+		}
+
+		items, err := s.orderItemRepo.FindByOrderID(txCtx, order.ID)
+		if err != nil {
+			return err
+		}
+
+		paidAt := req.PaidAt
+		if newStatus == constant.TransactionSuccess && paidAt == nil {
+			now := time.Now()
+			paidAt = &now
+		}
+
+		if err := s.txRepo.UpdateStatus(txCtx, txData.ID, newStatus, paidAt); err != nil {
+			return err
+		}
+
+		switch newStatus {
+		case constant.TransactionSuccess:
+			if err := s.orderService.UpdateOrderStatus(txCtx, order.ID, constant.OrderConfirmed); err != nil {
+				return err
+			}
+		case constant.TransactionFailed, constant.TransactionExpired:
+			if err := s.orderService.UpdateOrderStatus(txCtx, order.ID, constant.OrderCancelled); err != nil {
+				return err
+			}
+			if err := releaseOrderItems(txCtx, items, s.inventoryService); err != nil {
+				return err
+			}
+		case constant.TransactionRefunded:
+			if err := s.orderService.UpdateOrderStatus(txCtx, order.ID, constant.OrderCancelled); err != nil {
+				return err
+			}
+			if err := releaseOrderItems(txCtx, items, s.inventoryService); err != nil {
+				return err
+			}
+		default:
+			// pending/processing: no-op for order and inventory
+		}
+
 		return nil
-	}
-
-	newStatus := req.Status
-	if newStatus == "" {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter status")
-	}
-
-	order, err := s.orderRepo.FindByID(ctx, txData.OrderID)
-	if err != nil {
-		return err
-	}
-	if order == nil {
-		return response.NewAppError(http.StatusNotFound, "order not found")
-	}
-
-	items, err := s.orderItemRepo.FindByOrderID(ctx, order.ID)
-	if err != nil {
-		return err
-	}
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	paidAt := req.PaidAt
-	if newStatus == constant.TransactionSuccess && paidAt == nil {
-		now := time.Now()
-		paidAt = &now
-	}
-
-	if err := s.txRepo.UpdateStatus(ctx, tx, txData.ID, newStatus, paidAt); err != nil {
-		return err
-	}
-
-	switch newStatus {
-	case constant.TransactionSuccess:
-		if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderConfirmed); err != nil {
-			return err
-		}
-	case constant.TransactionFailed, constant.TransactionExpired:
-		if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
-			return err
-		}
-		if err := releaseOrderItems(ctx, tx, items, s.inventoryService); err != nil {
-			return err
-		}
-	case constant.TransactionRefunded:
-		if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
-			return err
-		}
-		if err := releaseOrderItems(ctx, tx, items, s.inventoryService); err != nil {
-			return err
-		}
-	default:
-		// pending/processing: no-op for order and inventory
-	}
-
-	return tx.Commit()
+	})
 }
 
 func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transactionID string) error {
@@ -250,57 +240,49 @@ func (s *TransactionServiceImpl) ExpireTransaction(ctx context.Context, transact
 		return response.NewAppError(http.StatusBadRequest, "invalid parameter transaction id")
 	}
 
-	txData, err := s.txRepo.FindByID(ctx, transactionID)
-	if err != nil {
-		return err
-	}
-	if txData == nil {
-		return response.NewAppError(http.StatusNotFound, "transaction not found")
-	}
+	return s.transactor.WithinTx(ctx, func(txCtx context.Context) error {
+		txData, err := s.txRepo.FindByID(txCtx, transactionID)
+		if err != nil {
+			return err
+		}
+		if txData == nil {
+			return response.NewAppError(http.StatusNotFound, "transaction not found")
+		}
 
-	currentStatus := constant.TransactionStatus(txData.Status)
-	if isFinalTransactionStatus(currentStatus) {
-		return nil
-	}
+		currentStatus := constant.TransactionStatus(txData.Status)
+		if isFinalTransactionStatus(currentStatus) {
+			return nil
+		}
 
-	order, err := s.orderRepo.FindByID(ctx, txData.OrderID)
-	if err != nil {
-		return err
-	}
-	if order == nil {
-		return response.NewAppError(http.StatusNotFound, "order not found")
-	}
+		order, err := s.orderRepo.FindByID(txCtx, txData.OrderID)
+		if err != nil {
+			return err
+		}
+		if order == nil {
+			return response.NewAppError(http.StatusNotFound, "order not found")
+		}
 
-	items, err := s.orderItemRepo.FindByOrderID(ctx, order.ID)
-	if err != nil {
-		return err
-	}
+		items, err := s.orderItemRepo.FindByOrderID(txCtx, order.ID)
+		if err != nil {
+			return err
+		}
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if err := s.txRepo.UpdateStatus(ctx, tx, txData.ID, constant.TransactionExpired, nil); err != nil {
-		return err
-	}
-	if err := s.orderService.UpdateOrderStatus(ctx, tx, order.ID, constant.OrderCancelled); err != nil {
-		return err
-	}
-	if err := releaseOrderItems(ctx, tx, items, s.inventoryService); err != nil {
-		return err
-	}
-
-	return tx.Commit()
+		if err := s.txRepo.UpdateStatus(txCtx, txData.ID, constant.TransactionExpired, nil); err != nil {
+			return err
+		}
+		if err := s.orderService.UpdateOrderStatus(txCtx, order.ID, constant.OrderCancelled); err != nil {
+			return err
+		}
+		return releaseOrderItems(txCtx, items, s.inventoryService)
+	})
 }
 
-func releaseOrderItems(ctx context.Context, tx *sql.Tx, items []*orderModel.OrderItem, inventorySvc InventoryService) error {
+func releaseOrderItems(ctx context.Context, items []*orderModel.OrderItem, inventorySvc InventoryService) error {
 	for _, item := range items {
 		if item == nil {
 			continue
 		}
-		if err := inventorySvc.ReleaseStock(ctx, tx, item.ProductID, item.Quantity); err != nil {
+		if err := inventorySvc.ReleaseStock(ctx, item.ProductID, item.Quantity); err != nil {
 			return err
 		}
 	}

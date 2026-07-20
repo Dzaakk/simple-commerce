@@ -7,7 +7,6 @@ import (
 	"Dzaakk/simple-commerce/package/logging"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"database/sql"
 	"net/http"
 	"strconv"
 )
@@ -143,22 +142,6 @@ func (c *CustomerServiceImpl) UpdateStatus(ctx context.Context, customerID strin
 	}
 
 	c.logger.Info(ctx, "customer_status_updated", map[string]interface{}{
-		"customer_id": customerID,
-		"status":      status,
-	})
-	return nil
-}
-
-func (c *CustomerServiceImpl) UpdateStatusWithTx(ctx context.Context, tx *sql.Tx, customerID string, status constant.UserStatus) error {
-	if err := c.repo.UpdateStatusWithTx(ctx, tx, customerID, status); err != nil {
-		c.logger.Error(ctx, "customer_status_update_with_tx_failed", map[string]interface{}{
-			"customer_id": customerID,
-			"status":      status,
-		})
-		return err
-	}
-
-	c.logger.Info(ctx, "customer_status_updated_with_tx", map[string]interface{}{
 		"customer_id": customerID,
 		"status":      status,
 	})

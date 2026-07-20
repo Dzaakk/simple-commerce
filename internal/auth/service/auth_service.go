@@ -6,10 +6,10 @@ import (
 	emailmodel "Dzaakk/simple-commerce/internal/email/model"
 	userdto "Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/package/constant"
+	dbtx "Dzaakk/simple-commerce/package/db/transactor"
 	"Dzaakk/simple-commerce/package/logging"
 	"Dzaakk/simple-commerce/package/response"
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,7 +20,7 @@ import (
 )
 
 type authService struct {
-	db             *sql.DB
+	transactor     dbtx.Transactor
 	customerSvc    customerService
 	sellerSvc      sellerService
 	emailService   emailService
@@ -31,7 +31,7 @@ type authService struct {
 }
 
 func NewAuthService(
-	db *sql.DB,
+	transactor dbtx.Transactor,
 	customerSvc customerService,
 	sellerSvc sellerService,
 	emailService emailService,
@@ -40,7 +40,7 @@ func NewAuthService(
 	refreshRepo refreshTokenRepository,
 ) AuthService {
 	return &authService{
-		db:             db,
+		transactor:     transactor,
 		customerSvc:    customerSvc,
 		sellerSvc:      sellerSvc,
 		emailService:   emailService,
@@ -171,49 +171,38 @@ func (s *authService) VerifyEmail(ctx context.Context, activationCode string) er
 		return response.ErrInvalidActivationCode
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
-	}
-	defer tx.Rollback()
+	return s.transactor.WithinTx(ctx, func(txCtx context.Context) error {
+		switch activationData.UserType {
+		case string(constant.Customer):
+			customer, err := s.customerSvc.FindByEmail(txCtx, activationData.Email)
+			if err != nil {
+				return err
+			}
+			if customer == nil {
+				return response.ErrUserNotFound
+			}
 
-	switch activationData.UserType {
-	case string(constant.Customer):
-		customer, err := s.customerSvc.FindByEmail(ctx, activationData.Email)
-		if err != nil {
-			return err
-		}
-		if customer == nil {
-			return response.ErrUserNotFound
+			if err := s.customerSvc.UpdateStatus(txCtx, customer.ID, constant.StatusActive); err != nil {
+				return err
+			}
+		case string(constant.Seller):
+			seller, err := s.sellerSvc.FindByEmail(txCtx, activationData.Email)
+			if err != nil {
+				return err
+			}
+			if seller == nil {
+				return response.ErrUserNotFound
+			}
+
+			if err := s.sellerSvc.UpdateStatus(txCtx, seller.ID, constant.StatusActive); err != nil {
+				return err
+			}
+		default:
+			return response.ErrInvalidActivationCode
 		}
 
-		err = s.customerSvc.UpdateStatusWithTx(ctx, tx, customer.ID, constant.StatusActive)
-		if err != nil {
-			return err
-		}
-	case string(constant.Seller):
-		seller, err := s.sellerSvc.FindByEmail(ctx, activationData.Email)
-		if err != nil {
-			return err
-		}
-		if seller == nil {
-			return response.ErrUserNotFound
-		}
-
-		err = s.sellerSvc.UpdateStatusWithTx(ctx, tx, seller.ID, constant.StatusActive)
-		if err != nil {
-			return err
-		}
-	default:
-		return response.ErrInvalidActivationCode
-	}
-
-	err = s.activationRepo.MarkAsUsedWithTx(ctx, tx, activationData.ID)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
+		return s.activationRepo.MarkAsUsed(txCtx, activationData.ID)
+	})
 }
 
 func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Dzaakk/simple-commerce/internal/auth/model"
+	"Dzaakk/simple-commerce/package/db/transactor"
 	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
@@ -58,8 +59,8 @@ func (r *ActivationCodeRepository) FindByCode(ctx context.Context, code string) 
 	return scanActivationCode(row)
 }
 
-func (r *ActivationCodeRepository) MarkAsUsedWithTx(ctx context.Context, tx *sql.Tx, id int64) error {
-	_, err := tx.ExecContext(ctx, activationCodeQueryMarkAsUsed, id)
+func (r *ActivationCodeRepository) MarkAsUsed(ctx context.Context, id int64) error {
+	_, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, activationCodeQueryMarkAsUsed, id)
 	if err != nil {
 		return response.Error("failed to mark activation code as used", err)
 	}
