@@ -1,0 +1,7 @@
+.git
+.env
+db-data
+bin
+tmp
+docs
+erd.png

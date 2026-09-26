@@ -1,17 +1,13 @@
-# Start with the official Golang image as a base
 FROM golang:1.24-alpine AS builder
-
-# Set the working directory
-WORKDIR /app
-
-# Copy the source code
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /simple-commerce .
 
-# Download all the dependencies and build the application
-RUN go get -d -v ./... && go build -o main .
-
-# Expose the port on which your app will run
+FROM alpine:3.22
+RUN addgroup -S app && adduser -S -G app app
+COPY --from=builder /simple-commerce /usr/local/bin/simple-commerce
+USER app
 EXPOSE 8080
-
-# Run the binary
-CMD ["./main"]
+ENTRYPOINT ["simple-commerce"]
