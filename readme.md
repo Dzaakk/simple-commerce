@@ -28,8 +28,7 @@ Useful checks:
 go test ./...
 go vet ./...
 docker compose config --quiet
-k6 run -e BASE_URL=http://localhost:8080 tests/k6/smoke.js
 ```
 
-The API contract is in `api.yaml`; the cleanup and benchmark sequence is in
+The API contract is in `api.yaml`; the cleanup and future benchmark sequence is in
 `docs/simple-commerce-revamp-plan.md`.

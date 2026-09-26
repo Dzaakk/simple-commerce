@@ -1,9 +1,6 @@
 APP_NAME := simple-commerce
 BIN_DIR := bin
 GO := go
-K6 := k6
-K6_BASE_URL ?= http://localhost:8080
-K6_DURATION ?= 3m
 
 ifeq ($(OS),Windows_NT)
 	BINARY := $(BIN_DIR)/$(APP_NAME).exe
@@ -15,7 +12,7 @@ else
 	CLEAN_BIN := rm -rf $(BIN_DIR)
 endif
 
-.PHONY: run build test tidy fmt vet compose-config docker-up docker-down k6-smoke k6-v1 k6-v2 clean
+.PHONY: run build test tidy fmt vet compose-config docker-up docker-down clean
 
 run:
 	$(GO) run .
@@ -44,15 +41,6 @@ docker-up:
 
 docker-down:
 	docker compose down
-
-k6-smoke:
-	$(K6) run -e BASE_URL=$(K6_BASE_URL) tests/k6/smoke.js
-
-k6-v1:
-	$(K6) run -e BASE_URL=$(K6_BASE_URL) -e ENDPOINT=/api/v1/product -e DURATION=$(K6_DURATION) tests/k6/catalog-browsing.js
-
-k6-v2:
-	$(K6) run -e BASE_URL=$(K6_BASE_URL) -e ENDPOINT=/api/v2/product -e DURATION=$(K6_DURATION) tests/k6/catalog-browsing.js
 
 clean:
 	$(CLEAN_BIN)
