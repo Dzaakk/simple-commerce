@@ -1,10 +1,7 @@
-*.gitignore
 .env
-postgres.yaml
-db.yaml
-redis.yaml
-db-data
-*.sum
-*.air.toml
-/tmp
-agent
+.env.*
+!.env.example
+db-data/
+bin/
+tmp/
+*.exe
