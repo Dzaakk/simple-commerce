@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"strconv"
+	"fmt"
 	"time"
 
 	"Dzaakk/simple-commerce/internal/catalog/dto"
@@ -11,81 +11,27 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-const (
-	catalogProductCacheTTL       = time.Minute
-	catalogCategoryCacheTTL      = 5 * time.Minute
-	catalogProductListCacheLimit = 100
-	catalogCacheWriteTimeout     = 500 * time.Millisecond
-)
+const catalogCacheTTL = 5 * time.Minute
 
-func readCatalogCache(ctx context.Context, redisClient *redis.Client, key string, dst interface{}) bool {
-	if redisClient == nil {
+func readCache(ctx context.Context, client *redis.Client, key string, target any) bool {
+	if client == nil {
 		return false
 	}
-
-	data, err := redisClient.Get(ctx, key).Bytes()
-	if err != nil {
-		return false
-	}
-
-	if err := json.Unmarshal(data, dst); err != nil {
-		redisClient.Del(ctx, key)
-		return false
-	}
-
-	return true
+	value, err := client.Get(ctx, key).Bytes()
+	return err == nil && json.Unmarshal(value, target) == nil
 }
 
-func writeCatalogCache(ctx context.Context, redisClient *redis.Client, key string, value interface{}, ttl time.Duration) {
-	if redisClient == nil {
+func writeCache(ctx context.Context, client *redis.Client, key string, value any) {
+	if client == nil {
 		return
 	}
-
-	data, err := json.Marshal(value)
-	if err != nil {
-		return
+	payload, err := json.Marshal(value)
+	if err == nil {
+		_ = client.Set(ctx, key, payload, catalogCacheTTL).Err()
 	}
-
-	redisClient.Set(ctx, key, data, ttl)
 }
 
-func writeCatalogCacheAsync(redisClient *redis.Client, key string, value interface{}, ttl time.Duration) {
-	if redisClient == nil {
-		return
-	}
-
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), catalogCacheWriteTimeout)
-		defer cancel()
-
-		writeCatalogCache(ctx, redisClient, key, value, ttl)
-	}()
-}
-
-func productDetailCacheKey(productID string) string {
-	return "catalog:v2:product:id:" + productID
-}
-
-func productListCacheKey(req dto.ProductQueryReq) (string, bool) {
-	if req.Cursor != nil && *req.Cursor != "" {
-		return "", false
-	}
-	if req.SellerID != nil || req.MinPrice != nil || req.MaxPrice != nil || req.Name != nil {
-		return "", false
-	}
-	if req.SortBy != "" {
-		return "", false
-	}
-	if req.Limit != catalogProductListCacheLimit {
-		return "", false
-	}
-
-	if req.CategoryID != nil {
-		return "catalog:v2:products:list:category_id=" +
-			strconv.FormatInt(*req.CategoryID, 10) +
-			":limit=" +
-			strconv.Itoa(req.Limit), true
-	}
-
-	return "catalog:v2:products:list:limit=" + strconv.Itoa(req.Limit), true
+func productListCacheKey(query dto.ProductQuery) string {
+	payload, _ := json.Marshal(query)
+	return fmt.Sprintf("catalog:products:%x", payload)
 }

@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"net/http"
+
 	"Dzaakk/simple-commerce/internal/auth/dto"
 	"Dzaakk/simple-commerce/internal/auth/service"
 	"Dzaakk/simple-commerce/package/response"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,110 +14,60 @@ type AuthHandler struct {
 	service service.AuthService
 }
 
-func NewAuthHandler(usecase service.AuthService) *AuthHandler {
-	return &AuthHandler{
-		service: usecase,
-	}
+func NewAuthHandler(authService service.AuthService) *AuthHandler {
+	return &AuthHandler{service: authService}
 }
 
 func (h *AuthHandler) RegisterCustomer(ctx *gin.Context) {
-	var data dto.RegisterCustomerRequest
-
-	if err := ctx.ShouldBindJSON(&data); err != nil {
+	var req dto.RegisterCustomerRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
-
-	err := h.service.RegisterCustomer(ctx.Request.Context(), &data)
-	if err != nil {
+	if err := h.service.RegisterCustomer(ctx.Request.Context(), &req); err != nil {
 		ctx.Error(err)
 		return
 	}
-
-	ctx.JSON(http.StatusCreated, response.Success("Success Create Customer"))
-}
-
-func (h *AuthHandler) RegisterSeller(ctx *gin.Context) {
-	var data dto.RegisterSellerRequest
-
-	if err := ctx.ShouldBindJSON(&data); err != nil {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	err := h.service.RegisterSeller(ctx.Request.Context(), &data)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusCreated, response.Success("Success Create Seller"))
-}
-
-func (h *AuthHandler) VerifyEmail(ctx *gin.Context) {
-
-	activationCode := ctx.Query("code")
-	if activationCode == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-	err := h.service.VerifyEmail(ctx.Request.Context(), activationCode)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Email verified successfully"))
+	ctx.JSON(http.StatusCreated, response.Response(http.StatusCreated, "Created", nil))
 }
 
 func (h *AuthHandler) Login(ctx *gin.Context) {
-	var body dto.LoginRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var req dto.LoginRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
-
-	req := &dto.LoginRequest{
-		Email:    body.Email,
-		Password: body.Password,
-		UserType: body.UserType,
-	}
-
-	res, err := h.service.Login(ctx.Request.Context(), req)
+	result, err := h.service.Login(ctx.Request.Context(), &req)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
-
-	ctx.JSON(http.StatusOK, response.Success(res))
+	ctx.JSON(http.StatusOK, response.Success(result))
 }
 
 func (h *AuthHandler) RefreshToken(ctx *gin.Context) {
-	var body dto.RefreshTokenRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var req dto.RefreshTokenRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
-
-	res, err := h.service.RefreshToken(ctx.Request.Context(), body.RefreshToken)
+	result, err := h.service.RefreshToken(ctx.Request.Context(), req.RefreshToken)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
-
-	ctx.JSON(http.StatusOK, response.Success(res))
+	ctx.JSON(http.StatusOK, response.Success(result))
 }
+
 func (h *AuthHandler) Logout(ctx *gin.Context) {
-	var body dto.RefreshTokenRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var req dto.RefreshTokenRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
 		return
 	}
-
-	if err := h.service.Logout(ctx.Request.Context(), body.RefreshToken); err != nil {
+	if err := h.service.Logout(ctx.Request.Context(), req.RefreshToken); err != nil {
 		ctx.Error(err)
 		return
 	}
-
-	ctx.JSON(http.StatusOK, response.Success("Logged out successfully"))
+	ctx.Status(http.StatusNoContent)
 }

@@ -1,41 +1,20 @@
 package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/catalog/model"
-	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"Dzaakk/simple-commerce/internal/catalog/dto"
+	"Dzaakk/simple-commerce/internal/catalog/model"
+	"Dzaakk/simple-commerce/package/response"
 )
 
-const (
-	productSelectColumns     = "id, seller_id, category_id, name, sku, description, price, image_url, is_active, created_at, updated_at"
-	productQueryCreate       = "INSERT INTO public.products (seller_id, category_id, name, sku, description, price, image_url, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id"
-	productQueryUpdate       = "UPDATE public.products SET seller_id=$1, category_id=$2, name=$3, sku=$4, description=$5, price=$6, image_url=$7, is_active=$8, updated_at=$9 WHERE id=$10 AND seller_id=$11"
-	productQuerySoftDelete   = "UPDATE public.products SET is_active=false, updated_at=$1 WHERE id=$2 AND seller_id=$3"
-	productQueryFindByID     = "SELECT " + productSelectColumns + " FROM public.products WHERE id=$1"
-	productQueryFindBySeller = "SELECT " + productSelectColumns + " FROM public.products WHERE seller_id=$1 AND is_active=true"
-	productQueryUpdateStock  = `
-	UPDATE public.inventories i
-	SET stock_quantity = $1, updated_at = $2, version = version + 1
-	FROM public.products p
-	WHERE i.product_id = p.id AND p.id = $3 AND p.seller_id = $4
-	`
-)
-
-type ProductFilter struct {
-	CategoryID *int64
-	SellerID   *string
-	MinPrice   *float64
-	MaxPrice   *float64
-	Name       *string // search by name (ILIKE)
-	Cursor     *string // pagination cursor: "value|id"
-	Limit      int
-	SortBy     string // "price_asc", "price_desc", "newest"
-}
+const productColumns = "id, category_id, sku, name, description, price, is_active, created_at, updated_at"
 
 type ProductRepository struct {
 	db *sql.DB
@@ -45,282 +24,112 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (r *ProductRepository) Create(ctx context.Context, data *model.Product) (string, error) {
-	var id string
-
-	err := r.db.QueryRowContext(
-		ctx,
-		productQueryCreate,
-		data.SellerID,
-		data.CategoryID,
-		data.Name,
-		data.SKU,
-		data.Description,
-		data.Price,
-		data.ImageURL,
-		data.IsActive,
-		data.CreatedAt,
-		data.UpdatedAt,
-	).Scan(&id)
-
-	if err != nil {
-		return "", response.Error("failed to create product", err)
+func (r *ProductRepository) FindByID(ctx context.Context, id int64) (*model.Product, error) {
+	row := r.db.QueryRowContext(ctx, "SELECT "+productColumns+" FROM products WHERE id = $1 AND is_active = true", id)
+	product, err := scanProduct(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
 	}
-
-	return id, nil
+	if err != nil {
+		return nil, response.Error("failed to find product", err)
+	}
+	return product, nil
 }
 
-func (r *ProductRepository) Update(ctx context.Context, data *model.Product) (int64, error) {
-	result, err := r.db.ExecContext(
-		ctx,
-		productQueryUpdate,
-		data.SellerID,
-		data.CategoryID,
-		data.Name,
-		data.SKU,
-		data.Description,
-		data.Price,
-		data.ImageURL,
-		data.IsActive,
-		data.UpdatedAt,
-		data.ID,
-		data.SellerID,
-	)
-
-	if err != nil {
-		return 0, response.ExecError("update product", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, response.Error("failed to get rows affected", err)
-	}
-
-	if rowsAffected == 0 {
-		return 0, response.Error("no rows updated", sql.ErrNoRows)
-	}
-
-	return rowsAffected, nil
-}
-
-func (r *ProductRepository) SoftDelete(ctx context.Context, id string, sellerID string, updatedAt time.Time) (int64, error) {
-	result, err := r.db.ExecContext(ctx, productQuerySoftDelete, updatedAt, id, sellerID)
-	if err != nil {
-		return 0, response.ExecError("soft delete product", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, response.Error("failed to get rows affected", err)
-	}
-
-	if rowsAffected == 0 {
-		return 0, response.Error("no rows updated", sql.ErrNoRows)
-	}
-
-	return rowsAffected, nil
-}
-
-func (r *ProductRepository) FindByID(ctx context.Context, id string) (*model.Product, error) {
-	row := r.db.QueryRowContext(ctx, productQueryFindByID, id)
-
-	return scanProduct(row)
-}
-
-func (r *ProductRepository) FindBySellerID(ctx context.Context, sellerID string) ([]*model.Product, error) {
-	rows, err := r.db.QueryContext(ctx, productQueryFindBySeller, sellerID)
-	if err != nil {
-		return nil, response.Error("failed to query products by seller", err)
-	}
-	defer rows.Close()
-
-	var products []*model.Product
-
-	for rows.Next() {
-		var p model.Product
-		err := rows.Scan(
-			&p.ID,
-			&p.SellerID,
-			&p.CategoryID,
-			&p.Name,
-			&p.SKU,
-			&p.Description,
-			&p.Price,
-			&p.ImageURL,
-			&p.IsActive,
-			&p.CreatedAt,
-			&p.UpdatedAt,
-		)
-		if err != nil {
-			return nil, response.Error("failed to scan product", err)
-		}
-
-		products = append(products, &p)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, response.Error("failed to iterate products by seller", err)
-	}
-
-	return products, nil
-}
-
-func (r *ProductRepository) FindAll(ctx context.Context, filter ProductFilter) ([]*model.Product, error) {
+func (r *ProductRepository) FindAll(ctx context.Context, filter dto.ProductQuery) ([]*model.Product, error) {
 	query, args := buildProductQuery(filter)
-
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, response.Error("failed to query products", err)
+		return nil, response.Error("failed to list products", err)
 	}
 	defer rows.Close()
 
-	var products []*model.Product
-
+	products := make([]*model.Product, 0)
 	for rows.Next() {
-		var p model.Product
-		err := rows.Scan(
-			&p.ID,
-			&p.SellerID,
-			&p.CategoryID,
-			&p.Name,
-			&p.SKU,
-			&p.Description,
-			&p.Price,
-			&p.ImageURL,
-			&p.IsActive,
-			&p.CreatedAt,
-			&p.UpdatedAt,
-		)
+		product, err := scanProduct(rows)
 		if err != nil {
 			return nil, response.Error("failed to scan product", err)
 		}
-
-		products = append(products, &p)
+		products = append(products, product)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, response.Error("failed to iterate products", err)
 	}
-
 	return products, nil
 }
 
-func (r *ProductRepository) UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error {
-	result, err := r.db.ExecContext(
-		ctx,
-		productQueryUpdateStock,
-		quantity,
-		time.Now(),
-		productID,
-		sellerID,
-	)
-	if err != nil {
-		return response.ExecError("update product stock", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return response.Error("failed to get rows affected", err)
-	}
-
-	if rowsAffected == 0 {
-		return response.Error("no rows updated", sql.ErrNoRows)
-	}
-
-	return nil
+type rowScanner interface {
+	Scan(...any) error
 }
 
-func buildProductQuery(f ProductFilter) (string, []any) {
-	query := "SELECT " + productSelectColumns + " FROM public.products WHERE is_active = true"
-	args := []any{}
-	argPos := 1
+func scanProduct(row rowScanner) (*model.Product, error) {
+	var product model.Product
+	err := row.Scan(
+		&product.ID, &product.CategoryID, &product.SKU, &product.Name,
+		&product.Description, &product.Price, &product.IsActive,
+		&product.CreatedAt, &product.UpdatedAt,
+	)
+	return &product, err
+}
 
-	if f.CategoryID != nil {
-		query += fmt.Sprintf(" AND category_id = $%d", argPos)
-		args = append(args, *f.CategoryID)
-		argPos++
-	}
-	if f.SellerID != nil {
-		query += fmt.Sprintf(" AND seller_id = $%d", argPos)
-		args = append(args, *f.SellerID)
-		argPos++
-	}
-	if f.MinPrice != nil {
-		query += fmt.Sprintf(" AND price >= $%d", argPos)
-		args = append(args, *f.MinPrice)
-		argPos++
-	}
-	if f.MaxPrice != nil {
-		query += fmt.Sprintf(" AND price <= $%d", argPos)
-		args = append(args, *f.MaxPrice)
-		argPos++
-	}
-	if f.Name != nil {
-		query += fmt.Sprintf(" AND name ILIKE $%d", argPos)
-		args = append(args, "%"+*f.Name+"%")
-		argPos++
+func buildProductQuery(filter dto.ProductQuery) (string, []any) {
+	query := "SELECT " + productColumns + " FROM products WHERE is_active = true"
+	args := make([]any, 0, 8)
+	add := func(value any) string {
+		args = append(args, value)
+		return fmt.Sprintf("$%d", len(args))
 	}
 
-	sortBy := f.SortBy
-	if sortBy == "" {
-		sortBy = "newest"
+	if filter.CategoryID != nil {
+		query += " AND category_id = " + add(*filter.CategoryID)
+	}
+	if filter.MinPrice != nil {
+		query += " AND price >= " + add(*filter.MinPrice)
+	}
+	if filter.MaxPrice != nil {
+		query += " AND price <= " + add(*filter.MaxPrice)
+	}
+	if filter.Name != nil {
+		query += " AND name ILIKE " + add("%"+*filter.Name+"%")
 	}
 
-	if f.Cursor != nil && *f.Cursor != "" {
-		cursorVal, cursorID, hasID := splitCursor(*f.Cursor)
-
-		switch sortBy {
-		case "price_asc":
-			if hasID {
-				if price, err := strconv.ParseFloat(cursorVal, 64); err == nil {
-					query += fmt.Sprintf(" AND (price, id) > ($%d, $%d)", argPos, argPos+1)
-					args = append(args, price, cursorID)
-					argPos += 2
+	if filter.Cursor != nil {
+		value, id, ok := splitCursor(*filter.Cursor)
+		if ok {
+			switch filter.SortBy {
+			case "price_asc":
+				if price, err := strconv.ParseFloat(value, 64); err == nil {
+					query += " AND (price, id) > (" + add(price) + ", " + add(id) + ")"
 				}
-			}
-		case "price_desc":
-			if hasID {
-				if price, err := strconv.ParseFloat(cursorVal, 64); err == nil {
-					query += fmt.Sprintf(" AND (price, id) < ($%d, $%d)", argPos, argPos+1)
-					args = append(args, price, cursorID)
-					argPos += 2
+			case "price_desc":
+				if price, err := strconv.ParseFloat(value, 64); err == nil {
+					query += " AND (price, id) < (" + add(price) + ", " + add(id) + ")"
 				}
-			}
-		default: // newest
-			if t, err := time.Parse(time.RFC3339Nano, cursorVal); err == nil {
-				if hasID {
-					query += fmt.Sprintf(" AND (created_at, id) < ($%d, $%d)", argPos, argPos+1)
-					args = append(args, t, cursorID)
-					argPos += 2
-				} else {
-					query += fmt.Sprintf(" AND created_at < $%d", argPos)
-					args = append(args, t)
-					argPos++
+			default:
+				if createdAt, err := time.Parse(time.RFC3339Nano, value); err == nil {
+					query += " AND (created_at, id) < (" + add(createdAt) + ", " + add(id) + ")"
 				}
 			}
 		}
 	}
 
-	switch sortBy {
+	switch filter.SortBy {
 	case "price_asc":
 		query += " ORDER BY price ASC, id ASC"
 	case "price_desc":
 		query += " ORDER BY price DESC, id DESC"
-	default: // newest
+	default:
 		query += " ORDER BY created_at DESC, id DESC"
 	}
-
-	if f.Limit > 0 {
-		query += fmt.Sprintf(" LIMIT $%d", argPos)
-		args = append(args, f.Limit)
-		argPos++
-	}
-
+	query += " LIMIT " + add(filter.Limit)
 	return query, args
 }
 
-func splitCursor(cursor string) (string, string, bool) {
+func splitCursor(cursor string) (string, int64, bool) {
 	parts := strings.SplitN(cursor, "|", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1], true
+	if len(parts) != 2 {
+		return "", 0, false
 	}
-	return cursor, "", false
+	id, err := strconv.ParseInt(parts[1], 10, 64)
+	return parts[0], id, err == nil
 }

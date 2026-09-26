@@ -1,65 +1,31 @@
 package route
 
 import (
-	"Dzaakk/simple-commerce/internal/auth/handler"
-	"Dzaakk/simple-commerce/internal/auth/repository"
-	"Dzaakk/simple-commerce/internal/auth/service"
-	emailQueue "Dzaakk/simple-commerce/internal/email/queue"
-	emailService "Dzaakk/simple-commerce/internal/email/service"
-	userrepo "Dzaakk/simple-commerce/internal/user/repository"
-	userservice "Dzaakk/simple-commerce/internal/user/service"
-	"Dzaakk/simple-commerce/package/db/transactor"
-	"Dzaakk/simple-commerce/package/rabbitmq"
 	"database/sql"
 
+	"Dzaakk/simple-commerce/internal/auth/handler"
+	authrepo "Dzaakk/simple-commerce/internal/auth/repository"
+	authservice "Dzaakk/simple-commerce/internal/auth/service"
+	userrepo "Dzaakk/simple-commerce/internal/user/repository"
+	userservice "Dzaakk/simple-commerce/internal/user/service"
+
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 )
 
 type AuthRoutes struct {
-	Handler *handler.AuthHandler
+	handler *handler.AuthHandler
 }
 
-func NewAuthRoutes(handler *handler.AuthHandler) *AuthRoutes {
-	return &AuthRoutes{
-		Handler: handler,
-	}
+func New(db *sql.DB) *AuthRoutes {
+	customers := userservice.NewCustomerService(userrepo.NewCustomerRepository(db))
+	tokens := authrepo.NewRefreshTokenRepository(db)
+	return &AuthRoutes{handler: handler.NewAuthHandler(authservice.NewAuthService(customers, tokens))}
 }
 
-func (ar *AuthRoutes) Route(r *gin.RouterGroup) {
-	api := r.Group("/api/v1/auth")
-
-	customer := api.Group("/customer")
-	{
-		customer.POST("/register", ar.Handler.RegisterCustomer)
-	}
-
-	seller := api.Group("/seller")
-	{
-		seller.POST("/register", ar.Handler.RegisterSeller)
-	}
-
-	api.GET("/verify-email", ar.Handler.VerifyEmail)
-	api.GET("/login", ar.Handler.Login)
-	api.POST("/refresh-token", ar.Handler.RefreshToken)
-	api.POST("/logout", ar.Handler.Logout)
-}
-
-func InitializedService(db *sql.DB, redis *redis.Client, rabbit *rabbitmq.Client) *AuthRoutes {
-	activationRepo := repository.NewActivationCodeRepository(db)
-	refreshRepo := repository.NewRefreshTokenRepository(db)
-
-	sellerRepo := userrepo.NewSellerRepository(db)
-	customerRepo := userrepo.NewCustomerRepository(db)
-
-	customerService := userservice.NewCustomerService(customerRepo)
-	sellerService := userservice.NewSellerService(sellerRepo)
-	emailService := emailService.NewEmailService()
-	emailPublisher := emailQueue.NewRabbitPublisher(rabbit)
-	txManager := transactor.New(db)
-
-	service := service.NewAuthService(txManager, customerService, sellerService, emailService, emailPublisher, activationRepo, refreshRepo)
-
-	hander := handler.NewAuthHandler(service)
-	return NewAuthRoutes(hander)
+func (r *AuthRoutes) Route(router *gin.RouterGroup) {
+	auth := router.Group("/api/v1/auth")
+	auth.POST("/customer/register", r.handler.RegisterCustomer)
+	auth.POST("/login", r.handler.Login)
+	auth.POST("/refresh-token", r.handler.RefreshToken)
+	auth.POST("/logout", r.handler.Logout)
 }

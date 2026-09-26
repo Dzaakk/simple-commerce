@@ -1,228 +1,84 @@
 package handler
 
 import (
+	"net/http"
+	"strconv"
+
 	"Dzaakk/simple-commerce/internal/catalog/dto"
 	"Dzaakk/simple-commerce/internal/catalog/service"
 	"Dzaakk/simple-commerce/package/response"
-	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CatalogHandler struct {
-	ProductService  service.ProductService
-	CategoryService service.CategoryService
+	products   service.ProductService
+	categories service.CategoryService
 }
 
-func NewCatalogHandler(productService service.ProductService, categoryService service.CategoryService) *CatalogHandler {
-	return &CatalogHandler{
-		ProductService:  productService,
-		CategoryService: categoryService,
-	}
-}
-
-func (h *CatalogHandler) CreateProduct(ctx *gin.Context) {
-	var req dto.CreateProductReq
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	sellerID, ok := getSellerID(ctx, req.SellerID)
-	if !ok {
-		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
-		return
-	}
-	req.SellerID = sellerID
-
-	id, err := h.ProductService.Create(ctx.Request.Context(), &req)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusCreated, response.Success(id))
-}
-
-func (h *CatalogHandler) UpdateProduct(ctx *gin.Context) {
-	productID := ctx.Param("id")
-	if productID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	sellerID, ok := getSellerID(ctx, "")
-	if !ok {
-		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
-		return
-	}
-
-	var req dto.UpdateProductReq
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	if err := h.ProductService.Update(ctx.Request.Context(), productID, sellerID, &req); err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Success Update Product"))
-}
-
-func (h *CatalogHandler) DeleteProduct(ctx *gin.Context) {
-	productID := ctx.Param("id")
-	if productID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	sellerID, ok := getSellerID(ctx, "")
-	if !ok {
-		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
-		return
-	}
-
-	if err := h.ProductService.SoftDelete(ctx.Request.Context(), productID, sellerID); err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Success Delete Product"))
-}
-
-func (h *CatalogHandler) FindProductByID(ctx *gin.Context) {
-	productID := ctx.Param("id")
-	if productID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	data, err := h.ProductService.FindByID(ctx.Request.Context(), productID)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-	if data == nil {
-		ctx.Error(response.NewAppError(http.StatusNotFound, "product not found"))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success(data))
+func NewCatalogHandler(products service.ProductService, categories service.CategoryService) *CatalogHandler {
+	return &CatalogHandler{products: products, categories: categories}
 }
 
 func (h *CatalogHandler) FindAllProducts(ctx *gin.Context) {
-	req, err := productQueryReqFromContext(ctx)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	data, err := h.ProductService.FindAll(ctx.Request.Context(), req)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success(data))
+	h.findAllProducts(ctx, false)
 }
 
-func (h *CatalogHandler) UpdateProductStock(ctx *gin.Context) {
-	req := dto.UpdateStockReq{
-		ProductID: ctx.Param("id"),
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	if req.ProductID == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	sellerID, ok := getSellerID(ctx, req.SellerID)
-	if !ok {
-		ctx.Error(response.NewAppError(http.StatusUnauthorized, "unauthorized"))
-		return
-	}
-	req.SellerID = sellerID
-
-	if err := h.ProductService.UpdateStock(ctx.Request.Context(), req.ProductID, req.SellerID, req.Quantity); err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success("Success Update Product Stock"))
+func (h *CatalogHandler) FindAllProductsV2(ctx *gin.Context) {
+	h.findAllProducts(ctx, true)
 }
 
-func (h *CatalogHandler) CreateCategory(ctx *gin.Context) {
-	var req dto.CreateCategoryReq
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	id, err := h.CategoryService.Create(ctx.Request.Context(), &req)
+func (h *CatalogHandler) findAllProducts(ctx *gin.Context, cached bool) {
+	query, err := productQuery(ctx)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
+	var result *dto.ProductListResponse
+	if cached {
+		result, err = h.products.FindAllCached(ctx.Request.Context(), query)
+	} else {
+		result, err = h.products.FindAll(ctx.Request.Context(), query)
+	}
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+	ctx.JSON(http.StatusOK, response.Success(result))
+}
 
-	ctx.JSON(http.StatusCreated, response.Success(id))
+func (h *CatalogHandler) FindProductByID(ctx *gin.Context) {
+	h.findProductByID(ctx, false)
+}
+
+func (h *CatalogHandler) FindProductByIDV2(ctx *gin.Context) {
+	h.findProductByID(ctx, true)
+}
+
+func (h *CatalogHandler) findProductByID(ctx *gin.Context, cached bool) {
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid product id"))
+		return
+	}
+	var result *dto.ProductResponse
+	if cached {
+		result, err = h.products.FindByIDCached(ctx.Request.Context(), id)
+	} else {
+		result, err = h.products.FindByID(ctx.Request.Context(), id)
+	}
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+	ctx.JSON(http.StatusOK, response.Success(result))
 }
 
 func (h *CatalogHandler) FindAllCategories(ctx *gin.Context) {
-	data, err := h.CategoryService.FindAll(ctx.Request.Context())
+	result, err := h.categories.FindAll(ctx.Request.Context())
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
-
-	ctx.JSON(http.StatusOK, response.Success(data))
-}
-
-func getSellerID(ctx *gin.Context, requestSellerID string) (string, bool) {
-	if idVal, exists := ctx.Get("id"); exists {
-		if id, ok := idVal.(string); ok && id != "" {
-			if requestSellerID != "" && requestSellerID != id {
-				return "", false
-			}
-			if queryID := ctx.Query("seller_id"); queryID != "" && queryID != id {
-				return "", false
-			}
-			return id, true
-		}
-	}
-
-	return "", false
-}
-
-func (h *CatalogHandler) FindCategoryByID(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	if idStr == "" {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ctx.Error(response.NewAppError(http.StatusBadRequest, "invalid request data"))
-		return
-	}
-
-	data, err := h.CategoryService.FindByID(ctx.Request.Context(), id)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-	if data == nil {
-		ctx.Error(response.NewAppError(http.StatusNotFound, "category not found"))
-		return
-	}
-
-	ctx.JSON(http.StatusOK, response.Success(data))
+	ctx.JSON(http.StatusOK, response.Success(result))
 }

@@ -1,385 +1,109 @@
 package service
 
 import (
+	"context"
+	"net/http"
+	"strings"
+	"time"
+
 	"Dzaakk/simple-commerce/internal/auth/dto"
 	"Dzaakk/simple-commerce/internal/auth/model"
-	emailmodel "Dzaakk/simple-commerce/internal/email/model"
 	userdto "Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/package/constant"
-	dbtx "Dzaakk/simple-commerce/package/db/transactor"
-	"Dzaakk/simple-commerce/package/logging"
 	"Dzaakk/simple-commerce/package/response"
-	"context"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"time"
+	"Dzaakk/simple-commerce/package/util"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type authService struct {
-	transactor     dbtx.Transactor
-	customerSvc    customerService
-	sellerSvc      sellerService
-	emailService   emailService
-	emailPublisher activationEmailPublisher
-	activationRepo activationCodeRepository
-	refreshRepo    refreshTokenRepository
-	logger         *logging.Logger
+	customers customerService
+	tokens    refreshTokenRepository
 }
 
-func NewAuthService(
-	transactor dbtx.Transactor,
-	customerSvc customerService,
-	sellerSvc sellerService,
-	emailService emailService,
-	emailPublisher activationEmailPublisher,
-	activationRepo activationCodeRepository,
-	refreshRepo refreshTokenRepository,
-) AuthService {
-	return &authService{
-		transactor:     transactor,
-		customerSvc:    customerSvc,
-		sellerSvc:      sellerSvc,
-		emailService:   emailService,
-		emailPublisher: emailPublisher,
-		activationRepo: activationRepo,
-		refreshRepo:    refreshRepo,
-		logger:         logging.NewLogger("auth", "auth_service"),
-	}
+func NewAuthService(customers customerService, tokens refreshTokenRepository) AuthService {
+	return &authService{customers: customers, tokens: tokens}
 }
 
 func (s *authService) RegisterCustomer(ctx context.Context, req *dto.RegisterCustomerRequest) error {
-
-	// check if email already exist
-	existingCustomer, err := s.customerSvc.FindByEmail(ctx, req.Email)
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	fullName := strings.TrimSpace(req.FullName)
+	if email == "" || fullName == "" || len(req.Password) < 8 {
+		return response.NewAppError(http.StatusBadRequest, "invalid registration data")
+	}
+	existing, err := s.customers.FindByEmail(ctx, email)
 	if err != nil {
 		return err
 	}
-	if existingCustomer != nil {
+	if existing != nil {
 		return response.ErrEmailAlreadyExist
 	}
 
-	hashedPassword, err := hashPassword(req.Password)
+	hash, err := hashPassword(req.Password)
 	if err != nil {
 		return err
 	}
-
-	createReq := &userdto.RegisterCustomerRequest{
-		Email:    req.Email,
-		Password: hashedPassword,
-		FullName: req.FullName,
-		Phone:    req.Phone,
-	}
-
-	_, err = s.customerSvc.Create(ctx, createReq)
-	if err != nil {
-		return err
-	}
-
-	activationCode, err := generateActivationCode()
-	if err != nil {
-		return err
-	}
-
-	activationData := &model.ActivationCode{
-		Email:     req.Email,
-		Code:      activationCode,
-		UserType:  string(constant.Customer),
-		ExpiresAt: time.Now().Add(15 * time.Minute),
-	}
-
-	_, err = s.activationRepo.Create(ctx, activationData)
-	if err != nil {
-		return err
-	}
-
-	baseLink := os.Getenv("BASE_URL")
-	s.dispatchActivationEmail(ctx, emailmodel.VerificationEmailReq{
-		Email:          req.Email,
-		Username:       req.FullName,
-		ActivationLink: fmt.Sprintf("%s/api/v1/auth/verify-email?code=%s", baseLink, activationCode),
+	_, err = s.customers.Create(ctx, &userdto.RegisterCustomerRequest{
+		Email:        email,
+		PasswordHash: hash,
+		FullName:     fullName,
 	})
-
-	return nil
-}
-
-func (s *authService) RegisterSeller(ctx context.Context, req *dto.RegisterSellerRequest) error {
-
-	// check if email already exist
-	existingSeller, err := s.sellerSvc.FindByEmail(ctx, req.Email)
-	if err != nil {
-		return err
-	}
-	if existingSeller != nil {
-		return response.ErrEmailAlreadyExist
-	}
-
-	hashedPassword, err := hashPassword(req.Password)
-	if err != nil {
-		return err
-	}
-
-	createReq := &userdto.RegisterSellerRequest{
-		Email:    req.Email,
-		Password: hashedPassword,
-		FullName: req.FullName,
-		Phone:    req.Phone,
-		ShopName: req.ShopName,
-	}
-
-	_, err = s.sellerSvc.Create(ctx, createReq)
-	if err != nil {
-		return err
-	}
-
-	activationCode, err := generateActivationCode()
-	if err != nil {
-		return err
-	}
-
-	activationData := &model.ActivationCode{
-		Email:     req.Email,
-		Code:      activationCode,
-		UserType:  string(constant.Seller),
-		ExpiresAt: time.Now().Add(15 * time.Minute),
-	}
-
-	_, err = s.activationRepo.Create(ctx, activationData)
-	if err != nil {
-		return err
-	}
-
-	baseLink := os.Getenv("BASE_URL")
-	s.dispatchActivationEmail(ctx, emailmodel.VerificationEmailReq{
-		Email:          req.Email,
-		Username:       req.FullName,
-		ActivationLink: fmt.Sprintf("%s/api/v1/auth/verify-email?code=%s", baseLink, activationCode),
-	})
-
-	return nil
-}
-
-func (s *authService) VerifyEmail(ctx context.Context, activationCode string) error {
-	activationData, err := s.activationRepo.FindByCode(ctx, activationCode)
-	if err != nil {
-		return err
-	}
-	if activationData == nil {
-		return response.ErrInvalidActivationCode
-	}
-
-	return s.transactor.WithinTx(ctx, func(txCtx context.Context) error {
-		switch activationData.UserType {
-		case string(constant.Customer):
-			customer, err := s.customerSvc.FindByEmail(txCtx, activationData.Email)
-			if err != nil {
-				return err
-			}
-			if customer == nil {
-				return response.ErrUserNotFound
-			}
-
-			if err := s.customerSvc.UpdateStatus(txCtx, customer.ID, constant.StatusActive); err != nil {
-				return err
-			}
-		case string(constant.Seller):
-			seller, err := s.sellerSvc.FindByEmail(txCtx, activationData.Email)
-			if err != nil {
-				return err
-			}
-			if seller == nil {
-				return response.ErrUserNotFound
-			}
-
-			if err := s.sellerSvc.UpdateStatus(txCtx, seller.ID, constant.StatusActive); err != nil {
-				return err
-			}
-		default:
-			return response.ErrInvalidActivationCode
-		}
-
-		return s.activationRepo.MarkAsUsed(txCtx, activationData.ID)
-	})
+	return err
 }
 
 func (s *authService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
-
-	var (
-		userID       string
-		passwordHash string
-		status       string
-		email        string
-	)
-
-	userType := constant.UserType(req.UserType)
-	// fetch user by email and user type
-	switch userType {
-	case constant.Customer:
-		user, err := s.customerSvc.FindByEmail(ctx, req.Email)
-		if err != nil {
-			return nil, err
-		}
-		if user == nil {
-			return nil, response.ErrInvalidCredentials
-		}
-		userID = user.ID
-		passwordHash = user.PasswordHash
-		status = user.Status
-		email = user.Email
-
-	case constant.Seller:
-		user, err := s.sellerSvc.FindByEmail(ctx, req.Email)
-		if err != nil {
-			return nil, err
-		}
-		if user == nil {
-			return nil, response.ErrInvalidCredentials
-		}
-		userID = user.ID
-		passwordHash = user.PasswordHash
-		status = user.Status
-		email = user.Email
-
-	default:
-		return nil, response.ErrInvalidCredentials
-	}
-
-	// check account status
-	if status == string(constant.StatusPending) {
-		return nil, response.ErrEmailNotVerified
-	}
-	if status != string(constant.StatusActive) {
-		return nil, response.ErrInvalidCredentials
-	}
-
-	// compare password
-	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)); err != nil {
-		return nil, response.ErrInvalidCredentials
-	}
-
-	//generate access and refresh token
-	accessToken, err := generateAccessToken(userID, string(req.UserType), email)
+	customer, err := s.customers.FindByEmail(ctx, strings.ToLower(strings.TrimSpace(req.Email)))
 	if err != nil {
-		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
+		return nil, err
+	}
+	if customer == nil || customer.Status != string(constant.StatusActive) ||
+		bcrypt.CompareHashAndPassword([]byte(customer.PasswordHash), []byte(req.Password)) != nil {
+		return nil, response.ErrInvalidCredentials
 	}
 
-	rawRefresh, hashedRefresh, err := generateRefreshToken()
+	accessToken, err := util.GenerateAccessToken(customer.ID, customer.Email)
 	if err != nil {
-		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
+		return nil, response.WrapAppError(http.StatusInternalServerError, "failed to generate access token", err)
 	}
-
-	refreshData := &model.RefreshToken{
-		UserID:    userID,
-		UserType:  userType,
-		TokenHash: hashedRefresh,
-		ExpiresAt: time.Now().Add(refreshTokenDuration),
-		CreatedAt: time.Now(),
+	rawRefresh, refreshHash, err := generateRefreshToken()
+	if err != nil {
+		return nil, response.WrapAppError(http.StatusInternalServerError, "failed to generate refresh token", err)
 	}
-
-	if _, err = s.refreshRepo.Create(ctx, refreshData); err != nil {
-		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
+	if err := s.tokens.Create(ctx, &model.RefreshToken{
+		UserID: customer.ID, TokenHash: refreshHash,
+		ExpiresAt: time.Now().Add(refreshTokenDuration), CreatedAt: time.Now(),
+	}); err != nil {
+		return nil, err
 	}
 
 	return &dto.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: rawRefresh,
-		ExpiresIn:    int(accessTokenDuration.Seconds()), // 900
+		AccessToken: accessToken, RefreshToken: rawRefresh,
+		ExpiresIn: int(util.AccessTokenDuration.Seconds()),
 	}, nil
 }
 
-func (s *authService) RefreshToken(ctx context.Context, rawRefreshToken string) (*dto.RefreshTokenResponse, error) {
-
-	hashed := hashRefreshToken(rawRefreshToken)
-
-	stored, err := s.refreshRepo.FindByTokenHash(ctx, hashed)
+func (s *authService) RefreshToken(ctx context.Context, raw string) (*dto.RefreshTokenResponse, error) {
+	stored, err := s.tokens.FindByTokenHash(ctx, hashRefreshToken(raw))
 	if err != nil {
 		return nil, err
 	}
 	if stored == nil {
 		return nil, response.ErrInvalidRefreshToken
 	}
-
-	var (
-		email    string
-		userType = constant.UserType(stored.UserType)
-	)
-
-	switch userType {
-	case constant.Customer:
-		user, err := s.customerSvc.FindByID(ctx, stored.UserID)
-		if err != nil {
-			return nil, err
-		}
-		if user == nil {
-			return nil, response.ErrUserNotFound
-		}
-		email = user.Email
-
-	case constant.Seller:
-		user, err := s.sellerSvc.FindByID(ctx, stored.UserID)
-		if err != nil {
-			return nil, err
-		}
-		if user == nil {
-			return nil, response.ErrUserNotFound
-		}
-		email = user.Email
-
-	default:
+	customer, err := s.customers.FindByID(ctx, stored.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if customer == nil || customer.Status != string(constant.StatusActive) {
 		return nil, response.ErrInvalidRefreshToken
 	}
-
-	accessToken, err := generateAccessToken(stored.UserID, string(stored.UserType), email)
+	accessToken, err := util.GenerateAccessToken(customer.ID, customer.Email)
 	if err != nil {
-		return nil, response.WrapAppError(http.StatusInternalServerError, "internal server error", err)
+		return nil, response.WrapAppError(http.StatusInternalServerError, "failed to generate access token", err)
 	}
-
-	return &dto.RefreshTokenResponse{
-		AccessToken: accessToken,
-		ExpiresIn:   int(accessTokenDuration.Seconds()),
-	}, nil
+	return &dto.RefreshTokenResponse{AccessToken: accessToken, ExpiresIn: int(util.AccessTokenDuration.Seconds())}, nil
 }
 
-func (s *authService) Logout(ctx context.Context, rawRefreshToken string) error {
-	hashed := hashRefreshToken(rawRefreshToken)
-	return s.refreshRepo.Revoke(ctx, hashed)
-}
-
-func (s *authService) dispatchActivationEmail(ctx context.Context, req emailmodel.VerificationEmailReq) {
-	if s.emailPublisher != nil {
-		if err := s.emailPublisher.PublishVerificationEmail(ctx, req); err == nil {
-			s.logger.Info(ctx, "activation_email_queued", map[string]interface{}{
-				"target": "verification_email",
-			})
-			return
-		}
-
-		s.logger.Warn(ctx, "activation_email_queue_fallback", map[string]interface{}{
-			"target": "verification_email",
-		})
-	}
-
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("recovered from panic in email goroutine: %v", r)
-			}
-		}()
-
-		err := s.emailService.SendEmailVerification(context.Background(), req)
-		if err != nil {
-			s.logger.Error(context.Background(), "activation_email_send_failed", map[string]interface{}{
-				"target": "verification_email",
-			})
-			log.Printf("failed to send email to %s: %v", req.Email, err)
-			return
-		}
-
-		s.logger.Info(context.Background(), "activation_email_sent_direct", map[string]interface{}{
-			"target": "verification_email",
-		})
-	}()
+func (s *authService) Logout(ctx context.Context, raw string) error {
+	return s.tokens.Revoke(ctx, hashRefreshToken(raw))
 }

@@ -1,13 +1,13 @@
 package service
 
 import (
-	"Dzaakk/simple-commerce/internal/catalog/dto"
-	repo "Dzaakk/simple-commerce/internal/catalog/repository"
-	"Dzaakk/simple-commerce/package/response"
 	"context"
 	"net/http"
 	"strconv"
 	"time"
+
+	"Dzaakk/simple-commerce/internal/catalog/dto"
+	"Dzaakk/simple-commerce/package/response"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -17,182 +17,68 @@ type ProductServiceImpl struct {
 	redis *redis.Client
 }
 
-func NewProductService(repo ProductRepository, redisClient ...*redis.Client) *ProductServiceImpl {
-	var cache *redis.Client
-	if len(redisClient) > 0 {
-		cache = redisClient[0]
-	}
-
-	return &ProductServiceImpl{
-		repo:  repo,
-		redis: cache,
-	}
+func NewProductService(repo ProductRepository, redisClient *redis.Client) *ProductServiceImpl {
+	return &ProductServiceImpl{repo: repo, redis: redisClient}
 }
 
-func (p *ProductServiceImpl) Create(ctx context.Context, req *dto.CreateProductReq) (string, error) {
-	data := req.ToCreateData()
-
-	id, err := p.repo.Create(ctx, data)
-	if err != nil {
-		return "", err
-	}
-
-	return id, nil
-}
-
-func (p *ProductServiceImpl) Update(ctx context.Context, productID string, sellerID string, req *dto.UpdateProductReq) error {
-	if productID == "" {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
-	}
-	if sellerID == "" {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
-	}
-
-	data := req.ToUpdateData(productID, sellerID)
-
-	rowsAffected, err := p.repo.Update(ctx, data)
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return response.NewAppError(http.StatusNotFound, "product not found")
-	}
-
-	return nil
-}
-
-func (p *ProductServiceImpl) SoftDelete(ctx context.Context, productID string, sellerID string) error {
-	if productID == "" {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
-	}
-	if sellerID == "" {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
-	}
-
-	rowsAffected, err := p.repo.SoftDelete(ctx, productID, sellerID, time.Now())
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return response.NewAppError(http.StatusNotFound, "product not found")
-	}
-
-	return nil
-}
-
-func (p *ProductServiceImpl) FindByID(ctx context.Context, productID string) (*dto.ProductRes, error) {
-	data, err := p.repo.FindByID(ctx, productID)
+func (s *ProductServiceImpl) FindByID(ctx context.Context, id int64) (*dto.ProductResponse, error) {
+	product, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if data == nil {
+	if product == nil {
 		return nil, response.NewAppError(http.StatusNotFound, "product not found")
 	}
-
-	product := dto.ToProductRes(data)
-
-	return &product, nil
+	result := dto.ToProductResponse(product)
+	return &result, nil
 }
 
-func (p *ProductServiceImpl) FindByIDCached(ctx context.Context, productID string) (*dto.ProductRes, error) {
-	cacheKey := productDetailCacheKey(productID)
-	var cached dto.ProductRes
-	if readCatalogCache(ctx, p.redis, cacheKey, &cached) {
-		return &cached, nil
+func (s *ProductServiceImpl) FindByIDCached(ctx context.Context, id int64) (*dto.ProductResponse, error) {
+	key := "catalog:product:" + strconv.FormatInt(id, 10)
+	var result dto.ProductResponse
+	if readCache(ctx, s.redis, key, &result) {
+		return &result, nil
 	}
+	product, err := s.FindByID(ctx, id)
+	if err == nil {
+		writeCache(ctx, s.redis, key, product)
+	}
+	return product, err
+}
 
-	data, err := p.FindByID(ctx, productID)
+func (s *ProductServiceImpl) FindAll(ctx context.Context, query dto.ProductQuery) (*dto.ProductListResponse, error) {
+	products, err := s.repo.FindAll(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-
-	writeCatalogCache(ctx, p.redis, cacheKey, data, catalogProductCacheTTL)
-
-	return data, nil
-}
-
-func (p *ProductServiceImpl) FindAll(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error) {
-	filter := repo.ProductFilter{
-		CategoryID: req.CategoryID,
-		SellerID:   req.SellerID,
-		MinPrice:   req.MinPrice,
-		MaxPrice:   req.MaxPrice,
-		Name:       req.Name,
-		Cursor:     req.Cursor,
-		Limit:      req.Limit,
-		SortBy:     req.SortBy,
+	items := make([]dto.ProductResponse, 0, len(products))
+	for _, product := range products {
+		items = append(items, dto.ToProductResponse(product))
 	}
-
-	data, err := p.repo.FindAll(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
-	if len(data) == 0 {
-		return &dto.ProductListRes{Items: []dto.ProductRes{}}, nil
-	}
-
-	result := make([]dto.ProductRes, 0, len(data))
-	for _, product := range data {
-		if product == nil {
-			continue
+	result := &dto.ProductListResponse{Items: items}
+	if len(items) == query.Limit && len(items) > 0 {
+		last := items[len(items)-1]
+		var cursor string
+		switch query.SortBy {
+		case "price_asc", "price_desc":
+			cursor = strconv.FormatFloat(last.Price, 'f', -1, 64) + "|" + strconv.FormatInt(last.ID, 10)
+		default:
+			cursor = last.CreatedAt.Format(time.RFC3339Nano) + "|" + strconv.FormatInt(last.ID, 10)
 		}
-		res := dto.ToProductRes(product)
-		result = append(result, res)
+		result.NextCursor = &cursor
 	}
-
-	res := &dto.ProductListRes{Items: result}
-
-	sortBy := req.SortBy
-	if sortBy == "" {
-		sortBy = "newest"
-	}
-
-	if req.Limit > 0 && len(result) == req.Limit {
-		cursor := buildProductCursor(sortBy, result[len(result)-1])
-		res.NextCursor = &cursor
-	}
-
-	return res, nil
+	return result, nil
 }
 
-func (p *ProductServiceImpl) FindAllCached(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error) {
-	cacheKey, cacheable := productListCacheKey(req)
-	var cached dto.ProductListRes
-	if cacheable && readCatalogCache(ctx, p.redis, cacheKey, &cached) {
-		return &cached, nil
+func (s *ProductServiceImpl) FindAllCached(ctx context.Context, query dto.ProductQuery) (*dto.ProductListResponse, error) {
+	key := productListCacheKey(query)
+	var result dto.ProductListResponse
+	if readCache(ctx, s.redis, key, &result) {
+		return &result, nil
 	}
-
-	data, err := p.FindAll(ctx, req)
-	if err != nil {
-		return nil, err
+	products, err := s.FindAll(ctx, query)
+	if err == nil {
+		writeCache(ctx, s.redis, key, products)
 	}
-
-	if cacheable {
-		writeCatalogCacheAsync(p.redis, cacheKey, data, catalogProductCacheTTL)
-	}
-
-	return data, nil
-}
-
-func (p *ProductServiceImpl) UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error {
-	if productID == "" {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter product id")
-	}
-	if sellerID == "" {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter seller id")
-	}
-	if quantity < 0 {
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter quantity")
-	}
-
-	return p.repo.UpdateStock(ctx, productID, sellerID, quantity)
-}
-
-func buildProductCursor(sortBy string, p dto.ProductRes) string {
-	switch sortBy {
-	case "price_asc", "price_desc":
-		return strconv.FormatFloat(p.Price, 'f', -1, 64) + "|" + p.ID
-	default:
-		return p.CreatedAt.Format(time.RFC3339Nano) + "|" + p.ID
-	}
+	return products, err
 }

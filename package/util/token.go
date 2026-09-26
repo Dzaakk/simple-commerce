@@ -3,38 +3,58 @@ package util
 import (
 	"errors"
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte(os.Getenv("JWT_SECRET"))
+const AccessTokenDuration = 15 * time.Minute
 
-func GenerateToken[T jwt.Claims](claims T) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	tokenString, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
+type AccessTokenClaims struct {
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	jwt.RegisteredClaims
 }
 
-func ParseToken[T jwt.Claims](tokenStr string) (T, error) {
-	var claims T
-	token, err := jwt.ParseWithClaims(tokenStr, claims,
-		func(token *jwt.Token) (interface{}, error) {
-			return secretKey, nil
-		})
-
-	if err != nil {
-		var zero T
-		return zero, err
+func GenerateAccessToken(userID, email string) (string, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return "", errors.New("JWT_SECRET is not set")
 	}
 
-	if !token.Valid {
-		var zero T
-		return zero, errors.New("invalid token")
+	now := time.Now()
+	claims := AccessTokenClaims{
+		UserID: userID,
+		Email:  email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(AccessTokenDuration)),
+		},
+	}
+
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
+}
+
+func ParseAccessToken(raw string) (*AccessTokenClaims, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return nil, errors.New("JWT_SECRET is not set")
+	}
+
+	token, err := jwt.ParseWithClaims(raw, &AccessTokenClaims{}, func(token *jwt.Token) (any, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(secret), nil
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid access token")
+	}
+
+	claims, ok := token.Claims.(*AccessTokenClaims)
+	if !ok || claims.UserID == "" {
+		return nil, errors.New("invalid access token claims")
 	}
 	return claims, nil
 }

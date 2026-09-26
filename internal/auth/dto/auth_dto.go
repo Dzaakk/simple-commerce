@@ -1,36 +1,27 @@
 package dto
 
 type RegisterCustomerRequest struct {
-	Email    string
-	Password string
-	FullName string
-	Phone    string
-}
-
-type RegisterSellerRequest struct {
-	Email    string
-	Password string
-	FullName string
-	Phone    string
-	ShopName string
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8"`
+	FullName string `json:"full_name" binding:"required"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"     binding:"required,email"`
-	Password string `json:"password"  binding:"required"`
-	UserType string `json:"user_type" binding:"required,oneof=customer seller"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
 }
 
 type LoginResponse struct {
-	AccessToken  string
-	RefreshToken string
-	ExpiresIn    int
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
 }
+
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
 type RefreshTokenResponse struct {
-	AccessToken string
-	ExpiresIn   int
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
 }

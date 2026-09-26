@@ -1,21 +1,21 @@
 package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/user/model"
-	"Dzaakk/simple-commerce/package/constant"
-	"Dzaakk/simple-commerce/package/db/transactor"
-	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
+	"errors"
+
+	"Dzaakk/simple-commerce/internal/user/model"
+	"Dzaakk/simple-commerce/package/response"
+
+	"github.com/lib/pq"
 )
 
 const (
-	customerSelectColumns     = "id, email, password_hash, full_name, phone, status, created_at, updated_at"
-	customerQueryCreate       = "INSERT INTO public.customers (id, email, password_hash, full_name, phone, status, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7) RETURNING id"
-	customerQueryFindByEmail  = "SELECT " + customerSelectColumns + " FROM public.customers WHERE email=$1"
-	customerQueryFindByID     = "SELECT " + customerSelectColumns + " FROM public.customers WHERE id=$1"
-	customerQueryUpdate       = "UPDATE public.customers SET email=$1, full_name=$2, phone=$3, status=$4, updated_at=$5 WHERE id=$6"
-	customerQueryUpdateStatus = "UPDATE public.customers SET status=$1, updated_at=NOW() WHERE id=$2"
+	customerColumns = "id, email, password_hash, full_name, status, created_at, updated_at"
+	createCustomer  = "INSERT INTO users (email, password_hash, full_name, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+	findByEmail     = "SELECT " + customerColumns + " FROM users WHERE lower(email) = lower($1)"
+	findByID        = "SELECT " + customerColumns + " FROM users WHERE id = $1"
 )
 
 type CustomerRepository struct {
@@ -26,77 +26,41 @@ func NewCustomerRepository(db *sql.DB) *CustomerRepository {
 	return &CustomerRepository{db: db}
 }
 
-func (r *CustomerRepository) Create(ctx context.Context, data *model.Customer) (string, error) {
+func (r *CustomerRepository) Create(ctx context.Context, customer *model.Customer) (string, error) {
 	var id string
-
-	err := r.db.QueryRowContext(
-		ctx,
-		customerQueryCreate,
-		data.Email,
-		data.PasswordHash,
-		data.FullName,
-		data.Phone,
-		data.Status,
-		data.CreatedAt,
-		data.UpdatedAt,
+	err := r.db.QueryRowContext(ctx, createCustomer,
+		customer.Email, customer.PasswordHash, customer.FullName, customer.Status,
+		customer.CreatedAt, customer.UpdatedAt,
 	).Scan(&id)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return "", response.ErrEmailAlreadyExist
+		}
 		return "", response.Error("failed to create customer", err)
 	}
-
 	return id, nil
 }
 
-func (r *CustomerRepository) Update(ctx context.Context, data *model.Customer) (int64, error) {
-	result, err := r.db.ExecContext(
-		ctx, customerQueryUpdate,
-		data.Email,
-		data.FullName,
-		data.Phone,
-		data.Status,
-		data.UpdatedAt,
-		data.ID,
-	)
-
-	if err != nil {
-		return 0, response.ExecError("update customer", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, response.Error("failed to get rows affected", err)
-	}
-	if rowsAffected == 0 {
-		return 0, nil
-	}
-
-	return rowsAffected, nil
-}
-
-func (r *CustomerRepository) FindByID(ctx context.Context, customerID string) (*model.Customer, error) {
-	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, customerQueryFindByID, customerID)
-
-	return scanCustomer(row)
-}
-
 func (r *CustomerRepository) FindByEmail(ctx context.Context, email string) (*model.Customer, error) {
-	row := transactor.ExecutorFrom(ctx, r.db).QueryRowContext(ctx, customerQueryFindByEmail, email)
-
-	return scanCustomer(row)
+	return scanCustomer(r.db.QueryRowContext(ctx, findByEmail, email))
 }
-func (r *CustomerRepository) UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error {
-	result, err := transactor.ExecutorFrom(ctx, r.db).ExecContext(ctx, customerQueryUpdateStatus, status, customerID)
-	if err != nil {
-		return response.ExecError("update customer status", err)
-	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return response.Error("failed to get rows affected", err)
-	}
-	if rowsAffected == 0 {
-		return response.Error("no rows updated", sql.ErrNoRows)
-	}
+func (r *CustomerRepository) FindByID(ctx context.Context, id string) (*model.Customer, error) {
+	return scanCustomer(r.db.QueryRowContext(ctx, findByID, id))
+}
 
-	return nil
+func scanCustomer(row *sql.Row) (*model.Customer, error) {
+	var customer model.Customer
+	err := row.Scan(
+		&customer.ID, &customer.Email, &customer.PasswordHash, &customer.FullName,
+		&customer.Status, &customer.CreatedAt, &customer.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, response.Error("failed to find customer", err)
+	}
+	return &customer, nil
 }

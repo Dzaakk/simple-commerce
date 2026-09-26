@@ -7,65 +7,28 @@ type Meta struct {
 	Message string `json:"message"`
 }
 
-type ApiResponse struct {
+type APIResponse struct {
 	Meta Meta        `json:"meta"`
 	Data interface{} `json:"data"`
 }
 
-func Response(code int, message string, data interface{}) ApiResponse {
-	Response := ApiResponse{
+func Response(code int, message string, data interface{}) APIResponse {
+	return APIResponse{
 		Meta: Meta{
 			Code:    code,
 			Message: message,
 		},
 		Data: data,
 	}
-	return Response
 }
 
-func InternalServerError(message string) ApiResponse {
-	if message != "" {
-		return Response(http.StatusInternalServerError, "Internal Server Error", message)
-	}
-	return Response(http.StatusInternalServerError, "Internal Server Error", nil)
-}
-
-func BadRequest(message string) ApiResponse {
-	if message != "" {
-		return Response(http.StatusBadRequest, "Bad Request", message)
-	}
-	return Response(http.StatusBadRequest, "Bad Request", nil)
-}
-
-func Success(data interface{}) ApiResponse {
+func Success(data interface{}) APIResponse {
 	return Response(http.StatusOK, "Success", data)
 }
 
-func NotFound(message string) ApiResponse {
-	if message != "" {
-		return Response(http.StatusNotFound, "Not Found", message)
-	}
-	return Response(http.StatusNotFound, "Not Found", nil)
-}
-
-func Unauthorized(message string) ApiResponse {
+func Unauthorized(message string) APIResponse {
 	if message != "" {
 		return Response(http.StatusUnauthorized, "Unauthorized", message)
 	}
 	return Response(http.StatusUnauthorized, "Unauthorized", nil)
-}
-
-func InvalidRequestData() ApiResponse {
-	return Response(http.StatusBadRequest, "Invalid Request Data", nil)
-}
-
-func InvalidEmailOrPassword() ApiResponse {
-	return Response(http.StatusBadRequest, "Invalid Email or Password", nil)
-}
-
-func Forbidden(message string) ApiResponse {
-	if message != "" {
-		return Response(http.StatusForbidden, "Forbidden", message)
-	}
-	return Response(http.StatusForbidden, "Forbidden", nil)
 }

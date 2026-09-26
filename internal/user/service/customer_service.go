@@ -1,149 +1,36 @@
 package service
 
 import (
+	"context"
+	"strings"
+
 	"Dzaakk/simple-commerce/internal/user/dto"
 	"Dzaakk/simple-commerce/internal/user/model"
-	"Dzaakk/simple-commerce/package/constant"
-	"Dzaakk/simple-commerce/package/logging"
-	"Dzaakk/simple-commerce/package/response"
-	"context"
-	"net/http"
-	"strconv"
 )
 
 type CustomerServiceImpl struct {
-	repo   CustomerRepository
-	logger *logging.Logger
+	repo CustomerRepository
 }
 
 func NewCustomerService(repo CustomerRepository) *CustomerServiceImpl {
-	return &CustomerServiceImpl{
-		repo:   repo,
-		logger: logging.NewLogger("user", "customer_service"),
-	}
+	return &CustomerServiceImpl{repo: repo}
 }
 
-func (c *CustomerServiceImpl) Create(ctx context.Context, req *dto.RegisterCustomerRequest) (string, error) {
-
-	data := req.ToCreateData()
-
-	id, err := c.repo.Create(ctx, data)
-	if err != nil {
-		c.logger.Error(ctx, "customer_create_failed", map[string]interface{}{
-			"operation": "create_customer",
-		})
-		return "", err
-	}
-
-	c.logger.Info(ctx, "customer_created", map[string]interface{}{
-		"customer_id": id,
-	})
-	return id, nil
+func (s *CustomerServiceImpl) Create(ctx context.Context, req *dto.RegisterCustomerRequest) (string, error) {
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+	req.FullName = strings.TrimSpace(req.FullName)
+	return s.repo.Create(ctx, req.ToModel())
 }
 
-func (c *CustomerServiceImpl) Update(ctx context.Context, req *dto.UpdateReq) error {
-
-	customerID, err := strconv.ParseInt(req.CustomerID, 0, 64)
-	if err != nil {
-		c.logger.Warn(ctx, "customer_update_invalid_id", map[string]interface{}{
-			"operation": "update_customer",
-		})
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
-	}
-
-	if customerID <= 0 {
-		c.logger.Warn(ctx, "customer_update_invalid_id", map[string]interface{}{
-			"operation": "update_customer",
-		})
-		return response.NewAppError(http.StatusBadRequest, "invalid parameter customer id")
-	}
-
-	data := req.ToUpdateData(customerID)
-
-	rowsAffected, err := c.repo.Update(ctx, data)
-	if err != nil {
-		c.logger.Error(ctx, "customer_update_failed", map[string]interface{}{
-			"customer_id": customerID,
-			"operation":   "update_customer",
-		})
-		return err
-	}
-	if rowsAffected == 0 {
-		c.logger.Warn(ctx, "customer_update_not_found", map[string]interface{}{
-			"customer_id": customerID,
-			"operation":   "update_customer",
-		})
-		return response.NewAppError(http.StatusNotFound, "customer not found")
-	}
-
-	c.logger.Info(ctx, "customer_updated", map[string]interface{}{
-		"customer_id": customerID,
-	})
-	return nil
+func (s *CustomerServiceImpl) FindByEmail(ctx context.Context, email string) (*model.Customer, error) {
+	return s.repo.FindByEmail(ctx, strings.ToLower(strings.TrimSpace(email)))
 }
 
-func (c *CustomerServiceImpl) FindByEmail(ctx context.Context, email string) (*model.Customer, error) {
-
-	data, err := c.repo.FindByEmail(ctx, email)
-	if err != nil {
-		c.logger.Error(ctx, "customer_find_by_email_failed", map[string]interface{}{
-			"operation": "find_customer_by_email",
-		})
+func (s *CustomerServiceImpl) FindByID(ctx context.Context, id string) (*dto.CustomerResponse, error) {
+	customer, err := s.repo.FindByID(ctx, id)
+	if err != nil || customer == nil {
 		return nil, err
 	}
-	if data == nil {
-		c.logger.Info(ctx, "customer_not_found", map[string]interface{}{
-			"lookup": "email",
-		})
-		return nil, nil
-	}
-
-	c.logger.Info(ctx, "customer_found", map[string]interface{}{
-		"lookup":      "email",
-		"customer_id": data.ID,
-	})
-	return data, nil
-}
-
-func (c *CustomerServiceImpl) FindByID(ctx context.Context, customerID string) (*dto.CustomerRes, error) {
-
-	data, err := c.repo.FindByID(ctx, customerID)
-	if err != nil {
-		c.logger.Error(ctx, "customer_find_by_id_failed", map[string]interface{}{
-			"customer_id": customerID,
-			"operation":   "find_customer_by_id",
-		})
-		return nil, err
-	}
-	if data == nil {
-		c.logger.Info(ctx, "customer_not_found", map[string]interface{}{
-			"lookup":      "id",
-			"customer_id": customerID,
-		})
-		return nil, nil
-	}
-
-	customer := dto.ToCustomerRes(data)
-
-	c.logger.Info(ctx, "customer_found", map[string]interface{}{
-		"lookup":      "id",
-		"customer_id": customerID,
-	})
-	return &customer, nil
-}
-
-func (c *CustomerServiceImpl) UpdateStatus(ctx context.Context, customerID string, status constant.UserStatus) error {
-	if err := c.repo.UpdateStatus(ctx, customerID, status); err != nil {
-		c.logger.Error(ctx, "customer_status_update_failed", map[string]interface{}{
-			"customer_id": customerID,
-			"status":      status,
-		})
-		return err
-	}
-
-	c.logger.Info(ctx, "customer_status_updated", map[string]interface{}{
-		"customer_id": customerID,
-		"status":      status,
-	})
-	return nil
+	result := dto.ToCustomerResponse(customer)
+	return &result, nil
 }

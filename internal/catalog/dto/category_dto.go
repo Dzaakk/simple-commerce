@@ -1,37 +1,18 @@
 package dto
 
 import (
-	"Dzaakk/simple-commerce/internal/catalog/model"
 	"time"
+
+	"Dzaakk/simple-commerce/internal/catalog/model"
 )
 
-type CategoryTree struct {
-	ID       int64
-	ParentID *int64
-	Name     string
-	Slug     string
-	Depth    int
+type CategoryResponse struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Slug      string    `json:"slug"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-type CreateCategoryReq struct {
-	ParentID *int64 `json:"parent_id"`
-	Name     string `json:"name" validate:"required"`
-	Slug     string `json:"slug" validate:"required"`
-	IsActive *bool  `json:"is_active"`
-}
-
-func (c *CreateCategoryReq) ToCreateData() *model.Category {
-	isActive := true
-	if c.IsActive != nil {
-		isActive = *c.IsActive
-	}
-
-	return &model.Category{
-		ParentID:  c.ParentID,
-		Name:      c.Name,
-		Slug:      c.Slug,
-		IsActive:  isActive,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+func ToCategoryResponse(category *model.Category) CategoryResponse {
+	return CategoryResponse{ID: category.ID, Name: category.Name, Slug: category.Slug, CreatedAt: category.CreatedAt}
 }

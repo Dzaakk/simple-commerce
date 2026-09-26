@@ -1,36 +1,33 @@
 package main
 
 import (
-	emailQueue "Dzaakk/simple-commerce/internal/email/queue"
-	emailService "Dzaakk/simple-commerce/internal/email/service"
-	postgres "Dzaakk/simple-commerce/package/db/postgres"
-	redis "Dzaakk/simple-commerce/package/db/redis"
+	"context"
+	"database/sql"
+	"errors"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	auth "Dzaakk/simple-commerce/internal/auth/route"
-	cart "Dzaakk/simple-commerce/internal/cart/route"
-	catalog "Dzaakk/simple-commerce/internal/catalog/route"
+	authroute "Dzaakk/simple-commerce/internal/auth/route"
+	catalogroute "Dzaakk/simple-commerce/internal/catalog/route"
 	"Dzaakk/simple-commerce/internal/health"
 	"Dzaakk/simple-commerce/internal/middleware"
-	logMiddleware "Dzaakk/simple-commerce/internal/middleware/logging"
-	metricsMiddleware "Dzaakk/simple-commerce/internal/middleware/metrics"
-	requestid "Dzaakk/simple-commerce/internal/middleware/requestid"
-	order "Dzaakk/simple-commerce/internal/order/route"
-	transaction "Dzaakk/simple-commerce/internal/transaction/route"
-	user "Dzaakk/simple-commerce/internal/user/route"
-	"Dzaakk/simple-commerce/package/logging"
-	"Dzaakk/simple-commerce/package/rabbitmq"
+	userroute "Dzaakk/simple-commerce/internal/user/route"
+	"Dzaakk/simple-commerce/package/db/postgres"
+	redisdb "Dzaakk/simple-commerce/package/db/redis"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
-	godotenv.Load()
+	_ = godotenv.Load()
 
-	postgresDB, err := postgres.NewBuilder().
+	db, err := postgres.NewBuilder().
 		WithHost(os.Getenv("POSTGRES_HOST")).
 		WithPort(os.Getenv("POSTGRES_PORT")).
 		WithDBName(os.Getenv("POSTGRES_DB")).
@@ -40,48 +37,61 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
-	redisClient, err := redis.NewBuilder().
-		WithHost(os.Getenv("REDIS_HOST")).
-		WithPort(os.Getenv("REDIS_PORT")).
-		WithPassword(os.Getenv("REDIS_PASSWORD")).
-		WithDB(0).
-		Connect()
-	if err != nil {
-		log.Fatalf("error connect to redis : %v", err)
-	}
-
-	var rabbitClient *rabbitmq.Client
-	rabbitURL := os.Getenv("RABBITMQ_URL")
-	if rabbitURL != "" {
-		rabbitClient, err = rabbitmq.Init(rabbitURL)
+	var redisClient *redis.Client
+	if os.Getenv("REDIS_HOST") != "" {
+		redisClient, err = redisdb.NewBuilder().
+			WithHost(os.Getenv("REDIS_HOST")).
+			WithPort(os.Getenv("REDIS_PORT")).
+			WithPassword(os.Getenv("REDIS_PASSWORD")).
+			Connect()
 		if err != nil {
-			log.Printf("rabbitmq queue disabled: %v", err)
-		} else {
-			defer rabbitClient.Close()
-
-			if err := emailQueue.StartActivationEmailConsumer(rabbitClient, emailService.NewEmailService()); err != nil {
-				log.Printf("failed to start activation email consumer: %v", err)
-			}
+			log.Printf("redis unavailable; catalog v2 will fall back to postgres: %v", err)
 		}
 	}
+	if redisClient != nil {
+		defer redisClient.Close()
+	}
 
-	r := gin.New()
-	r.Use(requestid.RequestID())
-	r.Use(metricsMiddleware.HTTPMiddleware())
-	r.Use(logMiddleware.RequestLogger(logging.NewLogger("http", "api")))
-	r.Use(gin.Recovery())
-	r.Use(middleware.ErrorHandler())
+	router := newRouter(db, redisClient)
 
-	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	health.NewHandler(postgresDB, redisClient).Route(r)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	server := &http.Server{
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 
-	auth.InitializedService(postgresDB, redisClient, rabbitClient).Route(&r.RouterGroup)
-	user.InitializedService(postgresDB).Route(&r.RouterGroup)
-	catalog.InitializedService(postgresDB, redisClient).Route(&r.RouterGroup)
-	cart.InitializedService(postgresDB).Route(&r.RouterGroup)
-	order.InitializedService(postgresDB).Route(&r.RouterGroup)
-	transaction.InitializedService(postgresDB).Route(&r.RouterGroup)
+	go func() {
+		log.Printf("server listening on :%s", port)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
 
-	r.Run()
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("graceful shutdown failed: %v", err)
+	}
+}
+
+func newRouter(db *sql.DB, redisClient *redis.Client) *gin.Engine {
+	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery(), middleware.ErrorHandler())
+	health.NewHandler(db, redisClient).Route(router)
+	authroute.New(db).Route(&router.RouterGroup)
+	userroute.Route(&router.RouterGroup, db)
+	catalogroute.Route(&router.RouterGroup, db, redisClient)
+	return router
 }

@@ -1,54 +1,28 @@
 package service
 
 import (
+	"context"
+
 	"Dzaakk/simple-commerce/internal/catalog/dto"
 	"Dzaakk/simple-commerce/internal/catalog/model"
-	repo "Dzaakk/simple-commerce/internal/catalog/repository"
-	"context"
-	"time"
 )
 
 type ProductService interface {
-	Create(ctx context.Context, req *dto.CreateProductReq) (string, error)
-	Update(ctx context.Context, productID string, sellerID string, req *dto.UpdateProductReq) error
-	SoftDelete(ctx context.Context, productID string, sellerID string) error
-	FindByID(ctx context.Context, productID string) (*dto.ProductRes, error)
-	FindByIDCached(ctx context.Context, productID string) (*dto.ProductRes, error)
-	FindAll(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error)
-	FindAllCached(ctx context.Context, req dto.ProductQueryReq) (*dto.ProductListRes, error)
-	UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error
+	FindByID(context.Context, int64) (*dto.ProductResponse, error)
+	FindByIDCached(context.Context, int64) (*dto.ProductResponse, error)
+	FindAll(context.Context, dto.ProductQuery) (*dto.ProductListResponse, error)
+	FindAllCached(context.Context, dto.ProductQuery) (*dto.ProductListResponse, error)
 }
 
 type ProductRepository interface {
-	Create(ctx context.Context, data *model.Product) (string, error)
-	Update(ctx context.Context, data *model.Product) (int64, error)
-	SoftDelete(ctx context.Context, productID string, sellerID string, updatedAt time.Time) (int64, error)
-	FindByID(ctx context.Context, productID string) (*model.Product, error)
-	FindBySellerID(ctx context.Context, sellerID string) ([]*model.Product, error)
-	FindAll(ctx context.Context, filter repo.ProductFilter) ([]*model.Product, error)
-	UpdateStock(ctx context.Context, productID string, sellerID string, quantity int) error
+	FindByID(context.Context, int64) (*model.Product, error)
+	FindAll(context.Context, dto.ProductQuery) ([]*model.Product, error)
 }
 
 type CategoryService interface {
-	Create(ctx context.Context, req *dto.CreateCategoryReq) (int64, error)
-	FindAll(ctx context.Context) ([]*dto.CategoryTree, error)
-	FindByID(ctx context.Context, categoryID int64) (*dto.CategoryTree, error)
+	FindAll(context.Context) ([]dto.CategoryResponse, error)
 }
 
 type CategoryRepository interface {
-	Create(ctx context.Context, data *model.Category) (int64, error)
-	FindByID(ctx context.Context, id int64) (*model.Category, error)
-	FindAll(ctx context.Context) ([]*model.Category, error)
-}
-
-type InventoryService interface {
-	FindByProductID(ctx context.Context, productID string) (*model.Inventory, error)
-	ReserveStock(ctx context.Context, productID string, qty int) error
-	ReleaseStock(ctx context.Context, productID string, qty int) error
-}
-
-type InventoryRepository interface {
-	FindByProductID(ctx context.Context, productID string) (*model.Inventory, error)
-	ReserveStock(ctx context.Context, productID string, qty int) error
-	ReleaseStock(ctx context.Context, productID string, qty int) error
+	FindAll(context.Context) ([]*model.Category, error)
 }

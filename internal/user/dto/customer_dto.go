@@ -1,72 +1,38 @@
 package dto
 
 import (
-	"Dzaakk/simple-commerce/internal/user/model"
-	"fmt"
 	"time"
+
+	"Dzaakk/simple-commerce/internal/user/model"
+	"Dzaakk/simple-commerce/package/constant"
 )
 
 type RegisterCustomerRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	FullName string `json:"full_name" validate:"required"`
-	Phone    string `json:"phone"`
+	Email        string
+	PasswordHash string
+	FullName     string
 }
 
-func (c *RegisterCustomerRequest) ToCreateData() *model.Customer {
+func (r RegisterCustomerRequest) ToModel() *model.Customer {
+	now := time.Now()
 	return &model.Customer{
-		Email:        c.Email,
-		PasswordHash: c.Password,
-		FullName:     c.FullName,
-		Phone:        c.Phone,
-		Status:       "pending",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		Email: r.Email, PasswordHash: r.PasswordHash, FullName: r.FullName,
+		Status: string(constant.StatusActive), CreatedAt: now, UpdatedAt: now,
 	}
 }
 
-type UpdateReq struct {
-	CustomerID string `json:"customer_id" validate:"required"`
-	Email      string `json:"email" validate:"required,email"`
-	FullName   string `json:"full_name" validate:"required"`
-	Phone      string `json:"phone"`
-	Status     string `json:"status"`
-}
-
-func (u *UpdateReq) ToUpdateData(customerID int64) *model.Customer {
-	status := u.Status
-	if status == "" {
-		status = "pending"
-	}
-
-	return &model.Customer{
-		ID:        fmt.Sprintf("%d", customerID),
-		Email:     u.Email,
-		FullName:  u.FullName,
-		Phone:     u.Phone,
-		Status:    status,
-		UpdatedAt: time.Now(),
-	}
-}
-
-type CustomerRes struct {
+type CustomerResponse struct {
 	ID        string    `json:"id"`
-	Email     string    `json:"email,omitempty"`
-	FullName  string    `json:"full_name,omitempty"`
-	Phone     string    `json:"phone,omitempty"`
-	Status    string    `json:"status,omitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	Email     string    `json:"email"`
+	FullName  string    `json:"full_name"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func ToCustomerRes(c *model.Customer) CustomerRes {
-	return CustomerRes{
-		ID:        c.ID,
-		Email:     c.Email,
-		FullName:  c.FullName,
-		Phone:     c.Phone,
-		Status:    c.Status,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.UpdatedAt,
+func ToCustomerResponse(customer *model.Customer) CustomerResponse {
+	return CustomerResponse{
+		ID: customer.ID, Email: customer.Email, FullName: customer.FullName,
+		Status: customer.Status, CreatedAt: customer.CreatedAt, UpdatedAt: customer.UpdatedAt,
 	}
 }

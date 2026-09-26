@@ -1,23 +1,19 @@
 package repository
 
 import (
-	"Dzaakk/simple-commerce/internal/auth/model"
-	"Dzaakk/simple-commerce/package/constant"
-	response "Dzaakk/simple-commerce/package/response"
 	"context"
 	"database/sql"
 	"errors"
-	"time"
+
+	"Dzaakk/simple-commerce/internal/auth/model"
+	"Dzaakk/simple-commerce/package/response"
 )
 
 const (
-	refreshTokenSelectColumns        = "id, user_id, user_type, token_hash, expires_at, revoked_at, created_at"
-	refreshTokenQueryCreate          = "INSERT INTO public.refresh_tokens (user_id, user_type, token_hash, expires_at, revoked_at, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-	refreshTokenQueryFindByUser      = "SELECT " + refreshTokenSelectColumns + " FROM public.refresh_tokens WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1"
-	refreshTokenQuerySetExpire       = "UPDATE public.refresh_tokens SET expires_at=$1 WHERE id=$2"
-	refreshTokenQueryFindByTokenHash = "SELECT " + refreshTokenSelectColumns + " FROM public.refresh_tokens WHERE token_hash=$1 AND revoked_at IS NULL AND expires_at > NOW() LIMIT 1"
-	refreshTokenQueryRevoke          = "UPDATE public.refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1"
-	refreshTokenQueryRevokeAllByUser = "UPDATE public.refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND user_type = $2"
+	refreshTokenColumns = "id, user_id, token_hash, expires_at, revoked_at, created_at"
+	createRefreshToken  = "INSERT INTO refresh_tokens (user_id, token_hash, expires_at, created_at) VALUES ($1, $2, $3, $4) RETURNING id"
+	findRefreshToken    = "SELECT " + refreshTokenColumns + " FROM refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL AND expires_at > NOW()"
+	revokeRefreshToken  = "UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1 AND revoked_at IS NULL"
 )
 
 type RefreshTokenRepository struct {
@@ -28,96 +24,41 @@ func NewRefreshTokenRepository(db *sql.DB) *RefreshTokenRepository {
 	return &RefreshTokenRepository{db: db}
 }
 
-func (r *RefreshTokenRepository) Create(ctx context.Context, data *model.RefreshToken) (int64, error) {
-	var id int64
+func (r *RefreshTokenRepository) Create(ctx context.Context, token *model.RefreshToken) error {
+	return r.db.QueryRowContext(ctx, createRefreshToken,
+		token.UserID, token.TokenHash, token.ExpiresAt, token.CreatedAt,
+	).Scan(&token.ID)
+}
 
-	err := r.db.QueryRowContext(
-		ctx,
-		refreshTokenQueryCreate,
-		data.UserID,
-		data.UserType,
-		data.TokenHash,
-		data.ExpiresAt,
-		data.RevokedAt,
-		data.CreatedAt,
-	).Scan(&id)
+func (r *RefreshTokenRepository) FindByTokenHash(ctx context.Context, hash string) (*model.RefreshToken, error) {
+	var token model.RefreshToken
+	var revokedAt sql.NullTime
+	err := r.db.QueryRowContext(ctx, findRefreshToken, hash).Scan(
+		&token.ID, &token.UserID, &token.TokenHash, &token.ExpiresAt, &revokedAt, &token.CreatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
-		return 0, response.Error("failed to create refresh token", err)
+		return nil, response.Error("failed to find refresh token", err)
 	}
-
-	return id, nil
+	if revokedAt.Valid {
+		token.RevokedAt = &revokedAt.Time
+	}
+	return &token, nil
 }
 
-func (r *RefreshTokenRepository) FindByUserID(ctx context.Context, userID string) (*model.RefreshToken, error) {
-	row := r.db.QueryRowContext(ctx, refreshTokenQueryFindByUser, userID)
-
-	return scanRefreshToken(row)
-}
-
-func (r *RefreshTokenRepository) SetExpire(ctx context.Context, id int64, expiresAt time.Time) (int64, error) {
-	result, err := r.db.ExecContext(ctx, refreshTokenQuerySetExpire, expiresAt, id)
-	if err != nil {
-		return 0, response.ExecError("update refresh token expiry", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, response.Error("failed to get rows affected", err)
-	}
-	if rowsAffected == 0 {
-		return 0, response.Error("no rows updated", sql.ErrNoRows)
-	}
-
-	return rowsAffected, nil
-}
-
-func (r *RefreshTokenRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*model.RefreshToken, error) {
-	row := r.db.QueryRowContext(ctx, refreshTokenQueryFindByTokenHash, tokenHash)
-
-	return scanRefreshToken(row)
-}
-
-func (r *RefreshTokenRepository) Revoke(ctx context.Context, tokenHash string) error {
-	_, err := r.db.ExecContext(ctx, refreshTokenQueryRevoke, tokenHash)
+func (r *RefreshTokenRepository) Revoke(ctx context.Context, hash string) error {
+	result, err := r.db.ExecContext(ctx, revokeRefreshToken, hash)
 	if err != nil {
 		return response.Error("failed to revoke refresh token", err)
 	}
-
-	return nil
-}
-
-func (r *RefreshTokenRepository) RevokeAllByUser(ctx context.Context, userID string, userType constant.UserType) error {
-	_, err := r.db.ExecContext(ctx, refreshTokenQueryRevokeAllByUser, userID, userType)
+	rows, err := result.RowsAffected()
 	if err != nil {
-		return response.Error("failed to revoke all refresh tokens for user", err)
+		return response.Error("failed to inspect refresh token revocation", err)
 	}
-
+	if rows == 0 {
+		return response.ErrInvalidRefreshToken
+	}
 	return nil
-}
-
-func scanRefreshToken(row *sql.Row) (*model.RefreshToken, error) {
-	data := &model.RefreshToken{}
-	var revokedAt sql.NullTime
-
-	err := row.Scan(
-		&data.ID,
-		&data.UserID,
-		&data.UserType,
-		&data.TokenHash,
-		&data.ExpiresAt,
-		&revokedAt,
-		&data.CreatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, response.Error("failed to scan refresh token", err)
-	}
-
-	if revokedAt.Valid {
-		data.RevokedAt = &revokedAt.Time
-	}
-
-	return data, nil
 }
